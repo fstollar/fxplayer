@@ -13,10 +13,13 @@ _dosbox/
 # Firecrawl scratch
 .firecrawl/
 
-# OS
+# OS / editor artefacts
 .DS_Store
 Thumbs.db
 .directory
+
+# Stray build error files at repo root
+*.err
 
 # OW V2 compiler download
 _watcom2/
