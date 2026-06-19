@@ -11,8 +11,8 @@ set_property(CACHE FX_MIXER PROPERTY STRINGS
 set(FXCORE_SOURCES
     engine/fx.c
     util/calc.c
-    # format/s3m.c          (TODO Task 3)
-    # effect/efc_s3m.c      (TODO Task 4)
+    format/s3m.c
+    effect/efc_s3m.c
 )
 
 if(FX_MIXER STREQUAL "SCALAR")
