@@ -7,7 +7,7 @@
 
 Legend for symbols used here:
 
-           - = not implememted yet      * = serious changes
+           - = not implemented yet      * = serious changes
            + = new implemented          # = bug removed
            ! = important remark
 
@@ -36,7 +36,7 @@ How to reach us:
 
 ---************************************************************************---
 
- v0.10à    First inofficial release                          in July, 1996
+ v0.10ï¿½    First unofficial release                          in July, 1996
 
            This was the first version spread among my friends
            for betatesting.
@@ -56,12 +56,12 @@ How to reach us:
 
 ---************************************************************************---
 
-v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
+v0.11ï¿½ - v0.12ï¿½   Bugs in SB routines detected and fixed   in August, 1996
                   Thanx to Jakob !
 
 ---************************************************************************---
 
- v0.13à    First alpha release to other persons          August 19th, 1996
+ v0.13ï¿½    First alpha release to other persons          August 19th, 1996
 
            This was the first public release for betatesting.
            It is freeware as long no money would be charged and
@@ -71,7 +71,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.20à    New Surface                                   Oktober 8th, 1996
+ v0.20ï¿½    New Surface                                   October 8th, 1996
 
            * New Surface by Pebble (my older brother)
              Now easier to look & find something,
@@ -79,35 +79,35 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.21à-0.24à Many little changes                   to December 30th, 1996
+ v0.21ï¿½-0.24ï¿½ Many little changes                   to December 30th, 1996
 
            Some minor fixes in effects and mixer.
 
 ---************************************************************************---
 
- v0.30à    Stereo and panning added                      January 7th, 1997
+ v0.30ï¿½    Stereo and panning added                      January 7th, 1997
 
            + Stereo for SB16 added (Yeah!)
            + panning added
            + WideMono for testing added (try it !!)
-             This one plays everything Mono, but with a litte jitter
+             This one plays everything Mono, but with a little jitter
              between left and right. Interesting, but not the big deal.
 
 ---************************************************************************---
 
- v0.31à-v0.37 Some changes and bughunts             to February 10th, 1997
+ v0.31ï¿½-v0.37 Some changes and bughunts             to February 10th, 1997
 
-           * S3M loader completly rewritten (now faster and smaller)
+           * S3M loader completely rewritten (now faster and smaller)
            # MANY bugs found and removed (looks like I found a bug-spray :)
-           * GREAT optimaziation of the mixer (now 5 asm opcodes !)
+           * GREAT optimization of the mixer (now 5 asm opcodes !)
            + Interpolation 1.grade integrated for testing
 
 ---************************************************************************---
 
- v0.38à    Complete rewrite of the mixer               February 15th, 1997
+ v0.38ï¿½    Complete rewrite of the mixer               February 15th, 1997
 
            * I start to rewrite the mixer from scratch for easy including
-             of the IT format and to make the player more functionable
+             of the IT format and to make the player more functional
            # bug removed in interpolation and optimized (now 10 asm opcodes)
            # IRQ above 7 will now accepted correct (for Laptops & SB clones)
 
@@ -115,7 +115,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.40à    MY 22th BIRTHDAY !!                         February 25th, 1997
+ v0.40ï¿½    MY 22th BIRTHDAY !!                         February 25th, 1997
 
            + A new mixer is now running ! Smaller, faster, BETTER !! :)
            * I deleted the s3m routines now and write them again from scratch,
@@ -131,7 +131,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.41á    Beta release !                                   May 11th, 1997
+ v0.41ï¿½    Beta release !                                   May 11th, 1997
 
              After a long time and some lazy coding :) I rewrote
              the effect handler from scratch and I can move now to
@@ -152,11 +152,11 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.50à    Watcom and Pmode/W !                        February 25th, 1998
+ v0.50ï¿½    Watcom and Pmode/W !                        February 25th, 1998
 
         !  Ok, here we go ! This is the first version of the        !
         !  C/C++ 'PMode/W and Watcom' F/X Player                    !
-        !  I wrote it completle from scratch again but now almost   !
+        !  I wrote it completely from scratch again but now almost   !
         !  nothing is written in assembler but now in C/C++ ;)      !
         !  Also, some other formats will have to wait...            !
 
@@ -166,7 +166,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
            Changes:
 
            ! The sound formats and the mixer is now complete divided in two
-             different programms and the play/interpretation routines of the
+             different programs and the play/interpretation routines of the
              sound formats are each unique and have no dependence! This will
              lead to a easy implementation of new formats and a easy
              emulation of the different soundformats or changes.
@@ -182,7 +182,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
              handle two threads, one calculation thread and one mainthread
              which is used for desktop or DOS shell ! So this player is
              perfectly made for games or demos under DOS because no timer IRQ
-             is taken by the soundsystem nor it must be called several times
+             is taken by the sound system, nor must it be called several times
              in a second... no... it just stands there and makes its work!
              It seems Windows have no problems with this 'illegal' thread
              implementation via DPMI in DOS so why not use it ?
@@ -198,7 +198,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
              a effect value without an effect and if followed by a
              effect with a value of 0 it didn't use the old value
 
-           - WideMono removed ( was only usefull on headphones :( )
+           - WideMono removed ( was only useful on headphones :( )
            - Interpolation was removed due to new mixer
 
            * mixer has been now optimized to 32bit assembler and is about
@@ -226,7 +226,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.51à    Interpolation                                  March 13th, 1998
+ v0.51ï¿½    Interpolation                                  March 13th, 1998
 
            + I cut one ASM instruction in the 16bit mixer so now it needs
              only 7 instructions in mono and 8 in stereo with panning
@@ -247,14 +247,14 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.52à    loop click removal                             March 22th, 1998
+ v0.52ï¿½    loop click removal                             March 22th, 1998
 
            * the interpolation routine is now beta
            + first try of loop click removal for interpolation activated
 
 ---************************************************************************---
 
- v0.53à    Soft clipping mode                             March 24th, 1998
+ v0.53ï¿½    Soft clipping mode                             March 24th, 1998
 
            + SB pro now works in stereo mode
 
@@ -269,7 +269,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.54à    Windows Sound System                           March 29th, 1998
+ v0.54ï¿½    Windows Sound System                           March 29th, 1998
 
            + WSS is now also available (thx to Obsidian for his soundcard)
              but there are some bugs around which will need some time to find
@@ -279,7 +279,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.55à    Bugs, bugs and another bug                     April 05th, 1998
+ v0.55ï¿½    Bugs, bugs and another bug                     April 05th, 1998
 
            # bug in Soundblaster device found. Causes system hang :(
            # bug in mono interpolation mixer found which causes crackls
@@ -289,7 +289,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.56à    SB16 bug                                       April 06th, 1998
+ v0.56ï¿½    SB16 bug                                       April 06th, 1998
 
            # and again after some cleaning up (I thought) the SB16 was not
              able to play anything else then 16bit stereo correct :(
@@ -299,13 +299,13 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.57à    Mekka'98 and Watcom 11.0                       April 08th, 1998
+ v0.57ï¿½    Mekka'98 and Watcom 11.0                       April 08th, 1998
 
            Once again I'm here at Mekka to make my party life some fancier.
-           As usuall I met a lot of nice scene people, new and old friends
+           As usual I met a lot of nice scene people, new and old friends
            (hi Pascal :) but the competitions were not as good as last year.
-           Espacially the AMIGA demos I did not like very much (sorry guys)
-           and the PC compo suxx too (23 demos) exept of 4 cool ones.
+           Especially the AMIGA demos I did not like very much (sorry guys)
+           and the PC compo suxx too (23 demos) except of 4 cool ones.
            ( Look at the end scroller of "SHM" (4th place) where you can find
            my name as "victim" in there. Greetz to the Lopez Bros. for that
            megacool "crappy" demo :) )
@@ -316,11 +316,11 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.58à    It is time for 32bit                            June 09th, 1998
+ v0.58ï¿½    It is time for 32bit                            June 09th, 1998
 
            Ok, I was some lazy the past month ( My new program 'Girlfriend'
            does not like my old good 'Coding 1.0' so there was some
-           debugging to come arround :) but now I have finished something
+           debugging to come around :) but now I have finished something
            you will love !
 
            STIGMA proudly presents:
@@ -338,17 +338,17 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
              (a CD has 96 dB) but this must then downcalculated to fit in
              the 16bit, 96 dB output stream of the soundcards. :<
              But with this mixer there are nearly no round errors possible
-             anymore and therefor is output 'finer and cleaner' which is real
+             anymore and therefore is output 'finer and cleaner' which is real
              noticeable !
                                !!  I LOVE QUALITY  !!
-             Additionaly are now up to 256 channels available for output !
+             Additionally are now up to 256 channels available for output !
              (IT here we come!) :->
 
            + full realtime interpolation in 1st grade is available now.
              There should be all click-bugs removed (hopefully)
            - but soft clipping is not implemented yet. The algorithm is much
              more complex for the 32bit mixer :(
-           # strange bug in interrupt handler causes an exeption under
+           # strange bug in interrupt handler causes an exception under
              Windows 95. It seems it only occurs if the machine is faster
              than a Pentium 133 :(
              So I added some extra stuff to avoid this mystery error.
@@ -356,16 +356,16 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.59à    The good old MOD                                June 23th, 1998
+ v0.59ï¿½    The good old MOD                                June 23th, 1998
 
            + A MOD loader is now available but it will not play correct
              because I used for a quick try the S3M player routines.
            # bug in S3M effect handler found ! This can produce errors
-             in very rare circumstandes. This should be fixed now.
+             in very rare circumstances. This should be fixed now.
 
 ---************************************************************************---
 
- v0.60à    Solution = 42 !                                 July 16th, 1998
+ v0.60ï¿½    Solution = 42 !                                 July 16th, 1998
 
            + The coexistence of the 16bit and 32bit mixer is much better
              now! I rewrote some mixer handlings to make code smaller and
@@ -389,25 +389,25 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.61à    WAV strikes back !                              July 26th, 1998
+ v0.61ï¿½    WAV strikes back !                              July 26th, 1998
 
            + WAV can now be played at any frequency the soundcard can take.
-             This will be realised by a interpolation/resampling routine
+             This will be realized by a interpolation/resampling routine
              in realtime during playback.
 
-           # I made a bad mistake in the routine which extend the orginal
-             protracker note/periode table. So there could be periodes not
-             recognized and therefor could no note found for that periode.
+           # I made a bad mistake in the routine which extend the original
+             Protracker note/period table. So there could be periods not
+             recognized and therefore could no note found for that period.
              Very high notes going over the amiga limit should now played
              correct.
-             By the way, I have made the periode to note converter a bit
+             By the way, I have made the period to note converter a bit
              more flexible :)
 
            # I found a bug in the interpolation mixer !!!!!!!!!!!!!!!!!!!!!!
              Well, indeed it is an (possible) overrun in a 32bit integer
              which can cause crackles and clicks and so I tried my first
              time the new 64bit integer Watcom supplies since 11.0 !
-             Curiosly I found it during my implemention of the WAV resampler
+             Curiously I found it during my implementation of the WAV resampler
              for that I copied some interpolation routines from the mixer
              and I wondered why they did not work all the time :)
              Now there are lesser clicks but I'm sure there are some errors
@@ -415,7 +415,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.62à    Soft clipping goes 32bit                   September 01th, 1998
+ v0.62ï¿½    Soft clipping goes 32bit                   September 01th, 1998
 
            Ok, this will be a bigger release with more fixes and extensions
            than usually :)
@@ -433,7 +433,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
              And if not is could produce strange sample loops... ups, fixed !
 
            # curiously by the last cleanup I made the same bug in the
-             S3M and MOD interpreter even they are absolutly different :)
+             S3M and MOD interpreter even they are absolutely different :)
              All Retrig commands did not work, because I made a mistake in
              the 'last effect' remember routine in which every time a
              allowed effect was recognized the 'last effect' holder was
@@ -449,7 +449,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
            + loop-click removal in the interpolation mixer is perfect
              now ! This method is mathematical correct, it's not like
              >If you don't hear it, it is good enough!<
-             YEAH ! I finally found the damn math bug in the Imixer :-D
+             YEAH ! I finally found the damn math bug in the interpolation mixer :-D
 
            + Soft clipping is now also available for the 32bit mixer !
              This was a real hard task but now this should be fine :)
@@ -458,13 +458,13 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
              Now you can play those overleveled modules and the clipping
              will be much better with lesser noise !
 
-         ! I'm working in the moment on a comercial project so my time is
+         ! I'm working in the moment on a commercial project so my time is
            now a bit more limited than usually ;)
            But I will work on the FX and give new releases every month !
 
 ---************************************************************************---
 
- v0.63à    669 never dies                               October 04th, 1998
+ v0.63ï¿½    669 never dies                               October 04th, 1998
 
            + I added a 669 loader and player. Well, I'm not very proud on it
              and I don't want to waste more time on this. So I will not
@@ -476,7 +476,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
              to move in MOD, 669, S3M or WAV forwards or backwards.
              This is a quick version like all players usually implement this
              feature but in the future this will be extended with better
-             handling for 'break pattern', 'change speed' or similiar effects
+             handling for 'break pattern', 'change speed' or similar effects
              so if skipping some patterns all speed changes are also done :)
 
            * Uiiiii, you can start to play 16bit stereo even if you only have
@@ -492,7 +492,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.64à    Windows is back !                            October 15th, 1998
+ v0.64ï¿½    Windows is back !                            October 15th, 1998
 
           * HA! I really did not believe that Win95 sucks so much and did not
             accept my play-routines anymore! But after I had my first look
@@ -510,11 +510,11 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
 
 ---************************************************************************---
 
- v0.65à                                                 October 25th, 1998
+ v0.65ï¿½                                                 October 25th, 1998
 
           # bug in MOD sample interpreter
             If you have a MOD with loop bigger than sample itself causes
-            crackles and clicks. The same if the loop starts behind sampleend.
+            crackles and clicks. The same if the loop starts behind sample end.
 
 ---************************************************************************---
 
@@ -525,7 +525,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
            + alpha routines of sample-precalculation!
              This means recalculating a whole sample with a higher rate
              (and bitwidth) via a complex interpolation algorithm,
-             a true spline algorithm which is almost similiar to a cubical
+             a true spline algorithm which is almost similar to a cubical
              interpolation but with one difference: Here the first derivative
              is smooth and the second is continuous with this type of
              interpolation.
@@ -539,11 +539,11 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
              interpolation algorithm and I needed 2 weeks to fix it to my
              needs, so I am real proud of it and I hope you appreciate it!
 
-           ! The command line routines are completly new and quite a bit more
+           ! The command line routines are completely new and quite a bit more
              clear :)
 
            ! New anti-click-routines for with I have to make serious changes
-             to the actuall mixer so that can cause new problems...
+             to the actual mixer so that can cause new problems...
 
            + new system of configuration files
              The old .INI file is now divided in two separate files:
@@ -551,7 +551,7 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
              hardware settings for different soundcards and devices
              and timings for predefined filters (in the future).
              The .INI file includes appearance and user settings as
-             well as the choosen sounddevice and desktop colors.
+             well as the chosen sound device and desktop colors.
 
            + I try my first sound effects for a 'different' output.
              This includes 'stereo base extension' and other things...
@@ -571,13 +571,13 @@ v0.11à - v0.12à   Bugs in SB routines detected and fixed   in August, 1996
            + a Linux and Windows 95/98/NT version
            + graphical interface (maybe only with X11/Win95)
 
-           * when the damn 'alpha' disapears only the stars can tell...
+           * when the damn 'alpha' disappears only the stars can tell...
 
 ---************************************************************************---
 
         ! If you have advice what must be implemented or bugs which !
         ! appeared , please  write to  me and  explain as  exact as !
-        ! possible what  happend and if you think you know why this !
+        ! possible what happened and if you think you know why this !
         ! error  appears, give me  some hints. Every  bug  reported !
         ! will be given the Credits in the  next  version  released !
                           (email in top of this text)
