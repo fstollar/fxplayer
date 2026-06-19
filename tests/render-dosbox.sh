@@ -109,13 +109,16 @@ if [ "$ELAPSED" -ge "$DURATION" ]; then
     echo "    Timeout after ${DURATION}s — killing DOSBox-X"
 fi
 
-# Kill DOSBox-X: SIGTERM the flatpak wrapper, wait, then SIGKILL if needed.
-# Use the Flatpak app ID in the pattern — NOT a generic "dosbox" substring,
-# which would match this script's own path (render-dosbox.sh).
-kill "$DBPID" 2>/dev/null || true
+# Kill DOSBox-X completely. The Flatpak sandbox creates a bwrap process tree:
+#   flatpak run (DBPID) → bwrap → dosbox-x (inner binary)
+# Killing DBPID alone orphans the inner process. We need three steps:
+#   1. Kill the entire process group (catches flatpak run + bwrap + dosbox-x)
+#   2. Escalate to SIGKILL after 1s
+#   3. pkill the inner binary by exact name as a final sweep
+kill -- -"$DBPID" 2>/dev/null || true   # SIGTERM to whole process group
 sleep 1
-kill -0 "$DBPID" 2>/dev/null && kill -9 "$DBPID" 2>/dev/null || true
-pkill -9 -f "com.dosbox_x.DOSBox-X" 2>/dev/null || true
+kill -9 -- -"$DBPID" 2>/dev/null || true  # SIGKILL the group
+pkill -9 -x "dosbox-x" 2>/dev/null || true  # inner binary by exact name
 wait "$DBPID" 2>/dev/null || true
 
 # Stop recording; flush the final audio buffer.
