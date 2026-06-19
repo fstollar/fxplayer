@@ -1,0 +1,30 @@
+Things that must be programmed:
+-------------------------------
+
+Misc:
+
+ - commandline
+ - INI reader
+
+Soundcards:
+
+ - GUS
+ - GUS max
+ - GUS PnP
+ - WSS
+ - PAS
+
+
+Soundfiles:
+
+ - MOD !
+ - 669
+ - MTM
+ - XM !!
+ - IT !!!!!
+
+ - VOC
+ - MP3
+ - Real Audio
+
+ - Audio CD !

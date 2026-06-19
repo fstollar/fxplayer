@@ -1,0 +1,14 @@
+Things that must be tested in the further:
+------------------------------------------
+
+Soundcards:
+
+ - check SB 1.0 - SB 2.0 working correct
+ - check SB pro mono mode working correct
+ - check SB pro stereo working ?
+
+Soundfiles:
+
+ - check S3Ms loaded correct
+ - check S3M effects
+

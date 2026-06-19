@@ -1,0 +1,6 @@
+system pmodew
+option caseexact
+name fx.exe
+file { device.obj dev_sb.obj convert.obj mixer.obj mixr_asm.obj format.obj dat_calc.obj dat_wav.obj dat_s3m.obj efc_s3m.obj dma.obj irq.obj command.obj fx.obj }
+
+option map=fx.map

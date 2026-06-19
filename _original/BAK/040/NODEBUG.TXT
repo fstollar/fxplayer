@@ -1,0 +1,21 @@
+1. INT1 und INT3 auf F000:FFF0 (CPU-StartAddr) umbiegen.
+
+2. ProtectedMode schalten
+3. InterruptDeskriptoren verbiegen INT1+3 auf F000:FFF0
+   und INT0 (Div by 0) auf eigene Routine biegen. siehe unten!
+4. in Flat Mode schalten. (Real Mode)
+
+5. DIV0 knstlich zwangsweise generieren => INT0
+6. Routine „ndert mit selbstmodifizerenden code
+   einen Sinnnlosen Jnz ein paar bytes zu sp„t
+   auf einen korrekten, wichtigen Jnz
+   Routine darf nicht ausgelassen werden, sonst funzts nich!!
+   (jb below, korrigiert: jc above. oder so was...:-)
+   Und: TD installCheck oder so wat und dann: CMOS „ndern, Reset, im EXE
+   abspeichern und 2mal machen lassen.
+
+7. Interrupttabelle im bereich von INT1 bis INT7 als Datenpuffer Nutzen.
+8. Adressen, die auf diesen Puffer zeigen st„ndig aktualisieren! Z.B.im IRQ der SB!
+
+9.  irgendwo: Prfetch QueueCheck!
+10. Checksums anlegen

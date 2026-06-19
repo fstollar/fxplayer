@@ -1,0 +1,16 @@
+// Cardtypes: SB   = SoundBlaster [PRO/16/AWE..] or 100% compatible
+//            GUS  = Gravis UltraSound (not implemented yet)
+//            WSS  = Windows Sound System (not implemented yet)
+//
+// Adress:    _all_ you want and your Soundcard is configured :)
+//            Default: 220 (hex)
+//
+// IRQ:       Default: 5
+//
+// DMA:       DMA channel for Voice output. If the DMA value is from 0 to 3
+//            the Player will play on 8 bit. From DMA 4 to 7 it will play
+//            on 16 bit and your SB must be a SB16 or higher
+//            Default: 1
+//
+// MixingSpeed: The speed of mixing the channels from 5000 to 44100 Hz
+//              (or some above...)

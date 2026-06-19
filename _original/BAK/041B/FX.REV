@@ -1,0 +1,147 @@
+
+                     =- Revisions of the F/X Player -=
+
+                           (c) 1996/97 by STIGMA
+
+
+       - email: apollo@eikon.e-technik.tu-muenchen.de    Subjekt: FX -
+
+
+Explaining:   - = not implememted yet      * = serious changes
+              + = new implemented          # = bug removed
+              ! = important remark
+
+---************************************************************************---
+
+ v0.10à    First inofficial release                           in July, 1996
+
+           This was the first version spread among my friends
+           for betatesting.
+           The player was started to code in february 1996 during my
+           military service.
+           It has a simple surface and could play 8 and 16 bit on SB
+           in a selfmade memory model called FMS. No EMM was allowed.
+           Only one format could be played, the S3M was the easiest
+           to implement.
+           The most important effekts were included, some not like:
+           - Arpeggio
+           - Tremolo
+           - Pattern delay
+           and so one...
+
+---************************************************************************---
+
+v0.11à - v0.12à   Bugs in SB routines detected and fixed    in August, 1996
+                  Thanx to Jakob !
+
+---************************************************************************---
+
+ v0.13à    First alpha release to other persons           August 19th, 1996
+
+           This was the first public release for betatesting.
+           It is freeware as long no money would be charged and
+           no changes to the code were made.
+           The first person who got it was Chris Rossall in Sweden :)
+
+---************************************************************************---
+
+ v0.20à    New Surface                                    Oktober 8th, 1996
+
+           * New Surface by Pebble (my older brother)
+
+---************************************************************************---
+
+ v0.21à-0.24à Many little changes                    to December 30th, 1996
+
+           (I was some lazy in the past months)
+
+---************************************************************************---
+
+ v0.30à    Stereo and panning added                       January 7th, 1997
+
+           + Stereo for SB16 added
+           + panning added
+           + WideMono for testing added (try it !!)
+
+---************************************************************************---
+
+ v0.30à-v0.37 Some changes and bughunts              to February 10th, 1997
+
+           * S3M loader completly rewritten (now faster and smaller)
+           # MANY bugs found and removed
+           * GREAT optimaziation of the mixer (now 5 asm opcodes !)
+           + Interpolation 1.grade integrated for testing
+
+---************************************************************************---
+
+ v0.38à    Comletly rewriting the mixer                 February 15th, 1997
+
+           * I start to rewrite the mixer from the scratch for including
+             IT format and to make the player more functionable
+           # bug removed in interpolation and optimized (now 10 asm opcodes)
+           # IRQ above 7 will now accepted correct
+
+           ! Puff$tar has today his 21th birthday !!! HAPPY BIRTHDAY !!!
+
+---************************************************************************---
+
+ v0.40à    MY 22th BIRTHDAY !!                         February 25th, 1997
+
+           + A new mixer is now running ! Smaller, faster, BETTER !! :)
+           * I deleted the s3m routines now and write them completly again
+             coz then were from v0.01 or so and so they are real SUCKING !
+           - almost no special commands are now implemented yet :(
+           # well, interpolated loops will now have no ultra clicks any more
+             (I hope) and now interpolation needs only 8 asm codes anymore
+             (with one 16bit mul)
+
+           ! some days ago Jakob had his birthday... exact at 19th february
+             so: HAPPY BIRTHDAY !!! (he is now also 22 years old)
+             (why the damned thing have 3 people of STIGMA during 10 days
+              there birthday ??)
+
+---************************************************************************---
+
+ v0.41á    Beta release !                                   May 11th, 1997
+
+             After a long time and some lazy coding :) I rewrote
+             the effect handler from scratch and I can move now to
+             the next format ! (XM or IT)
+             Also this version is a beta release now. It is only for
+             testing, the desktop / fileselector will be rewritten
+             in the near future. Also I will move now to Watcom to
+             run it in Protected mode, EMM386 is allowed then !! :)
+
+           * all special effects of S3M are now implemented !
+             They are tested and it seems there are no errors.
+          +# surely some thing I added/fixed but didn't remember :)
+
+        University has started again and as usually I started to code too :)
+
+---************************************************************************---
+
+           ! If you have advice what must be implemented or bugs which
+             appeared, please write to me and explain as exact as
+             possible what happend and if you think you know why this
+             error appears, give me some tips. Every bug reported will
+             given the Credits in the next version released !
+                          (email in top of this text)
+
+---************************************************************************---
+
+Preview:  - A MOD loader will be programmed.
+-------   - A new surface is in work... will apear in v0.50 !
+          - The IT format will be included in about v0.60
+          - A GUS player will be programmed
+          - We will move from BC 3.1 and Flat Realmode to pmode/w and Watcom
+            soon ! Then you can use your EMM386 again :)
+          - When the damned "beta" dissapears is written in the stars..... :)
+
+! If somebody is interested to include this player in his demo, he will be
+  welcomed ! Write to me for exact description.
+  If I got enough demand I will spread the source code of the player !
+
+
+                                        have fun,
+
+                                                  APOLLO of STIGMA

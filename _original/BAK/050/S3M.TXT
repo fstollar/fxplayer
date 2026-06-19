@@ -1,0 +1,270 @@
+
+	Scream Tracker 3.0 File Format
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. ST3 Module File Header:
+
+Offset  Bytes   Comments
+-----------------------------------------------------------
+  00      28    song name
+  28	   1	end of file mark (=^Z)
+  29	   1	file type (0=song,1=module)
+  30	   2
+  32	   2	number of orders
+  34	   2	number of instruments
+  36	   2	number of patterns
+  38	   2	bit flags
+		  bit 0 = vibrato mode (ST2/ST3)
+		  bit 3 = mute null channels
+		  bit 4 = extended periods (MOD/
+ST3)
+		  bit 5 = filter on/off
+  40	   2	tracker information
+		  bit 15-12 = tracker id  (1=Scream Tracker)
+		  bit 11-00 = tracker version (300h=version 3.0)
+  42	   2	format??
+  44	   4	header signature (=SCRM)
+  48	   1	master volume
+  49	   1	tempo
+  50	   1	bpm
+  51	   1	master amplifier
+		 bit 7 = stereo/mono
+		 bit 6-0 = amplification
+  52	  12
+  64	  32    channel map table
+  96	  ??	order sequence, arrray of BYTEs
+  ??	  ??	instruments offsets, array of paraoffsets WORDs
+  ??	  ??	
+patterns offsets, array of paraoffsets WORDs
+
+ Remarks:
+
+ a. In the order sequence there are numbers 0FFh which are used
+    for trackmo synchronization.
+
+ b. The paraoffsets are relative to the begin of the S3M file,
+    you must multiply by 16 to get the real byte offset.
+
+
+2. ST3 Instrument Header:
+
+Offset  Bytes   Comments
+-----------------------------------------------------------
+  00       1    instrument type (0=none,1=digital,2=adlib)
+  01	  13	asciiz file name (filename.ext)
+  14	
+   2	raw data paraoffset
+  -- digital instruments
+  16	   4    length in bytes
+  20	   4	repeat start in bytes
+  24	   4	repeat end in bytes
+  -- adlib instruments
+  16	   2	sound characteristic
+  18	   2	level
+  20	   2	attack / decay
+  22	   2	sustain / release
+  24	   2	wave select
+  26	   1	feedback
+  27	   1	pad
+  --
+  28	   1	volume
+  29	   1	library disk
+  30	   1	pack method??
+  31	   1	looped flag
+		  0 = not looped
+		  1 = looped
+  32	   4	C-4 frequency rate
+  36	   4
+  40	
+ 2	GUS DRAM offset??
+  42	   2
+  44	   4
+  48	  28	sample name
+  76	   4	instrument signature (digital=SCRS,adlib=SCRI)
+
+
+3. ST3 Pattern Information:
+
+Offset  Bytes   Comments
+-----------------------------------------------------------
+  00       2	pattern length in bytes
+  02	  ??	compressed pattern data
+
+
+3.1 ST3 Pattern Decoding:
+
+  for row=0 to 63 do
+    repeat
+      code=getbyte			; get pack code
+      if code=0 then break		; if zero, then end of pattern row
+      note=0FFh				; as
+sume null note event
+      inst=00h
+      volume=0FFh
+      effect=00h
+      params=00h
+      channel=code and 1Fh		; get channel number (0-31)
+      if code and 20h then		; if bit 5 is set then
+	note=getbyte			; get the note index and inst number
+	inst=getbyte
+      endif
+      if code and 40h then		; if bit 6 is set then
+	volume=getbyte			; get the volume
+      endif
+      if code and 80h then		; if bit 7 is set then
+	effect=getbyte			; get effect number and parameters
+	params=getbyte
+
+  endif
+      <note event stuff>
+    loop
+  endfor
+
+ Remarks:
+
+ a. The channel number must be remapped using the channel map array:
+
+	code = header.chanmap[channel]
+	channel = code and 7Fh
+	if code bit 7 is set then "Skip event on mute channel"
+
+	 Channel   Comments
+	----------------------
+	 00..07    L-sample
+	 08..15    R-sample
+	 16..25    L-adlib
+	 26..31    L-hybrid		; hybrids are a sort of digital
+	 32..41    R-adlib		; and adlib instruments.
+	 42..47    R-hybrid
+	 127	   unused
+
+
+ b. If the instrument field is 00 then it doesn't change the channel
+    sample, if the volume field is 0FFh then it doesn't change the
+    channel volume.
+
+ c. The note number is interpreted like:
+
+	if note is 0FFh then "skip null note"	; special cases
+	if note is 0FEh then "key off"
+
+	index = note and 15			; bit 3-0  (0-11)
+	octave = note shr 4			; bit 7-4  (0-7)
+	period = periodtable[index] shr octave
+
+		     Period Table for Octave #0
+	 0    1    2    3    4    5    6    7    8    9    1
+0   11
+       -------------------------------------------------------------
+	 C-   C#   D-   D#   E-   F-   F#   G-   G#   A-   A#   B-
+	1712 1616 1524 1440 1356 1280 1208 1140 1076 1016  960  907
+
+ d. The effect is interpreted like:
+
+	if not param is 00h then		; save last nonzero param
+	   oldparam[channel] = param		; of each channel
+	endif
+	<dispatch effect>
+
+
+	 Effect	  ST3	 MOD    Comments
+	---------------------------------------------------
+	   00	  ...	 000    null
+	   01	  Axx	 Fxx   
+ set tempo
+	   02	  Bxx	 Bxx    jump to order
+	   03	  Cxx	 Dxx    break pattern
+	   04	  D0x	 A0x	volume slide down
+		  Dx0	 Ax0	volume slide up
+		  DFx	 EBx	fine volume down
+		  DxF	 EAx	file volume up
+	   05     Exx	 2xx	portamento down
+		  EEx	 ...	extra fine porta down
+		  EFx	 E2x	fine porta down
+	   06	  Fxx	 1xx	portamento up
+		  FEx	 ...    extra fine porta up
+		  FFx	 E1x	fine porta up
+	   07	  Gxx	 3xx	tone portamento
+	   08	  Hxy	 4xy	vibrato
+	   09	  Ixy	 ...	tremor
+	   10	  Jxy
+	 0xy	arpeggio
+	   11	  Kxx	 6xx	slide + vibrato
+	   12	  Lxx	 5xx	slide + toneporta
+	   13
+	   14
+	   15	  Oxx	 9xx	sample offset
+	   16
+	   17     Qxy	 ...	log volume slide
+	   19	  Rxy	 7xy	tremolo
+	   20	  S0x	 ...	filter on/off
+		  S1x	 E3x	gliss control
+		  S2x	 E5x	set finetune
+		  S3x	 E7x	tremolo control
+		  S4x	 E4x	vibrato control
+		  SAx	 ...	set panning
+				 0= L
+				 1= R
+				 2= LL
+				 3= RR
+				 4= LL-R
+				 5= L-RR
+				 6= L-R
+				 7= LL-RR
+		  SBx	 E6x	pattern loop 
+(0=markend,n=markstart)
+		  SCx	 ECx	note cut
+		  SDx	 EDx	note delay
+		  SEx	 EEx	pattern delay
+	   21	  Txx	 Fxx	set bpm (xx>=20h)
+	   22
+	   23	  Vxx	 ...	set master volume
+	   24
+	   25
+	   26
+	   27	  Zxx	 ...	set sync mark
+
+
+ Remarks:
+
+ a. When converting a MOD file to ST3 format, the period values are
+    transposed two octaves; octave 1 becomes octave 3, etc. remember
+    that the ST3 format support 8 octaves (0-7).
+    Then the portamentos works a bit different, example:
+
+     E
+xx  2xx	portamento down		period=period-4*param
+     EEx  ...	extra fine porta down	period=period-param
+     EFx  E2x	fine porta down		period=period-4*param
+
+    Notice that we are decreasing the period by 4 times the parameter
+    because of the 2 octaves transposing, and to keep MOD/ST2 effects
+    compatibility.
+    Also, the period range used in the portamento effects depend on the
+    extended period bit flag in the S3M file header.
+
+ b. For the effects Dxx Exx Fxx Gxx Kxx Lxx and Qxx, if the 
+parameter
+    is zero then we will use the last nonzero parameter of the channel,
+    doesn't matter on which effect was used this parameter.
+
+ c.  The effect BFF (jump to pattern 0FFh) means put the player in
+     holding mode, ie. don't advance to the next pattern row.
+
+ d.  The effect Hxx depend on the vibrato compatibility bit flag in
+     the S3M file header.
+
+ e.  All the other ST3 effects are interpreted normally like the
+     equivalent MOD effects listed above. Except for the effect SBx 
+
+     which is slightly different to the MOD effect E6x.
+
+
+4. ST3 digital sample raw data:
+
+ This is a 8-bit unsigned stream of sample bytes, no headers, etc.
+
+
+-------------------------------------------------------------------
+This document was written by Pelusa in the 29th of January of 1993.
+-------------------------------------------------------------------

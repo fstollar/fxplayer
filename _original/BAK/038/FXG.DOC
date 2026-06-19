@@ -1,0 +1,260 @@
+
+                           DOCUMENTATION OF THE
+
+                                F/X Player
+
+                                  v0.13à
+
+                           (c) 1996 by STIGMA
+
+      IMPORTANT: This is only an ALPHA release of this program !
+                 No guaranties are made of functionality.
+                 Damage of Soft- or Hardware are on your own risk !
+
+
+INTRODUCTION
+------------
+
+"Oh no.... not a player again ! I have so many of them on my harddisk and the
+most are trash........"
+
+So or similiar many peoples will say if they get this program in their hands.
+They are right I said but let's see if this one is like the others....
+
+F/X Player ist ein recht einfacher S3M Module Player fr PC. Er kann NUR
+S3M Module abspielen was sich jedoch in der Zukunft noch „ndern wird.
+Wer das S3M Format noch nicht kennt: Es ist ein Module Format das von
+     Future Crew ins Leben gerufen wurde. Der dazugeh”rige Tracker ist der
+     ScreamTracker 3.x . Die neueste mir vorliegende Version ist die 3.21
+     (wer eine neuere hat soll mit mir Kontakt aufnehmen :)
+F/X ben”tigt mindestens einen 386sx mit 2Mb Speicher sowie einen geladenen
+XMS Treiber (z.B. HIMEM.SYS). Da seine Speicherverwaltung auf dem
+Protected Mode beruht, darf kein v86 Manager wie EMM386 oder „hnliches
+geladen werden. Das gilt ebenso fr OS/2 sowie WINDOWS NT oder „hnlichem...
+Ursprnglich wollte ich nur einen Player fr unser neuestes DEMO schreiben,
+doch mit der Entwicklung entschloss ich mich dazu, diesen Player auch anderen
+zug„nglich zu machen. Ich hatte n„mlich soviele schlechtklingende MOD Player,
+daá mein Ergeiz mir sagte, es muá doch m”glich sein einen MOD Player zu
+schreiben der gut UND klein ist, und den andere brauchen k”nnten.
+ (ich will jetzt nicht diese Player diffamieren, denn berhaupt einen
+  lauff„higen Player zu schreiben setzt wirklich einige gute Programmier-
+  kenntnisse vorraus, und diese Leute sind sich meiner Bewunderung sicher !!
+ [Hello Mr.H, PSI, DELUSION and all the other MOD coders in the world ]   ;)
+Er wurde auch haupts„chlich fr die DEMO Szene geschrieben und ich hoffe, daá
+er auch gefallen findet. Auch ist es mir wichtig, daá dieser Player das kann,
+was von ihm verlangt wird, daá heiát:
+
+  Wenn Du Vorschl„ge hast, die die Funktionalit„t betreffen, Soundkarten-
+  untersttzung, Žnderung des Designs und und und..... dann melde Dich,
+  denn nur wenn Du Deine Meinung sagst, kann ich darauf Rcksicht nehmen !
+  Solltest Du Bugs finden (Gott behte :) oder interesse haben diesen Player
+  in Dein n„chstes Projekt, sei es ein DEMO oder ein GAME, zu benutzen, dann
+  warte nicht l„nger sondern schreib mir ! Meine Adresse und eMail sind am
+  Ende dieser DOC Datei. (Wenn Du detailierte Informationen ber andere
+  Soundkarten oder so hast, schicke sie mir bitte. Danke ! :)
+
+So, ich hoffe daá ich damit auf reaktionen stoáe, denn sonst ist meine Arbeit
+(fast) umsonst. Was ich noch hinzufgen m”chte ist, daá wenn ich genug
+anfragen bzw. Post bekomme, ich Teile oder auch den gesammten Source heraus-
+geben werde ! (Also, schreibt mal sch”n... am besten ne nette Postkarte)
+
+Einige werden sich jetzt schon gefragt haben: "Warum F/X Player, warum F/X ?"
+Nun die Antwort ist leicht, denn der Grundgedanke war, den Player mit einer
+Vielzahl von Filtern und Effekten zu versehen, was aber frhestens in v1.0
+m”glich sein wird. Und im englischen ist die Abkrzung fr "effects": F/X
+Fr n„here Infos lest bei >FORECAST< weiter.
+
+Um nochmal auf das ALPHA zurckzukommen: Es ist nur eine Entwicklungsversion !
+Also don't bother me fr die schlecht Oberfl„che und die geringe Format
+Untersttzung, die geringe Soundkartenauswahl....... das wird sich alles noch
+„ndern. Eine neue Oberfl„che ist bereits in Arbeit (sie „hnelt aber der
+bisherigen). Ebenfalls geplant ist ein Tracker, der „hnlich wie ScreamTracker
+aufgebaut ist, nur daá er das S3M Format voll ausnutzt. Wenn ihr wissen wollt,
+was noch alles geplant ist, dann lest unter >FORECAST< weiter.
+
+
+KEYBORD CONTROL
+---------------
+
+"Keybord not found... Press F1 to continue !"
+
+Lacht nicht ! So etwas ist mir wirklich schon passiert. Und ich denke das ist
+gerade der richtige Einleitungssatz fr die Bedienung des Players.
+
+Bevor Ihr den Player startet, muá erst noch die INI Datei eingestellt werden.
+Da der Player bisher noch nicht ber eine 100% zuverl„ssige Erkennungsroutine
+verfgt, mssen die Daten der Soundblaster manuell eingetragen werden.
+Das einzige was der Player testet, ist ob eine SB an der vorgegebenen Adresse
+vorhanden ist.
+Die Datei sieht ungef„hr folgendermaáen aus:
+
+[SB-Init]
+Adress=220
+IRQ=5
+DMA=1
+MixingSpeed=44100
+
+[FX-Player]
+StartUpDirectory=C:\
+
+Die Reihenfolge und Schreibweise der [] kann unterschiedlich sein !
+
+Adress = hier wird die Grundadresse der SB eingetragen. Meisten hat sie den
+         Wert 220.
+IRQ    = Dies ist der Interrupt auf den die SB eingestellt ist. Standartein-
+         stellung ist 5.
+DMA    = Direct Memory Access der SB. Der Wert gibt auch an ob eine 8 Bit oder
+         eine 16 Bit Ausgabe stattfindet. Werte ber 3 (4-7) sind fr 16 Bit
+         Ausgaben und nur fr SB16 & Compatible gedacht. Standartwert fr
+         8 Bit ist 1 - fr 16 Bit 5.
+MixingSpeed = Hier wird die Mischfrequenz des Players eingestellt, die bei
+               jeder Soundkarte unterschiedlich sein kann. Meistens reicht
+               dieser Wert von 5000-44100 Hz. (Ich habe aber auch schon eine
+               SB 2.0 in den H„nden gehalten, die ebenfalls 44100 anstandslos
+               nahm, obwohl diese SB nur bis 22000 ausgelegt ist ! Einfach
+               ausprobieren.)
+
+StartUpDirectory = Wie der Name schon sagt, das Directory in dem der Player
+                   seine Arbeit aufnimmt, sein Workdirectory also.
+                   Das sollte dann auf den Pfad Eurer S3M gelegt werden.
+
+So, nachdem diese Hrde genommen wurde und der Player gestarted wurde,
+befindet Ihr Euch jetzt in einer einfachen Oberfl„che, der S3M Auswahl.
+Die Tasten zur Bedienung sind die Cursortasten sowie PgUp, PgDn, Home, End
+und all die Tasten die im Regelfall eingesetzt werden. Das Auswahlsystem
+untersttzt auch das FastFind System, daá heist Ihr drckt den Anfangs-
+buchstaben eurer gesuchten Datei und der Cursor springt zu der ersten Datei
+mit diesem Anfangsbuchstaben. [Ist erst in v0.20 implementiert]
+Wenn der Cursor auf einer S3M Datei ca. 1/2 Sekunde verweilt, dann wird im
+linksoberen Fenster Daten der S3M Datei angezeigt wie Titel, Tracker unter
+dem dieses Lied erstellt wurde sowie L„nge des Arrangements.
+Mit ENTER w„hlt Ihr das gewnschte S3M aus das gespielt werden soll.
+Daraufhin wird im linken Fenster Daten ber den aktuellen verlauf des S3Ms
+eingebelndet, wie: momentane Position, L„nge, Tempo und Speed sowie eine
+Zeitkonstante die angibt wieviel Rechenzeit noch vorhanden ist.
+Mit der Cursortaste nach recht kann vorgespult werden und mit ESC abgebrochen
+werden.
+Zum verlassen des Players bet„tigt Ihr entweder ein zweites mal ESC oder
+ALT+X.
+Tja, das wars schon. Nicht gerade eine Menge Tasten und auch nicht gerade sehr
+Bedienungsfreundlich, aber das wird sich von Version zu Version „ndern.
+
+
+TECHNICAL
+---------
+
+"The last words of an electronic-engineer: Hm ... what's this wire for...."
+
+Fr alle die es interessiert, habe ich hier einige technische Details
+zusammengetragen die vielleicht interessant sein k”nnten.
+
+Der Player ist in 100% Assembler geschrieben und hat eine L„nge von 127 KB
+oder 3152 Programmzeilen. Auch der S3M Lader ist in Assembler geschrieben
+worden, was ihn sehr klein und schnell macht.
+Die Oberfl„che ist zu 99%  in C geschrieben worden (1% Assembler) und hat eine
+Gr”áe von 40 KB Quellcode.
+Der Player ist in vollem 32Bit Code geschrieben worden und benutzt auch die
+zus„tzlichen Segmentregister FS und GS. Das Speichermodell fr die Samples
+ist das schon oft genutzte Flat-Memory Modell. Das ist ein 32Bit linear
+anzusprechender Speichermodus der „hnlich wie RealMode funktioniert,also keine
+Segmentdiscreptoren oder so ben”tigt (auáer einmal am Anfang zum aktivieren).
+Das mischen der einzelnen K„n„le geschied mittels einer Mastervolume Tabelle.
+Dieses Verfahren bringt zwar gute Qualit„t hervor, hat jedoch auch sehr
+starke Ansprche an den Cache (besonders den 2nd Level). Diese Tabelle ist
+im 8Bit Modus 64KB und im 16Bit Modus 128KB groá.
+Bei der "Dehnung und Stauchung" der Samples wird die Interpolation 1. Grades
+benutzt. Diese ist eine Verl„ngerung des Werte bis zur Mitte der vorherigen
+und folgenden Werte. (Rechteckregel)
+Als Steigerung gibt es die "Trapezregel" (2. Grades) und die Spline (3.Grades)
+Diese Versionen werden ca 25% und 100% mehr Rechenzeit ben”tigen und in
+gewisser Zeit ebenfalls implementiert sein. H”here Gr„de der Interpolation
+werden nicht empfohlen da diese zu Welligkeiten neigen und deshalb auch nicht
+implementiert werden. (3/8 Regel, Gaussche Faábogen...)
+
+
+FORECAST
+--------
+
+"Hello McFly....(tock,tock,tock) ...anybody at home ??"
+
+Wie schon einige Male erw„hnt, ist das nur eine Entwicklungsversion und ich
+m”chte hier sagen, was noch alles geplant ist:
+
+Bisher hat der Player nur grundlegende Funktionen bekommen, und selbst diese
+sind noch bei weitem nicht alle.
+Demn„chst in v0.20 wird die neue Oberfl„che erscheinen, wo der Player im
+Hintergrund zu dem Menuesystem laufen wird. MOD Dateien sollen geladen werden
+k”nnen und die restliche Effekte werden auch implementiert sein.
+Geplant ist auch eine Oberfl„che die in VESA 640x480 sein soll und die
+integrierung von STEREO Ausgabe mit panning.
+
+Was demn„chst alles kommen soll.....
+
+ - Eine neu geschriebene Oberfl„che die „hnlich der bisherigen ist.
+   (ab v0.20)
+ - Die restliche 5 Effekte werden auch noch implementiert.
+ - Ein MOD lader wird in absehbarer Zeit geschrieben.
+
+Was irgendwann mal kommen soll.....
+
+ - Stereo Untersttzung und panning
+ - Oberfl„che in 640x480x256 Grafikmodus
+ - Interpolation 2. und 3. Grades (bisher wird Interpolation 1. Grades
+   verwendet, und zwar die Rechteckregel, eine Verl„ngerung des letzten Wertes
+   bis zur Mitte des n„chsten. Diese ist gegen den bisherigen Meinungen
+   bereits eine Interpolation.)
+
+Was vielleicht mal kommen soll.....
+
+ - Effekte von Echo, Loudness, EQ's, definierbaren Filtern etc.etc.etc.
+
+QUESTION
+--------
+
+"ERROR at Adress F000:B40C ! Do you want to CONTINUE or ABORT ?"
+
+Hey, these are not the FAQ's (Frequently Ask Question) no, these are questions
+from me to YOU !! Ich habe ebenfalls Fragen an die User dieses Programms !
+Ich k”nnte jetzt Standartfragen stellen wie "Wie gef„llt Dir F/X Player ?"
+oder so „hnlich, aber diese Fragen sind mir etwas zu einfach. Wer eine
+Meinung dazu hat, ob eine gute oder eine schlechte, ich wrde mich freuen sie
+zu h”ren.
+Es gibt einige andere Dinge die ich wissen m”chte und das w„ren unter anderem:
+
+- Ist die jetzige Oberfl„che OK (gengt sie den Ansprchen) oder findest Du
+  es geh”ren Spielereien wie SVGA Osziloscope oder „hnliches mit hinein ?
+
+- Geh”ren mehr Soundkarten untersttzt (GUS ausgenommen) ? (PAS, PC Piepser..)
+
+- Sollte es auch eine Version fr EMS oder 286 geben ? (Oder vielleicht ohne
+  XMS Treiber..)
+
+- Ist F/X Player zu langsam ? Sollte eine Beschleunigung auf Kosten der
+  Qualit„t zuschaltbar sein ?
+
+Tja, das waren meine Fragen und wenn Ihr mir Antworten schickt, dann bitte
+nicht wie: 1. Ja  2. Nein  3. Ja  4. Ja...
+Damit kann ich nicht viel Anfangen. Begrndet bitte auch Eure Meinung oder
+gebt mir Beispiele. Ich bin auch fr andere Anregungen dankbar und werde sie
+in sp„teren Versionen hier Ver”ffentlichen, sowie eine exemplarisch
+Beantwortung der Fragen.
+
+
+EPILOG
+------
+
+"To be continued..."
+
+Was soll ich noch grossartig sagen. Es hat mir spaá gemacht diese DOC Datei
+zu schreiben, genauso wie es mich freut daá Du sie gelesen hast. :)
+Wenn Du mit F/X etwas anfangen kannst, dann freut das mich besonders ! :))
+
+Und wie schon oft darauf hingewiesen ist hier meine Adresse:
+
+SNAIL:                    EMAIL:
+------                    ------
+
+ Frank Stollar (Apollo)    apollo@eikon.e-technik.tu-muenchen.de
+ Finkenstr. 5              SUBJEKT: FX
+ 83558 Maitenbeth
+ GERMANY

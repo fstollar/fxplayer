@@ -1,0 +1,30 @@
+
+In Ausgabe 2/94 der toolbox ist ein entsprechender Artikel, der
+beschreibt, wie man WAV - Dateien mit dem PC- Qu„ker unter TP
+abspielen kann. Da ist auch eine Beschreibung des WAV-Formats
+dabei. Ich kann das ja mal schnell abtippen:
+
+--------------------------------------------------------------------------
+L„nge   Typ   Bedeutung
+=======================
+   4    char  Main Chunk  [ Zeichenfolge : 'RIFF' ]
+   4    int   Dateil„nge  [ in Bytes ;-) ]
+   4    char  Chunk Type  [ Zeichenfolge : 'WAVE' ]
+   4    char  Sub Chunk (fmt)
+   2    int   L„nge Sub Chunk
+   2    int   Format Tag
+                  1 = PCM  [ Pulse Code Modulation ]
+   2    int   Modus (Channels)
+                  1 = Mono, 2 = Stereo
+   4    int   Bytes/Sekunde [ sprich: 'Samplefrequenz' ;-) ]
+
+                   $2B11 = 11025Hz
+                   $5622 = 22050Hz
+                   $AC44 = 44100Hz
+
+   2    int   Bytes pro Sample
+   2    int   Bits pro Sample (8, 12, 16)
+   4    char  Data Chunk [ Zeichenfolge : 'DATA' ]
+   4    int   Datenl„nge
+   ... Daten ...
+--------------------------------------------------------------------------

@@ -1,0 +1,63 @@
+
+                     =- Revisions of the F/X Player -=
+
+                              (c) by STIGMA
+
+
+           - email: john.read@t-online.de    Subjekt: FX -
+
+
+Explaining:   - = not implememted yet      * = serious changes
+              + = new implemented
+              ! = important remark
+
+---************************************************************************---
+
+ v0.10à    First inofficial release                           in July, 1996
+
+           This was the first version spread among my friends
+           for betatesting.
+           The player was started to code in february 1996 during my
+           military service.
+           It has a simple surface and could play 8 and 16 bit on SB
+           in a selfmade memory model called FMS. No EMM was allowed.
+           Only one format could be played, the S3M was the easiest
+           to implement.
+           The most important effekts were included, some not like:
+           - Apreggato
+           - Tremolo
+           - Pattern repeat
+           and so one...
+
+v0.11à - v0.12à   Bugs of SB routines detected and fixed    in August, 1996
+                  Thanx to Jakl !
+
+---************************************************************************---
+
+ v0.13à    First alpha release to other persons           August 19th, 1996
+
+           This was the first public release for betatesting.
+           It is freeware as long no money would be charged and
+           no changes to the code were made.
+           The first person who got it was Chris Rossall in Sweden :)
+
+           ! If you have advice what must be implemented or bugs which
+             appeared in S3M, please write them to me and explain as exact
+             as possible what happend and if you think you know the error
+             give me some tips. Every bug reported will given the Credits
+             in the next version released ! (email in top of this text)
+
+---************************************************************************---
+
+Preview:  - All effects were included and a MOD loader will be programmed.
+-------   - A new surface is in work... will apear in v0.20 !
+          - The player will work in background and you will select the next
+            S3M without pressing the ESC.
+          - When the damned "alpha" dissapear is written in the stars..... :)
+
+! If somebody has interest to include this player in his demo, he will be
+  welcomed ! Write to me for exact description.
+  If I got enough demand i will spread the source code of the player !
+
+                                        Much fun,
+                                                  APOLLO / STIGMA

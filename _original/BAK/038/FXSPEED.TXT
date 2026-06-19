@@ -1,0 +1,27 @@
+F/X Player Speed tests
+
+Taktcycles |  1. Loop    2. Loop    3. Loop    4. Loop    5. Loop    6. Loop
+-----------|-----------------------------------------------------------------
+Version    |
+           |
+v0.35‡     |   10/12      13/15                           27K/35K   400K/270K
+           |
+-----------|-----------------------------------------------------------------
+
+Taktcycles: Macro um Taktcyclen zwischen zwei Markern auf einem standart
+            Pentium benîtigen. Wert - 17 da die Kommandos selber ca. 17
+            Taktcyclen benîtigen. Es wird immer bei inneren Loops der beste
+            Wert angegeben.
+
+Als Standart wird das S3M Gianna2.S3M festgelegt. Die Berechnung findet fÅr
+1. Loop bis 4. Loop und 5. Loop in 16bit statt.
+
+1. Loop: Aller innerste Mischeraufruf ohne Loop-/Endkontrolle in Mono/Stereo
+2. Loop: Innerste Mischerschleife mit Loop-/Endkontrolle in Mono/Stereo
+3. Loop:
+4. Loop: Taktcyclen um einen kompletten Kanal zu berechnen Mono/Stereo
+5. Loop: Taktcyclen fÅr ein Mastervolume Aufruf in 8bit/16bit
+6. Loop: Taktcyclen um einen kompletten SB Block zu berechnen Mono/Stereo
+         (Stereo muss um einen realistischen Wert zu erziehlen mit 2 mult.
+          weil der Buffer nun doppelt so oft gefÅllt wird)
+

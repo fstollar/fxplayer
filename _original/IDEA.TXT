@@ -1,0 +1,6 @@
+New Ideas !!!
+-------------
+
+- computer checks the real output rate of the own soundcard
+  ( stop the time between two interrupts )
+

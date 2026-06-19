@@ -1,0 +1,18 @@
+objects = device.obj   dev_sb.obj    dev_wss.obj   &
+          convert.obj  amptable.obj  mixer.obj     &
+          mixr_16n.obj mixr_32n.obj  mixr_32i.obj  &
+          format.obj   dat_calc.obj  &
+          dat_wav.obj  &
+          dat_s3m.obj  efc_s3m.obj   &
+          dat_669.obj  efc_669.obj   &
+          dat_mod.obj  efc_mod.obj   &
+          dma.obj      irq.obj       &
+          command.obj  keyctrl.obj   &
+          fx.obj
+
+hpath = $(%DEMOPATH)common
+dest = fx
+copt = /oneatx /ob /oh /oi+ /ol+ /ei /zp8 /5r /fp5 /fpi87 /mf /s  /d0
+aopt = /ml /m5
+
+!include $(%PROGPATH)stdprj.mak

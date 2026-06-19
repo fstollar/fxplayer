@@ -1,0 +1,13 @@
+objects = device.obj   dev_sb.obj    dev_wss.obj   &
+          convert.obj  mixer.obj     mixr_asm.obj  &
+          format.obj   dat_calc.obj  &
+          dat_wav.obj  &
+          dat_s3m.obj  efc_s3m.obj   &
+          dma.obj      irq.obj       command.obj   &
+          fx.obj
+
+hpath = $(%DEMOPATH)common
+dest = fx
+copt = /otrabekml+ /oi+ /oh /s /ei /zp8 /5r /fp5 /fpi87  /d0
+
+!include $(%PROGPATH)stdprj.mak

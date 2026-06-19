@@ -1,0 +1,233 @@
+
+
+                               - F/X Player -
+
+                                   v0.41
+
+                         Sound Format Documentation
+
+
+                         (c) 1997 by Apollo / STIGMA
+
+
+Introduction:
+
+This documentation is for those, who always wanted to know how the effects
+in different formats are played. But unfortunatly no Player or Tracker has
+a really 'good' documentation of them. So, take a look into this list for
+more infos about them. For those whom don't write a player or get bored,
+stop it ! It's only for them who want to know them exact.
+This is very important to gain full compatibel to the formats and if there
+are any errors or you think there is something wrong, tell me ! But first
+try it out on the given tracker and if there is REAL an error, give me also
+an example, please ! It is hard to find out on my self on which
+circumstandes it will appear.
+
+I tested many hours on the trackers and my player so EVERY effects was tested
+first if it was played right !
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+(I)
+
+Following formats are inplemented in F/X Player now:
+
+  Name                         Shortcut            Player used for testing
+
+- Scream Tracker 3.xx           (S3M)               Scream Tracker 3.2
+(- Pro Tracker                   (MOD)               - none - )
+(- Impuls Tracker 2.xx           (IT)                Impuls Tracker 2.12 )
+(- Fast Tracker 2.xx             (XM)                Fast Tracker 2.06 )
+
+For every format several test are archieved in given player version so all
+effects explained are tested on that version and is implemented this way
+in F/X Player too !
+
+
+
+(II) Formats explaining
+
+
+ Scream Tracker 3.xx
+---------------------------------------------
+
+This format is the first coded in F/X Player and is very well tested.
+Not all effects are 100% compatible coz some seems to be a 'bug' so they are
+changed in F/X but this is told then.
+
+Some general informations:
+
+A S3M channel is build in the following way:
+
+  Note+Octave, Instrument, Volume, Effect & effect value
+
+for example:   > |C-4 01  64  A06|
+
+This means start a new instrument Nr. 01 at Note C of octave 4 with 64
+volume and set speed to 06 frames per row.
+
+The special commands (effects) are saved by it's character Number.
+This means A = 01, B = 02 .... T = 20 etc. A value of 255 means empty
+effect / not used. Values of 0 are not legal.
+
+
+Here are now the effects and some commends which I thought are worth about it:
+
+> Axx -- Set speed to xx
+
+  This command is, like in all formats I know so far, to set the number of
+  frames to move one row forward. This means, after xx frames are encountered
+  a new row beginns, e.g. move one row forward. The length of one frame is
+  selected by the Txx command, where a frame will be explained more clearly.
+
+  By the way, 'frame' and 'tick' are the same !! It is a different terminology
+  of the same thing ! So don't get confused by reading both in this doc :)
+
+> Bxx -- Jump to order xx
+
+  This effect does exact that what it's said. It jumps after playing this row
+  to the end, to the given pattern in the choosed order. So if the order is:
+
+   01 -> 01
+   02 -> 02
+   03 -> 04
+
+  and a B03 is encountered in pattern 2 (order 2) it jumps to pattern Nr. 4
+  (order 3 !) and starts from the beginning (row 0).
+
+
+> Cxx -- Break pattern to row xx
+
+  Some mod-like command which come also from the AMIGA :)
+  After playing this row to the end, it jumps into the next pattern of the
+  given order (exact: it jump into next order) and starts there in row xx.
+
+  ATTENTION !
+  The xx data is internally in the S3M pattern saved as a BCD number !!!!
+  This means C42 is NOT 42h (hex) it is 42d (dezimal) !!
+
+
+> Dxy -- Volume Slides by xy
+
+  This effects must be divided into several different:
+
+ - D0y -- normal Volume slide down by y
+
+   Every non-row-frame (e.g. all ticks exept the first of a new row)
+   the volume is subtracted by y and all values beyond 0 are clipped to 0
+
+ - Dx0 -- normal Volume slide up by x
+
+   Every non-row-frame the volume is raised by x and values above 64 are
+   clipped.
+
+ - DFy -- Fine Volume slide down by y
+
+   Only on the row-frame (e.g. only the first frame of a new row) volume is
+   lowered by y, values below 0 are clipped.
+
+ - DxF -- Fine Volume slide up by x
+
+   On row-frame volume is raised by x and values over 64 are clipped to 64.
+
+ - D0F -- Fine + Normal Volume slide down
+
+   A very special volume slide which is wrong documentated in Scream Tracker.
+   It is said, this acts like a normal volume slide with the value 15 (=0Fh)
+   but it acts like a fine volume slide AND a normal too ! So the volume is
+   changed EVERY frame, not only all non-row-ticks ! Clipped as usual...
+
+ - DF0 -- Fine + Normal Volume slide up
+
+   The same as above, only with sliding up.
+
+ - DFF -- treated as normal volume slide up by F (=15)
+
+   This command it treated as if a DF0 effect would be encountered, with the
+   only difference in it is updated only all NON-ROW-TICKS !
+   This seems to be correct documentated.
+
+
+> Exx -- Slide down by xx
+
+  - E00 - EDF -- Normal slide down
+
+    This is easy explained. Every non-row-frame the actual periode playing
+    is subtracted by xx. This periode must of cause recalculated to the
+    frequence of this new periode.
+
+......
+......
+
+> Txx -- Tempo=xx (20h - FFh)
+
+  Well, this command is to set the tempo on which now the song is played.
+  The number xx gives the BPM (Beats per Minute) on which it will be played.
+  Actually this says how 'long' one frame will be. It is calculated by
+  following formula:
+
+    value = (Mixing Speed * 5) / (speed * 2)
+
+  This value tells you now how many samples (bytes/words) must be calculated
+  to do ONE frame.
+  So at a Mixing Speed of 44100 Hz and a speed of 125 (7Dh)it is:
+
+   (44100 * 5) / (125 * 2) = 882
+
+  So there are 882 samples calculated per channel to move one frame forward.
+  Every frame the effects were executed as needed and volume, pitch etc
+  will be updated. After by the Axx command set frames (xx= number of frames)
+  you have to move one row forward and read notes, volumes etc. again.
+  This means practically for example to do a volume slide down by 2 (D02)
+  and a speed of 6:
+
+  |C-4 01  64  D02|    first frame of row note, instrument and volume is read
+           62          second frame (non-row-frame) sub volume by 2
+           60          again
+           58          etc.
+           56
+           54          last frame (Nr. 6) lower volume by 2
+  |--- --  --  D02|    next row only a volumslide appears but do not execute
+           52          lower volume by 2 again
+           50          ...
+           ...
+
+  Tho, the meaning of frames and non-row-frames is hopefully clear now.
+
+
+> Uxy -- Fine Vibrato
+
+  The same like Hxy (Vibrato) only 4 times finer (1/4 so deep). This is for
+  high notes playing where a normal Vibrato sounds too strong. So this finer
+  Vibrato is used. Of coz it uses only non-row-frames !
+
+
+> Vxx -- Set global volume (0 - 40h)
+
+  This commands set the global volume which effects ALL channels. The valid
+  range is from 0 to 64 (40h). The end volume for every channel is calculated
+  by:
+
+     End volume = (Global Volume * Channel Volume) / 64
+
+  The divison by 64 is of course easier by shift it right 6 times.
+  This calculation must be done for every channel. The use is for global
+  lowering volume for end- or beginning of a S3M for example.
+
+
+> Wxx -- Not used !
+
+
+> Xxx -- unused amiga command 8xx :)
+
+  If you load a MOD and save it as S3M, the 8xx command is saved as this Xxx.
+
+
+> Yxx -- Not used !
+
+
+> Zxx -- Not used !
+
+
+NOT FINISHED YET !!
+
