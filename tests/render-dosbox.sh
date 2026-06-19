@@ -97,25 +97,29 @@ sleep 0.3   # let parecord connect to PulseAudio
 $DOSBOX_CMD -conf "$TMPCONF" &
 DBPID=$!
 
-# Wait for DOSBox-X to exit OR the duration timeout.
+# Wait for DOSBox-X to exit on its own (non-looping module) OR hit the timeout.
 ELAPSED=0
 while [ "$ELAPSED" -lt "$DURATION" ]; do
-    # Exit if the flatpak run wrapper AND no dosbox process remain.
-    if ! kill -0 "$DBPID" 2>/dev/null && ! pgrep -fi "dosbox" &>/dev/null; then
-        break
-    fi
+    kill -0 "$DBPID" 2>/dev/null || break   # flatpak wrapper exited cleanly
     sleep 1
     ELAPSED=$((ELAPSED + 1))
 done
 
 if [ "$ELAPSED" -ge "$DURATION" ]; then
-    echo "    Timeout after ${DURATION}s — stopping DOSBox-X"
-    pkill -f "com.dosbox_x.DOSBox-X" 2>/dev/null || true
-    sleep 0.5
+    echo "    Timeout after ${DURATION}s — killing DOSBox-X"
 fi
 
+# Kill DOSBox-X: SIGTERM the flatpak wrapper, wait, then SIGKILL if needed.
+# Use the Flatpak app ID in the pattern — NOT a generic "dosbox" substring,
+# which would match this script's own path (render-dosbox.sh).
+kill "$DBPID" 2>/dev/null || true
+sleep 1
+kill -0 "$DBPID" 2>/dev/null && kill -9 "$DBPID" 2>/dev/null || true
+pkill -9 -f "com.dosbox_x.DOSBox-X" 2>/dev/null || true
+wait "$DBPID" 2>/dev/null || true
+
 # Stop recording; flush the final audio buffer.
-sleep 0.3
+sleep 0.5
 kill "$PARECORD_PID" 2>/dev/null || true
 wait "$PARECORD_PID" 2>/dev/null || true
 
