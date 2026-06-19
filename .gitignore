@@ -10,7 +10,13 @@ Makefile
 # DOSBox environment (Watcom binaries etc.)
 _dosbox/
 
+# Firecrawl scratch
+.firecrawl/
+
 # OS
 .DS_Store
 Thumbs.db
 .directory
+
+# OW V2 compiler download
+_watcom2/

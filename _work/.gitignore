@@ -1,0 +1,19 @@
+# Build artifacts
+*.OBJ
+*.o
+*.EXE
+*.MAP
+*.err
+
+# Historical subdirs (identical to _original -- no point duplicating)
+BAK/
+PUBLIC/
+ZIP/
+
+# DOS extender binaries (unchanged)
+PMODEW.EXE
+PMWLITE.EXE
+PMWSETUP.EXE
+
+# Original pre-compiled EXE
+FX2.EXE
