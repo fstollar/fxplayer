@@ -11,33 +11,33 @@ locals
 
 .code
 
-;// some helpfull definitions...
+;// some helpful definitions...
 
 low16bit           equ 8000h           ; value of 16th bit on
 high16bit          equ 80000000h       ; value of 32th bit on
 
-fill32bit          equ 7fffffffh       ; value to fill 32bit paramter
-fill16bit          equ 7fffh           ; value to fill 16bit paramter
+fill32bit          equ 7fffffffh       ; value to fill 32bit parameter
+fill16bit          equ 7fffh           ; value to fill 16bit parameter
 
-;// ...and some helpfull macros for selfmodifing code
+;// ...and some helpful macros for selfmodifying code
 
-argdb              macro name          ; for selfmodifing byte
+argdb              macro name          ; for selfmodifying byte
 
-                   org $-1             ; actuall adress-1
+                   org $-1             ; actual address-1
                    name db 0           ; is a databyte
 endm
 
 
-argdw              macro name          ; for selfmodifing word
+argdw              macro name          ; for selfmodifying word
 
-                   org $-2             ; actuall adress-2
+                   org $-2             ; actual address-2
                    name dw 0           ; is a dataword
 endm
 
 
-argdd              macro name          ; for selfmodifing dword
+argdd              macro name          ; for selfmodifying dword
 
-                   org $-4             ; actuall adress-4
+                   org $-4             ; actual address-4
                    name dd 0           ; is a data dword
 endm
 

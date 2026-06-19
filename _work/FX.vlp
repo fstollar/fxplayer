@@ -1,0 +1,24 @@
+[program]
+workdir=D:\Code\alt\FX
+params=
+executable=D:\Code\alt\FX\FX.EXE
+[vdms.gameport]
+enabled=no
+[vdms.midi]
+enabled=no
+sysExLed=Scroll Lock
+[winnt.memory]
+useEMS=no
+useXMS=no
+[vdms.sb.dsp]
+DMA16=7
+[winnt.scheduling]
+detectIdle=yes
+idlePrio=0
+[vdms.sb.fm]
+enabled=no
+[winnt.dosbox]
+exitClose=no
+exitWarn=no
+[winnt.pmode]
+useCLIPOPF=no

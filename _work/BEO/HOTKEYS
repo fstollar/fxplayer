@@ -1,0 +1,82 @@
+Main Screen Key-commands:
+
+ Cursor Up	Move Selector Bar up
+ Cursor Down	Move Selector Bar down
+
+	Enter	Play selected File or PlayList
+
+	PgUp	Move one Page to the Top
+	PgDn	Move one Page to the Bottom
+	Home	Move to the Top
+	End	Move to the Bottom
+	Ins	Toggle Select File under Cursor
+	Del	Unselect File under Cursor
+
+KeyPad<+>	Select multiple Files
+KeyPad<->	UnSelect multiple Files
+KeyPad<*>	Reverse Selection
+KeyPad</>	Select known Filetypes
+	
+	F1	Generic Help
+	F2	Stop Playing
+	F3	
+	F4	Edit PlayListFile (wenn keine playList, dann nochmal nachfragenm, ob wirklich editiert werden soll)
+	F5	Copy selected Files
+	F6	Rename selected Files
+	F7	Search for a File
+	F8	Delete selected Files
+	F9	Go to the Cntrol Menu
+	F10	Exit Player
+
+<Shift>+F1	Help on Hotkeys (this Screen)
+<Shift>+F2	Add Files to PlayList
+<Shift>+F3	See contents of PlayListFile
+<Shift>+F4	
+<Shift>+F5	Create new Playlist (durchsucht die platte!)
+<Shift>+F6	Verify selected PlayList
+<Shift>+F7	Find PlayListfiles
+<Shift>+F8	Delete selected from PlayList
+<Shift>+F9	
+<Shift>+F10	Go to OS-Shell
+
+ <Crtl>+F1	Left Window toggle (Fileselector,PlayList,...,Console)
+ <Crtl>+F2	Right Window toggle (FileInfoScr,PlayInfoScr,InstrScr,...,Console)
+ <Crtl>+F3	Sort Files by Name
+ <Crtl>+F4	Sort Files by Type
+ <Crtl>+F5	Sort Files by Time
+ <Crtl>+F6	Sort Files by Size
+ <Crtl>+F7	Do not sort Files
+ <Crtl>+F8	Sort Files by Permissions (not in DOS)
+ <Crtl>+F9
+ <Crtl>+F10	Console Toggle (Backgr,Blobs,TextFFT,WasWeisIchWasMode,FullScr)
+
+
+ <Ctrl>+L	Toggle long filenames
+ <Ctrl>+R	Reload Directory
+ <Ctrl>+PgUp	Move one Directory up
+ <Ctrl>+PgDn	Move to Directory under Cursor (if File, don't Play)
+ <Ctrl>+BkSpc	Move to RootDirectory
+
+ <Ctrl>+O	Toggle Console to foreground
+ <Ctrl>+M	Toggle Screen Meters
+ <Ctrl>+B	Toggle Status-Bar on top
+
+ <Ctrl>+W	Start DiskWriter with selected File
+ <Ctrl>+S	Toggle Surround
+ <Ctrl>+I	Toggle Interpolation
+ <Ctrl>+F	Toggle Filters
+ <Ctrl>+
+
+ <Ctrl>+
+ <Ctrl>+
+ <Ctrl>+
+ <Ctrl>+
+
+
+PlayList Editor Key-Commands: (Wird aufgerufen zum editieren der Playlist)
+
+ Ein ganz normaler Texteditor kann ja eigentlich von extern eingebunden werden.
+ Also sind die kommandos hier eigentlich ÅberflÅssig.
+ Warum also nen editor schreiben, wenns tausende gibt ;-) z.b. joe
+ Der Player ÅberprÅft, ob eine datei editierbar ist.
+ z.b. anhand einer negativ-liste: *.exe *.com *.blah in der .ini

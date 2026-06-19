@@ -1,0 +1,28 @@
+Watcom Make Version 11.0
+Copyright by Sybase, Inc., and its subsidiaries, 1988, 1996.
+All rights reserved.  Watcom is a trademark of Sybase, Inc.
+Watcom C++32 Optimizing Compiler  Version 11.0 
+Copyright by Sybase, Inc., and its subsidiaries, 1989, 1996.
+All rights reserved.  Watcom is a trademark of Sybase, Inc.
+fx.cpp(1): Error! E121: col(1) syntax error 
+D:\WATCOM\H\dos.h(100): Error! E336: col(21) declaration specifiers are required to declare 'wchar_t' 
+D:\WATCOM\H\dos.h(100): Error! E006: col(17) syntax error; probable cause: missing ';' 
+D:\WATCOM\H\dos.h(102): Error! E121: col(1) syntax error 
+D:\WATCOM\H\dos.h(205): Error! E121: col(58) syntax error 
+D:\WATCOM\H\dos.h(216): Error! E121: col(1) syntax error 
+D:\WATCOM\H\string.h(55): Error! E498: col(59) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(56): Error! E498: col(67) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(57): Error! E498: col(63) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(58): Error! E498: col(63) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(64): Error! E498: col(42) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(75): Error! E498: col(69) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(76): Error! E498: col(70) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(77): Error! E006: col(25) syntax error; probable cause: missing ';' 
+D:\WATCOM\H\string.h(79): Error! E006: col(25) syntax error; probable cause: missing ';' 
+D:\WATCOM\H\string.h(81): Error! E006: col(26) syntax error; probable cause: missing ';' 
+D:\WATCOM\H\string.h(82): Error! E498: col(63) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(83): Error! E498: col(67) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(84): Error! E498: col(63) syntax error before 'size_t'; probable cause: incorrectly spelled type name 
+D:\WATCOM\H\string.h(87): Error! E006: col(25) syntax error; probable cause: missing ';' 
+D:\WATCOM\H\string.h(97): Error! E133: col(95) too many errors: compilation aborted 
+fx.cpp: no lines, included 1030, no warnings, 21 errors

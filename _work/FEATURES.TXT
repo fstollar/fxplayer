@@ -1,0 +1,8 @@
+
+
+Soundcards:
+
+Will play at any Soundblaster or 100% clone, which means
+SB 2.0, SB pro, SB pro 2.0, SB 16, SB 32, SB 64, SB 32 AWE, SB 64 AWE,
+SB 16 PnP, SB 16 value, SB 16 AWE gold etc.
+

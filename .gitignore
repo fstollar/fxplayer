@@ -20,3 +20,6 @@ Thumbs.db
 
 # OW V2 compiler download
 _watcom2/
+
+# DOSBox-X intermediate WAV captures (not ground truth)
+tests/captures/
