@@ -10,9 +10,9 @@ set_property(CACHE FX_MIXER PROPERTY STRINGS
 
 set(FXCORE_SOURCES
     engine/fx.c
-    # engine/   - channel state, mix dispatch       (TODO)
-    # format/   - mod.c s3m.c m669.c wav.c          (TODO)
-    # effect/   - efc_mod.c efc_s3m.c efc_669.c     (TODO)
+    util/calc.c
+    # format/s3m.c          (TODO Task 3)
+    # effect/efc_s3m.c      (TODO Task 4)
 )
 
 if(FX_MIXER STREQUAL "SCALAR")
