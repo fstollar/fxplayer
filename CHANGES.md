@@ -1,5 +1,68 @@
 # F/X Player — Change Log
 
+## core/ — C99 port (cross-platform engine library)
+
+---
+
+### 2026-06-20 — S3M playback path ported to C99; CTest passes bit-exact
+
+First working milestone of the cross-platform port.  `core/` now builds
+as a pure C99 static library (`libfxcore.a`) that plays S3M modules and
+produces output **bit-identical** to the original DOS build.
+
+#### What was ported
+
+| Original (DOS) | C99 port | Notes |
+|---|---|---|
+| `_work/dat_s3m.cpp` | `core/format/s3m.c` | Buffer-based loader; `uintptr_t` for sample pointers |
+| `_work/efc_s3m.cpp` | `core/effect/efc_s3m.c` | Full S3M effect set (effects A–Z) |
+| `_work/mixer.cpp` + ASM kernels | `core/mixer/mixer_scalar.c` | 32-bit scalar mixing path; soft-clip master volume |
+| `_work/dat_calc.cpp` (`#pragma aux`) | `core/util/calc.c` | `divide_64bit` → plain C `uint64_t` arithmetic |
+| `interrupt_S3M()` in `dat_s3m.cpp` | `s3m_render_block()` | Tick/row/order advance loop, mixer bridge |
+| `DoMasterVolumeCalculations()` | `mixer_convert_to_s16()` | `MasterVol16for32ss` path: soft-clip + signed S16 output |
+
+#### Public API added (`core/include/fx/fx.h`)
+
+```c
+fx_err  fx_workspace_size(data, size, *out_bytes);  /* caller allocates */
+fx_err  fx_load(data, size, workspace, ws_size);
+size_t  fx_render_frames(out, frame_count, *cfg);
+void    fx_close(void);
+```
+
+No `malloc` inside the engine.  Caller supplies workspace; size is
+computed from the module header by `fx_workspace_size`.
+
+#### Non-obvious porting decisions
+
+- **`uintptr_t` for sample addresses** — the original DOS code stored
+  raw flat-model pointers in `unsigned long` (32-bit on Watcom).  On
+  64-bit Linux the upper 32 bits would be silently truncated if kept as
+  `uint32_t`.  `S3M_SampleAddress` and `g_ChannelSampleAddress` use
+  `uintptr_t` throughout.
+
+- **`max_frames` cap in test binary** — `TEST.S3M` loops forever;
+  `render_s3m` accepts an optional third argument.  The CTest passes
+  `1441792` (352 × 4096), which matches the DOS `-n:30` render cap used
+  to produce `tests/reference_renders/TEST.wav`.
+
+#### Validation
+
+```
+cmake -B build -DFX_BUILD_TESTS=ON && cmake --build build
+ctest --test-dir build   # 2/2 pass
+```
+
+`compare_s3m` asserts:
+
+```
+sha256(out.wav) == 5edd49d54cd161dfac8c88ffbec30bf6fcadea4a2e3cd053db3dbb1c68c30834
+```
+
+Bit-exact match achieved on first run.
+
+---
+
 ## _work/ — Working DOS build (OpenWatcom + TASM, runs in DOSBox-X)
 
 All changes are in `_work/`. The `_original/` source is never touched.

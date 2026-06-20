@@ -83,17 +83,55 @@ The mixer's output is fully deterministic, so:
 
 ## Current status & immediate next step
 
-**Status:** Planning complete. No port code written yet.
+**Status:** DOS build working; DEV_WAV implemented; reference renders generated.
 
-**Next milestone:** Add a `DEV_WAV` (file output) target to the **original** DOS code so we can produce bit-exact ground-truth WAV renders. Plan:
+### Completed
 
-- New files `DEV_WAV.CPP` / `DEV_WAV.H` (distinct from existing `DAT_WAV.CPP` which plays WAV input).
-- `DEVICE.CPP` already has an empty `case 4 :` slot in the `PlainInterupt` switch — that becomes the WAV output card type.
-- `FX.CPP` main loop branches: when `CardType == WAV`, drive `PlainInterupt()` synchronously instead of waiting for IRQ, then `fwrite(Mixerpointer, ...)` after each block.
-- New `-w <filename>` command-line switch and `-t <seconds>` max-render-time.
-- Render-as-fast-as-possible only (no realtime+tee).
+- `_work/` builds cleanly with OpenWatcom V2 on Linux → `FX.EXE` (156 K, PMode/W).
+- **`dev_wav.cpp` / `dev_wav.h`** — WAV file output device (CardType 4).
+  - `-w:FILENAME` CLI switch selects WAV output (implies CardType 4, no hardware needed).
+  - `-n:SECONDS` CLI switch caps render time. (Note: `-t:` was already taken for card **T**ype.)
+  - Renders as fast as possible — ~20× realtime in DOSBox-X.
+- **`tests/render-dosbox.sh --native`** — mounts `_work/` as C:, runs
+  `FX /w:FXOUT.WAV /n:N MODULE`, retrieves the WAV. No SB emulation or
+  PulseAudio capture needed. Default (non-`--native`) PulseAudio path preserved.
+- Reference renders in `tests/reference_renders/`:
+  - `TEST.wav` (30 s) — sha256 `5edd49d5…`
+  - `64mania.wav` (120 s) — sha256 `78987972…`
 
-Step 0 before any of that: confirm the Watcom toolchain still builds the project unchanged, producing a working `FX.EXE` that plays a `.S3M` in DOSBox.
+### C99 core port — COMPLETE ✓
+
+S3M playback path ported to `core/` as a pure C99 library.  CTest
+`compare_s3m` passes: sha256 of rendered `TEST.S3M` matches the DOS
+reference render byte-for-byte.
+
+**Files added:**
+
+| Path | What |
+|---|---|
+| `core/include/fx/fx.h` | Public API: `fx_workspace_size`, `fx_load`, `fx_render_frames`, `fx_close`, `fx_err`, `fx_config` |
+| `core/engine/fx.c` | API dispatch — wires format/mixer/engine together |
+| `core/util/calc.c` | `s3m_calc_speed`, `s3m_divide_64bit` (replaces `#pragma aux`) |
+| `core/format/s3m.c` | Buffer-based S3M loader + pattern decode + render block loop |
+| `core/effect/efc_s3m.c` | Full S3M effect set (A–Z) |
+| `core/mixer/mixer_scalar.c` | 32-bit scalar mixing path + soft-clip master volume |
+| `tests/render_s3m/main.c` | Test binary: renders TEST.S3M → WAV |
+| `cmake/check_sha256.cmake` | CTest sha256 assertion helper |
+
+**Key decisions made during port:**
+- `S3M_SampleAddress` / `g_ChannelSampleAddress` use `uintptr_t` (not
+  `uint32_t`) — the original DOS code assumed 32-bit flat pointers; on
+  64-bit Linux the upper 32 bits would be silently truncated otherwise.
+- `render_s3m` takes an optional `max_frames` argument.  TEST.S3M loops
+  forever; the CTest passes `1441792` (= 352 × 4096, matching the DOS
+  `-n:30` cap used to produce the reference render).
+- Bit-exact match achieved on first run — no tuning needed.
+
+### Next milestone: host/cli with miniaudio
+
+Wire `fx_load` / `fx_render_frames` into the `host/cli/` C++ host with
+miniaudio for real-time playback.  The engine API is complete; this is
+purely a host integration task.
 
 ## Notes on collaborator
 
