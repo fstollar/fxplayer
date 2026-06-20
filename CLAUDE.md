@@ -127,11 +127,37 @@ reference render byte-for-byte.
   `-n:30` cap used to produce the reference render).
 - Bit-exact match achieved on first run — no tuning needed.
 
-### Next milestone: host/cli with miniaudio
+### host/cli with miniaudio — COMPLETE ✓
 
-Wire `fx_load` / `fx_render_frames` into the `host/cli/` C++ host with
-miniaudio for real-time playback.  The engine API is complete; this is
-purely a host integration task.
+`build/host/cli/fxplayer <module.s3m>` plays S3M files in real time via
+miniaudio.  Usage: Ctrl+C to stop; auto-stops at song end.
+
+**Files added/changed:**
+
+| Path | What |
+|---|---|
+| `host/cli/third_party/miniaudio/miniaudio.h` | Vendored miniaudio 0.11.21 (single-header) |
+| `host/cli/miniaudio.c` | `MINIAUDIO_IMPLEMENTATION` translation unit (compiled as C) |
+| `host/cli/CMakeLists.txt` | Adds miniaudio TU; links `Threads::Threads`, `dl`, `m` |
+| `host/cli/main.cpp` | Arg parse → file read → `fx_load` → `ma_device` callback loop |
+
+**Key decisions:**
+- `fx_load` copies module data into workspace (`memcpy` at s3m.c:153), so the
+  file buffer can be freed immediately after `fx_load` returns.  Only
+  workspace needs to live until `fx_close`.
+- Config: 48 kHz, stereo S16, interpolation on, soft-clip on — matches the
+  reference render settings used for CTest bit-exact validation.
+- `data_callback` zero-fills the tail when `fx_render_frames` returns fewer
+  frames than requested (song end), then sets `g_stop` to exit the main loop.
+- `ma_sleep` is internal to miniaudio; replaced with
+  `std::this_thread::sleep_for`.
+
+### Next milestone: MOD / 669 format support
+
+Port `DAT_MOD.CPP` / `EFC_MOD.CPP` and `DAT_669.CPP` / `EFC_669.CPP` to
+`core/format/mod.c` + `core/effect/efc_mod.c` and
+`core/format/m669.c` + `core/effect/efc_669.c`, following the same
+C99 port pattern established for S3M.  Add CTest reference renders for each.
 
 ## Notes on collaborator
 

@@ -1,5 +1,42 @@
 # F/X Player — Change Log
 
+## host/cli — C++ command-line player (miniaudio)
+
+---
+
+### 2026-06-20 — Real-time S3M playback via miniaudio
+
+`build/host/cli/fxplayer <module.s3m>` — plays S3M files in real time
+through the system audio device.  Ctrl+C to stop; auto-stops at song end.
+
+#### What was added
+
+| File | What |
+|---|---|
+| `host/cli/third_party/miniaudio/miniaudio.h` | Vendored miniaudio 0.11.21 (single-header audio library) |
+| `host/cli/miniaudio.c` | `MINIAUDIO_IMPLEMENTATION` translation unit compiled as C |
+| `host/cli/CMakeLists.txt` | Updated: adds miniaudio TU; links `Threads::Threads`, `dl`, `m` |
+| `host/cli/main.cpp` | Arg parse → file read → `fx_load` → `ma_device` callback loop |
+
+#### Design notes
+
+- **Buffer ownership**: `s3m_load` does `memcpy(workspace, data, size)` on
+  entry, so the file buffer can be freed immediately after `fx_load`.
+  Only the workspace buffer must survive until `fx_close`.
+- **Audio thread**: `ma_device` data callback calls `fx_render_frames` on
+  the miniaudio audio thread.  No engine calls are made from the main thread
+  after `fx_load`.
+- **Song end**: `fx_render_frames` returns fewer frames than requested when
+  `s3m_is_done()` is set (end-of-order reached without looping back).  The
+  callback zero-fills the tail and sets `g_stop`; the main thread exits on
+  the next 50 ms poll.
+- `ma_sleep` is internal to miniaudio and not part of the public API; the
+  main-thread idle loop uses `std::this_thread::sleep_for` instead.
+- Config: 48 kHz, stereo, S16, linear interpolation, soft-clip — matches
+  the reference render settings used in the CTest bit-exact check.
+
+---
+
 ## core/ — C99 port (cross-platform engine library)
 
 ---

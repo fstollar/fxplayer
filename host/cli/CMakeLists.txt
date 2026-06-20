@@ -1,13 +1,19 @@
-# fxplayer-cli - command-line player host.
-#
-# Wraps fxcore with a C++ frontend and a cross-platform audio backend
-# (miniaudio, planned). For now just prints the engine version.
+# fxplayer-cli — command-line player host.
+
+find_package(Threads REQUIRED)
 
 add_executable(fxplayer
+    miniaudio.c
     main.cpp
 )
 
-target_link_libraries(fxplayer PRIVATE fx::core)
+target_include_directories(fxplayer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+)
 
-# TODO: vendor miniaudio under host/cli/third_party/miniaudio/ and add it
-# here, then wire up an audio device callback that calls fx_render().
+target_link_libraries(fxplayer PRIVATE
+    fx::core
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+    m
+)
