@@ -169,7 +169,7 @@ CTests pass bit-exact: `compare_s3m`, `compare_mod` (hul.mod, 8-channel),
 | `core/effect/efc_669.c` / `efc_669.h` | 669 effects (0–7): portamento, glissando, vibrato |
 | `tests/render_mod/main.c` + `CMakeLists.txt` | CTest render harness for MOD + 669 |
 | `tests/_test_mods/` | Source test modules (S3M/MOD/669/IT/XM, + FX2.EXE) |
-| `bugs.md` | Original + port bug log (see below) |
+| `BUGS.md` | Original + port bug log (see below) |
 
 **Key decisions made during port:**
 - MOD samples are **signed 8-bit** (Amiga Paula chip native) — no conversion needed.
@@ -184,7 +184,7 @@ CTests pass bit-exact: `compare_s3m`, `compare_mod` (hul.mod, 8-channel),
 - MOD default panning is **LRRL** (`ch%4`: 0=L,1=R,2=R,3=L), master volume
   scales by channel count: `(0x50 - channels*4) * 256`.
 
-**Bugs fixed to reach bit-exactness (see `bugs.md` for full detail):**
+**Bugs fixed to reach bit-exactness (see `BUGS.md` for full detail):**
 - **Master-vol soft-clip table (O-2):** `calcMasterVolume32` leaves `test`
   uninitialised past `2*val` — it must persist (~⅔·MasterVolume), NOT reset to
   128.  Only loud modules (669) reach those indices, so S3M masked it.  This was
