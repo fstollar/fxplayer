@@ -52,8 +52,6 @@ uint32_t  S3M_Periode[S3M_MAXCHANNELS];
 int32_t   S3M_PeriodeAdjust[S3M_MAXCHANNELS];
 uint32_t  S3M_Frequence[S3M_MAXCHANNELS];
 
-int32_t  *g_master_vol_table = NULL;
-
 /* ---- internal workspace pointers ---- */
 static uint8_t       *s_buf      = NULL;
 static uint8_t      **s_ins      = NULL;   /* InstrumentPointer[] */

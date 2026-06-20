@@ -152,12 +152,42 @@ miniaudio.  Usage: Ctrl+C to stop; auto-stops at song end.
 - `ma_sleep` is internal to miniaudio; replaced with
   `std::this_thread::sleep_for`.
 
-### Next milestone: MOD / 669 format support
+### MOD / 669 format support — COMPLETE (pending CTest reference renders) ✓
 
-Port `DAT_MOD.CPP` / `EFC_MOD.CPP` and `DAT_669.CPP` / `EFC_669.CPP` to
-`core/format/mod.c` + `core/effect/efc_mod.c` and
-`core/format/m669.c` + `core/effect/efc_669.c`, following the same
-C99 port pattern established for S3M.  Add CTest reference renders for each.
+MOD and 669 formats ported to the C99 core.  `fx_detect_format` now sniffs all
+three formats; `fx_load` / `fx_render_frames` dispatch automatically.
+
+**Files added:**
+
+| Path | What |
+|---|---|
+| `core/format/mod.c` / `mod.h` | MOD loader, period-table expansion, render block |
+| `core/effect/efc_mod.c` / `efc_mod.h` | Full MOD effect set (0–15 + Exx extended) |
+| `core/format/m669.c` / `m669.h` | 669 loader (magic "if"), render block |
+| `core/effect/efc_669.c` / `efc_669.h` | 669 effects (0–7): portamento, glissando, vibrato |
+| `tests/render_mod/main.c` + `CMakeLists.txt` | CTest render harness (SHA placeholder) |
+
+**Key decisions made during port:**
+- MOD samples are **signed 8-bit** (Amiga Paula chip native) — no conversion needed.
+  Only 669 samples are unsigned; they are XOR'd with 0x80 during workspace copy,
+  matching the original `ConvU8MtoS8M` call.
+- `g_master_vol_table` moved from `s3m.c` to `mixer_scalar.c` so all format
+  loaders can set it without cross-module deps.
+- Format detection: S3M ("SCRM" at 44), 669 ("if" at 0), MOD (8 known 4-char
+  IDs at 1080 — 31-sample variants only; 15-sample MODs not auto-detected).
+- MOD big-endian 16-bit fields byte-swapped in workspace copy (not in-place on
+  caller's buffer).
+- CTest SHA256 for MOD and 669 pending reference renders from the DOS build:
+  copy a test `.mod` / `.669` to `tests/reference_renders/`, render via
+  `tests/render-dosbox.sh --native`, fill in `tests/render_mod/CMakeLists.txt`.
+
+### Next milestone: CTest reference renders for MOD / 669
+
+1. Copy a test MOD to `tests/reference_renders/` (e.g. from `/home/fst/_privat/retro/audio_mods/mod/`).
+2. Render via DOS build: `tests/render-dosbox.sh --native <module.mod> 30`
+3. Record SHA256 of the output WAV.
+4. Fill in `tests/render_mod/CMakeLists.txt` (uncomment and set `REF_MOD`, `REF_SHA`, `MAX_FRAMES`).
+5. Repeat for a 669 file.
 
 ## Notes on collaborator
 

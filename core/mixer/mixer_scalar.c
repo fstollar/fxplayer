@@ -4,6 +4,9 @@
 #include "mixer/mixer_scalar.h"
 #include "util/calc.h"
 
+/* ---- master volume table pointer (set by each format loader) ---- */
+int32_t *g_master_vol_table = NULL;
+
 /* ---- global mixer state ---- */
 
 uint32_t g_MixSpeed          = 48000;

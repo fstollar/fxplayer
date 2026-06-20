@@ -13,6 +13,10 @@ set(FXCORE_SOURCES
     util/calc.c
     format/s3m.c
     effect/efc_s3m.c
+    format/mod.c
+    effect/efc_mod.c
+    format/m669.c
+    effect/efc_669.c
 )
 
 if(FX_MIXER STREQUAL "SCALAR")

@@ -51,9 +51,6 @@ extern uint32_t S3M_Periode[S3M_MAXCHANNELS];
 extern int32_t  S3M_PeriodeAdjust[S3M_MAXCHANNELS];
 extern uint32_t S3M_Frequence[S3M_MAXCHANNELS];
 
-/* Pointer to MasterVolumeTable (workspace-carved, centre at [0]) */
-extern int32_t *g_master_vol_table;
-
 /* API */
 size_t   s3m_workspace_bytes(const uint8_t *data, size_t size);
 int      s3m_load(const uint8_t *data, size_t size,

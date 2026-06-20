@@ -46,7 +46,14 @@ extern uint32_t g_NextSamplePosition[FX_MAXCHANNELS];
 extern uint32_t g_NextSampleFraction[FX_MAXCHANNELS];
 extern uint32_t g_NextChannelActiv[FX_MAXCHANNELS];
 
-/* API called by s3m.c and engine/fx.c */
+/*
+ * Workspace-allocated master volume table.
+ * Set by each format loader (mod_load, s3m_load, m669_load) to point into
+ * its own workspace, then consumed by mixer_convert_to_s16.
+ */
+extern int32_t *g_master_vol_table;
+
+/* API called by format loaders and engine/fx.c */
 void mixer_reset(void);
 void mixer_clear(void);
 void mixer_do_pre_mixing(uint32_t mix_length);
