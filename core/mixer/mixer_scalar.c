@@ -209,7 +209,7 @@ static void mix32_ichannel(uint32_t ch, uint32_t count, uint32_t mix_pos)
             for (i = 0; i < count; i++) {
                 int32_t s0 = (int8_t)s8[pos];
                 int32_t s1 = (int8_t)s8[pos + 1];
-                int32_t interp = (s0 << 16) + (s1 - s0) * (int32_t)frac;
+                int32_t interp = (int32_t)((uint32_t)s0 << 16) + (s1 - s0) * (int32_t)frac;
                 mb[i] += (int32_t)((int64_t)interp * vol >> 8);
                 frac = (uint32_t)((int32_t)frac + dfrac);
                 pos  = (uint32_t)((int32_t)pos + dpos) + (frac >> 16);
@@ -219,7 +219,7 @@ static void mix32_ichannel(uint32_t ch, uint32_t count, uint32_t mix_pos)
             for (i = 0; i < count; i++) {
                 int32_t s0 = (int8_t)s8[pos];
                 int32_t s1 = (int8_t)s8[pos + 1];
-                int32_t interp = (s0 << 16) + (s1 - s0) * (int32_t)frac;
+                int32_t interp = (int32_t)((uint32_t)s0 << 16) + (s1 - s0) * (int32_t)frac;
                 mb[i*2+0] += (int32_t)((int64_t)interp * vol_l >> 8);
                 mb[i*2+1] += (int32_t)((int64_t)interp * vol_r >> 8);
                 frac = (uint32_t)((int32_t)frac + dfrac);
@@ -617,16 +617,21 @@ void mixer_calc_master_vol32(uint32_t master_volume, int32_t *table_centre)
     if (val < 1) return;
 
     {
-        int32_t test;
+        /*
+         * Original quirk: `test` is only (re)assigned while counter < 2*val.
+         * For counter >= 2*val it retains its last value (~2/3 * MasterVolume),
+         * NOT 128 — do NOT add an else branch here (see bugs.md P-3 / O-2).
+         * Loud modules (e.g. 669, MasterVolume 12288) reach these high indices;
+         * quiet S3M modules don't, which masks the difference.
+         */
+        int32_t test = 128;
         for (counter = val; counter < 8192; counter++) {
             if (counter < 2 * val)
                 test = (int32_t)((double)(4 * val - counter) *
                                  ((double)master_volume / (double)(3 * val)));
-            else
-                test = 128;
             if (test < 128) test = 128;
-            table_centre[ counter] = test;
-            table_centre[-counter] = test;
+            table_centre[counter]     = test;
+            table_centre[counter - 1] = test;   /* original writes counter and counter-1 */
         }
     }
 }

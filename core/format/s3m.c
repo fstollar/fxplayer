@@ -166,19 +166,25 @@ int s3m_load(const uint8_t *data, size_t size,
     s_order    = s_buf + 0x60;
 
     /* build instrument and sample pointer tables */
+    /* Use byte-safe reads — ord_num may be odd, causing misaligned uint16_t access */
     tp = (const uint16_t *)(s_buf + 0x60 + hdr->ord_num);
     for (i = 0; i < hdr->ins_num; i++) {
-        uint32_t para;
-        s_ins[i] = s_buf + ((uint32_t)tp[i] << 4);
-        para = (uint32_t)(*(const uint16_t *)(s_ins[i] + 0x0e))
+        uint32_t para, pp;
+        const uint8_t *tp8 = (const uint8_t *)tp + i * 2u;
+        pp = (uint32_t)tp8[0] | ((uint32_t)tp8[1] << 8);
+        s_ins[i] = s_buf + (pp << 4);
+        para = (uint32_t)(s_ins[i][0x0e]) | ((uint32_t)(s_ins[i][0x0f]) << 8)
              | ((uint32_t)(*(const uint8_t *)(s_ins[i] + 0x0d)) << 16);
         s_smp[i] = s_buf + (para << 4);
         *(uint8_t *)(s_ins[i] + 0x0d) = 0;  /* terminate sample name */
     }
 
-    tp = (const uint16_t *)(s_buf + 0x60 + hdr->ord_num + hdr->ins_num * 2u);
-    for (i = 0; i < hdr->pat_num; i++) {
-        s_pat[i] = (tp[i] != 0) ? (s_buf + ((uint32_t)tp[i] << 4)) : NULL;
+    {
+        const uint8_t *tp8 = (const uint8_t *)tp + hdr->ins_num * 2u;
+        for (i = 0; i < hdr->pat_num; i++) {
+            uint32_t pp = (uint32_t)tp8[i*2] | ((uint32_t)tp8[i*2+1] << 8);
+            s_pat[i] = (pp != 0) ? (s_buf + (pp << 4)) : NULL;
+        }
     }
 
     /* convert unsigned samples to signed in-place */
@@ -379,8 +385,11 @@ void S3M_unpack_row(uint32_t pat_nr, uint32_t row_nr)
 
 uint32_t Calc_st3periode(uint32_t note, uint32_t octave, uint32_t c4spd)
 {
-    uint32_t noteperiode = S3M_NotePeriodes[note] << 4;
-    uint32_t dum = (uint32_t)(8363u * 16u * (noteperiode >> octave));
+    uint32_t noteperiode;
+    uint32_t dum;
+    if (note > 11 || c4spd == 0) return 0x1000u;  /* safe fallback */
+    noteperiode = S3M_NotePeriodes[note] << 4;
+    dum = (uint32_t)(8363u * 16u * (noteperiode >> octave));
     return dum / c4spd;
 }
 

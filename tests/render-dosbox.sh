@@ -74,6 +74,13 @@ if [ "$MODE" = native ]; then
     HOST_OUT="$WORK_DIR/$DOSOUT"
     rm -f "$HOST_OUT"
 
+    # If the module isn't already in WORK_DIR, copy it there temporarily.
+    COPIED_MODULE=0
+    if [ "$(realpath "$MODULE_DIR")" != "$(realpath "$WORK_DIR")" ]; then
+        cp "$MODULE_PATH" "$WORK_DIR/$MODULE_FILE"
+        COPIED_MODULE=1
+    fi
+
     cat > "$TMPCONF" <<EOF
 [dosbox]
 fastbioslogo = true
@@ -85,9 +92,8 @@ cycles = max
 
 [autoexec]
 mount c $WORK_DIR
-mount d $MODULE_DIR
 c:
-FX /w:$DOSOUT /n:$DURATION D:\\$MODULE_FILE
+FX /w:$DOSOUT /n:$DURATION $MODULE_FILE
 exit
 EOF
 
@@ -111,6 +117,10 @@ EOF
     pkill -9 -x "dosbox-x" 2>/dev/null || true
     wait "$DBPID" 2>/dev/null || true
 
+    if [ $COPIED_MODULE -eq 1 ]; then
+        rm -f "$WORK_DIR/$MODULE_FILE"
+    fi
+
     if [ ! -s "$HOST_OUT" ]; then
         echo "ERROR: $HOST_OUT is missing or empty — did FX.EXE start?" >&2
         exit 1
@@ -127,6 +137,13 @@ fi
 # ---------------------------------------------------------------------------
 TMPWAV="$(mktemp "$HOME/.fx-capture-XXXXXX.wav")"
 trap 'rm -f "$TMPCONF" "$TMPWAV"' EXIT
+
+# If the module isn't already in WORK_DIR, copy it there temporarily.
+COPIED_MODULE=0
+if [ "$(realpath "$MODULE_DIR")" != "$(realpath "$WORK_DIR")" ]; then
+    cp "$MODULE_PATH" "$WORK_DIR/$MODULE_FILE"
+    COPIED_MODULE=1
+fi
 
 cat > "$TMPCONF" <<EOF
 [dosbox]
@@ -146,9 +163,8 @@ hdma = 5
 
 [autoexec]
 mount c $WORK_DIR
-mount d $MODULE_DIR
 c:
-FX /t:1 /d:5 /i:7 D:\\$MODULE_FILE
+FX /t:1 /d:5 /i:7 $MODULE_FILE
 exit
 EOF
 
@@ -194,6 +210,10 @@ wait "$DBPID" 2>/dev/null || true
 sleep 0.5
 kill "$PARECORD_PID" 2>/dev/null || true
 wait "$PARECORD_PID" 2>/dev/null || true
+
+if [ $COPIED_MODULE -eq 1 ]; then
+    rm -f "$WORK_DIR/$MODULE_FILE"
+fi
 
 if [ ! -s "$TMPWAV" ]; then
     echo "ERROR: captured WAV is empty — is SB16 emulation working?" >&2

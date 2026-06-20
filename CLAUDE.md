@@ -152,10 +152,12 @@ miniaudio.  Usage: Ctrl+C to stop; auto-stops at song end.
 - `ma_sleep` is internal to miniaudio; replaced with
   `std::this_thread::sleep_for`.
 
-### MOD / 669 format support — COMPLETE (pending CTest reference renders) ✓
+### MOD / 669 format support — COMPLETE ✓ (bit-exact CTests passing)
 
-MOD and 669 formats ported to the C99 core.  `fx_detect_format` now sniffs all
-three formats; `fx_load` / `fx_render_frames` dispatch automatically.
+MOD and 669 formats ported to the C99 core.  `fx_detect_format` sniffs all
+three formats; `fx_load` / `fx_render_frames` dispatch automatically.  All six
+CTests pass bit-exact: `compare_s3m`, `compare_mod` (hul.mod, 8-channel),
+`compare_669` (purple.669).
 
 **Files added:**
 
@@ -165,7 +167,9 @@ three formats; `fx_load` / `fx_render_frames` dispatch automatically.
 | `core/effect/efc_mod.c` / `efc_mod.h` | Full MOD effect set (0–15 + Exx extended) |
 | `core/format/m669.c` / `m669.h` | 669 loader (magic "if"), render block |
 | `core/effect/efc_669.c` / `efc_669.h` | 669 effects (0–7): portamento, glissando, vibrato |
-| `tests/render_mod/main.c` + `CMakeLists.txt` | CTest render harness (SHA placeholder) |
+| `tests/render_mod/main.c` + `CMakeLists.txt` | CTest render harness for MOD + 669 |
+| `tests/_test_mods/` | Source test modules (S3M/MOD/669/IT/XM, + FX2.EXE) |
+| `bugs.md` | Original + port bug log (see below) |
 
 **Key decisions made during port:**
 - MOD samples are **signed 8-bit** (Amiga Paula chip native) — no conversion needed.
@@ -177,17 +181,24 @@ three formats; `fx_load` / `fx_render_frames` dispatch automatically.
   IDs at 1080 — 31-sample variants only; 15-sample MODs not auto-detected).
 - MOD big-endian 16-bit fields byte-swapped in workspace copy (not in-place on
   caller's buffer).
-- CTest SHA256 for MOD and 669 pending reference renders from the DOS build:
-  copy a test `.mod` / `.669` to `tests/reference_renders/`, render via
-  `tests/render-dosbox.sh --native`, fill in `tests/render_mod/CMakeLists.txt`.
+- MOD default panning is **LRRL** (`ch%4`: 0=L,1=R,2=R,3=L), master volume
+  scales by channel count: `(0x50 - channels*4) * 256`.
 
-### Next milestone: CTest reference renders for MOD / 669
+**Bugs fixed to reach bit-exactness (see `bugs.md` for full detail):**
+- **Master-vol soft-clip table (O-2):** `calcMasterVolume32` leaves `test`
+  uninitialised past `2*val` — it must persist (~⅔·MasterVolume), NOT reset to
+  128.  Only loud modules (669) reach those indices, so S3M masked it.  This was
+  the single biggest source of divergence.
+- MOD effect porting: arpeggio `PeriodeAdjust` sign, fine-portamento using full
+  `Info` byte, volume-slide order (`dec(y)` then `add(x)`), note-delay bitmask.
+- UB guards: S3M arpeggio out-of-bounds `S3M_NotePeriodes[]` reads + divide-by-
+  zero (original relies on DOS no-memory-protection; `stars.s3m` crashes the
+  original DOS player — the C99 port is more robust).
+- Misaligned 16-bit reads in `s3m_load` (odd `ord_num`) → byte-wise reads.
 
-1. Copy a test MOD to `tests/reference_renders/` (e.g. from `/home/fst/_privat/retro/audio_mods/mod/`).
-2. Render via DOS build: `tests/render-dosbox.sh --native <module.mod> 30`
-3. Record SHA256 of the output WAV.
-4. Fill in `tests/render_mod/CMakeLists.txt` (uncomment and set `REF_MOD`, `REF_SHA`, `MAX_FRAMES`).
-5. Repeat for a 669 file.
+**Test harness note:** `tests/render-dosbox.sh --native` now copies the module
+into `_work/` and references it by **8.3-safe** name on C: (DOS truncates long
+names; cross-drive `D:\` paths failed silently).
 
 ## Notes on collaborator
 

@@ -343,9 +343,10 @@ int mod_load(const uint8_t *data, size_t size,
     MOD_tempo = 128;
     MOD_speed = 6;
 
-    /* default panning: LRRL repeating */
+    /* default panning: LRRL repeating (ch%4: 0=L, 1=R, 2=R, 3=L) */
     for (ch = 0; ch < channels; ch++) {
-        MOD_Panning[ch] = ((ch & 3u) < 2u) ? 28u : 100u;
+        uint32_t pos = ch & 3u;
+        MOD_Panning[ch] = (pos == 1u || pos == 2u) ? 100u : 28u;
     }
 
     MOD_TickLength  = s3m_calc_speed(MOD_tempo, g_MixSpeed);

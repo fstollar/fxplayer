@@ -40,3 +40,6 @@ _work/*.MAP
 
 # Claude Code project state
 .claude/
+
+# Scratch test modules (large; CTest uses committed refs in reference_renders/)
+tests/_test_mods/

@@ -253,13 +253,22 @@ void MOD_beforeEffect(void)
             break;
         }
         case 14u: {  /* extended: note delay */
-            uint32_t x = MOD_EffectInfo[ch] >> 4;
-            if (x == 13u) {  /* ED - note delay */
-                MOD_NoteDelayFlag[ch] = (uint8_t)(MOD_EffectInfo[ch] & 0x0Fu);
-                MOD_NoteDelayNote[ch] = MOD_RowBuffer[ch*4+0];
-                MOD_NoteDelayInst[ch] = MOD_RowBuffer[ch*4+1];
-                MOD_RowBuffer[ch*4+0] = 0xFFu;
-                MOD_RowBuffer[ch*4+1] = 0;
+            uint32_t bx = MOD_EffectInfo[ch] >> 4;
+            if (bx == 13u) {  /* ED - note delay */
+                uint8_t bval;
+                MOD_NoteDelayFlag[ch] = 0;
+                bval = MOD_RowBuffer[ch*4+0];
+                if (bval != 0xFFu) {
+                    MOD_NoteDelayNote[ch] = bval;
+                    MOD_RowBuffer[ch*4+0] = 0xFFu;
+                    MOD_NoteDelayFlag[ch] |= 1u;
+                }
+                bval = MOD_RowBuffer[ch*4+1];
+                if (bval != 0) {
+                    MOD_NoteDelayInst[ch] = bval;
+                    MOD_RowBuffer[ch*4+1] = 0;
+                    MOD_NoteDelayFlag[ch] |= 2u;
+                }
             }
             break;
         }
@@ -282,8 +291,12 @@ void MOD_RowEffect(void)
         switch (effect) {
         case 0xFFu: break;
 
-        case 0u:   /* arpeggio — nothing on row */
-            MOD_PeriodeAdjust[ch] = 0;
+        case 0u:   /* arpeggio — on row tick use base note period (same formula as tick) */
+            if (info) {
+                MOD_PeriodeAdjust[ch] =
+                    (int32_t)(MOD_Periodes[MOD_SampleFinetune[ch]][MOD_Note[ch]] << 4u) -
+                    (int32_t)MOD_Periode[ch];
+            }
             MOD_VibratoPosition[ch] = 0;
             break;
 
@@ -310,15 +323,24 @@ void MOD_RowEffect(void)
             break;
 
         case 5u:  /* portamento + volume slide */
-            if (x) MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-            else if (y) MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+            MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+            MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
             MOD_TremoloVolume[ch] = MOD_Volume[ch];
-            if (MOD_GlissFlag[ch] == 1) MOD_GlissFlag[ch] = 2;
+            if (MOD_GlissFlag[ch] == 1) {
+                MOD_GlissPeriode[ch] =
+                    MOD_Periodes[MOD_SampleFinetune[ch]][MOD_GlissNote[ch]] << 4u;
+                MOD_GlissFlag[ch] = 2;
+            }
+            if (MOD_GlissPeriode[ch] != MOD_Periode[ch]) {
+                MOD_VibratoPosition[ch] = 0;
+                MOD_PeriodeAdjust[ch]   = 0;
+                MOD_GlissFlag[ch]       = 2;
+            }
             break;
 
         case 6u:  /* vibrato + volume slide */
-            if (x) MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-            else if (y) MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+            MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+            MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
             MOD_TremoloVolume[ch] = MOD_Volume[ch];
             break;
 
@@ -339,8 +361,8 @@ void MOD_RowEffect(void)
             break;
 
         case 10u: /* volume slide */
-            if (x) MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-            else if (y) MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+            MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+            MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
             MOD_TremoloVolume[ch] = MOD_Volume[ch];
             break;
 
@@ -352,11 +374,11 @@ void MOD_RowEffect(void)
         case 14u: {  /* extended */
             switch (x) {
             case 0u:  /* amiga filter (ignore) */ break;
-            case 1u:  /* fine porta up */
-                MOD_Periode[ch] = MOD_decPeriode((int32_t)MOD_Periode[ch], y << 4);
+            case 1u:  /* fine porta up — slide amount is full Info byte */
+                MOD_Periode[ch] = MOD_decPeriode((int32_t)MOD_Periode[ch], info);
                 break;
-            case 2u:  /* fine porta down */
-                MOD_Periode[ch] = MOD_addPeriode((int32_t)MOD_Periode[ch], y << 4);
+            case 2u:  /* fine porta down — slide amount is full Info byte */
+                MOD_Periode[ch] = MOD_addPeriode((int32_t)MOD_Periode[ch], info);
                 break;
             case 3u:  /* set gliss control */
                 break;
@@ -413,19 +435,15 @@ void MOD_TickEffect(void)
         switch (effect) {
         case 0xFFu: break;
 
-        case 0u:  /* arpeggio */
+        case 0u:  /* arpeggio — PeriodeAdjust = period(arp_note) - Periode */
             if (info) {
+                uint32_t note = MOD_Note[ch];
                 uint32_t phase = MOD_tick % 3u;
-                if (phase == 0) {
-                    MOD_PeriodeAdjust[ch] = 0;
-                } else {
-                    uint32_t adj_note = (phase == 1u) ? x : y;
-                    uint32_t target   = MOD_Note[ch] + adj_note;
-                    if (target < 84u)
-                        MOD_PeriodeAdjust[ch] =
-                            (int32_t)(MOD_Periodes[MOD_SampleFinetune[ch]][MOD_Note[ch]] << 4u) -
-                            (int32_t)(MOD_Periodes[MOD_SampleFinetune[ch]][target]       << 4u);
-                }
+                if (phase == 1u) note += x;
+                if (phase == 2u) note += y;
+                MOD_PeriodeAdjust[ch] =
+                    (int32_t)(Calc_AMIGAperiode(note, MOD_SampleFinetune[ch])) -
+                    (int32_t)MOD_Periode[ch];
             }
             break;
 
@@ -440,8 +458,8 @@ void MOD_TickEffect(void)
         case 3u:  /* portamento to note */
         case 5u:  /* porta + volslide */
             if (effect == 5u) {
-                if (x) MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-                else if (y) MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+                MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+                MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
                 MOD_TremoloVolume[ch] = MOD_Volume[ch];
             }
             if (MOD_GlissFlag[ch] == 2) {
@@ -459,8 +477,8 @@ void MOD_TickEffect(void)
         case 4u:  /* vibrato */
         case 6u:  /* vibrato + volslide */
             if (effect == 6u) {
-                if (x) MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-                else if (y) MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+                MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+                MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
                 MOD_TremoloVolume[ch] = MOD_Volume[ch];
             }
             MOD_MVibrato(ch);
@@ -474,8 +492,8 @@ void MOD_TickEffect(void)
             break;
 
         case 10u: /* volume slide */
-            if (x) MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-            else if (y) MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+            MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
+            MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
             MOD_TremoloVolume[ch] = MOD_Volume[ch];
             break;
 
@@ -487,14 +505,16 @@ void MOD_TickEffect(void)
             case 12u: /* note cut on tick */
                 if (MOD_tick == y) { MOD_Volume[ch] = 0; MOD_TremoloVolume[ch] = 0; }
                 break;
-            case 13u: /* note delay */
-                if (MOD_tick == MOD_NoteDelayFlag[ch]) {
-                    MOD_Note[ch] = MOD_NoteDelayNote[ch];
-                    if (MOD_NoteDelayInst[ch]) {
+            case 13u: /* note delay — NoteDelayFlag is bitmask: bit1=inst, bit0=note */
+                if (MOD_tick == (uint32_t)(MOD_EffectInfo[ch] & 0x0Fu)) {
+                    if (MOD_NoteDelayFlag[ch] & 2u) {
                         MOD_SampleNr[ch] = MOD_NoteDelayInst[ch];
                         MOD_GetNewSample(ch);
                     }
-                    MOD_GetNewNote(ch);
+                    if (MOD_NoteDelayFlag[ch] & 1u) {
+                        MOD_Note[ch] = MOD_NoteDelayNote[ch];
+                        MOD_GetNewNote(ch);
+                    }
                 }
                 break;
             }

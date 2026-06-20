@@ -475,11 +475,12 @@ void S3M_RowEffect(void)
                 S3M_Tremor(channel, (uint8_t)(x + 1u), (uint8_t)(y + 1u));
                 break;
 
-            case 10:  /* Jxy: arpeggio */
-                S3M_PeriodeAdjust[channel] =
-                    (int32_t)Calc_st3periode(S3M_Note[channel], S3M_Octave[channel],
-                                             S3M_SampleC4SPD[channel])
-                    - (int32_t)S3M_Periode[channel];
+            case 10:  /* Jxy: arpeggio (row tick = base note) */
+                if (S3M_Note[channel] <= 11 && S3M_SampleC4SPD[channel] != 0)
+                    S3M_PeriodeAdjust[channel] =
+                        (int32_t)Calc_st3periode(S3M_Note[channel], S3M_Octave[channel],
+                                                 S3M_SampleC4SPD[channel])
+                        - (int32_t)S3M_Periode[channel];
                 break;
 
             case 11: case 12: break;
@@ -592,7 +593,8 @@ void S3M_TickEffect(void)
                 uint8_t oct  = S3M_Octave[channel];
                 if ((S3M_tick % 3u) == 1u) note += x;
                 if ((S3M_tick % 3u) == 2u) note += y;
-                if (note > 11) { note -= 12; oct++; }
+                while (note > 11) { note -= 12; oct++; }
+                if (note > 11 || oct > 8) break;  /* guard out-of-range */
                 S3M_PeriodeAdjust[channel] =
                     (int32_t)Calc_st3periode(note, oct, S3M_SampleC4SPD[channel])
                     - (int32_t)S3M_Periode[channel];
