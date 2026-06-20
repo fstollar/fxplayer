@@ -81,124 +81,37 @@ The mixer's output is fully deterministic, so:
 2. Every port variant must produce **bit-identical** output to the scalar C reference, which itself must match the original DOS WAV.
 3. Comparison is `sha256(wav)` — no tolerance, no fuzzy matching.
 
-## Current status & immediate next step
+## Current status
 
-**Status:** DOS build working; DEV_WAV implemented; reference renders generated.
+**Per-change history lives in `CHANGES.md`; known bugs/quirks in `BUGS.md`.**
+This section is a one-line-per-milestone index only — don't duplicate the
+blow-by-blow logs here.
 
-### Completed
+- **DOS build (`_work/`)** — builds with OpenWatcom V2 on Linux → `FX.EXE`
+  (156 K, PMode/W). `DEV_WAV` file-output device (`-w:`/`-n:` switches).
+- **C99 core (`core/`)** — S3M, MOD (4/8-ch), and 669 all play **bit-exact**
+  vs. the DOS reference. `fx_detect_format` dispatches all three. 6/6 CTests
+  pass (`compare_s3m` / `compare_mod` / `compare_669`).
+- **CLI host (`host/cli/`)** — `fxplayer <module>` real-time playback via
+  miniaudio.
+- **Validation harness** — `tests/render-dosbox.sh --native` renders DOS
+  reference WAVs; CTests compare sha256 against hardcoded reference hashes.
 
-- `_work/` builds cleanly with OpenWatcom V2 on Linux → `FX.EXE` (156 K, PMode/W).
-- **`dev_wav.cpp` / `dev_wav.h`** — WAV file output device (CardType 4).
-  - `-w:FILENAME` CLI switch selects WAV output (implies CardType 4, no hardware needed).
-  - `-n:SECONDS` CLI switch caps render time. (Note: `-t:` was already taken for card **T**ype.)
-  - Renders as fast as possible — ~20× realtime in DOSBox-X.
-- **`tests/render-dosbox.sh --native`** — mounts `_work/` as C:, runs
-  `FX /w:FXOUT.WAV /n:N MODULE`, retrieves the WAV. No SB emulation or
-  PulseAudio capture needed. Default (non-`--native`) PulseAudio path preserved.
-- Reference renders in `tests/reference_renders/`:
-  - `TEST.wav` (30 s) — sha256 `5edd49d5…`
-  - `64mania.wav` (120 s) — sha256 `78987972…`
+**Durable facts worth keeping in context** (rationale in CHANGES.md / BUGS.md):
+- Sample addresses use `uintptr_t`, not `uint32_t` (64-bit host pointer width).
+- `g_master_vol_table` lives in `mixer_scalar.c`, shared by all format loaders.
+- MOD samples are signed 8-bit (no conversion); only 669 samples are XOR'd 0x80.
+- The mixer's master-volume soft-clip table has a faithful original quirk
+  (BUGS.md O-2) — do not "fix" it; it's required for bit-exactness.
+- DOS reference renders need **8.3-safe filenames** on the C: mount.
 
-### C99 core port — COMPLETE ✓
+### Next milestones (not yet started)
 
-S3M playback path ported to `core/` as a pure C99 library.  CTest
-`compare_s3m` passes: sha256 of rendered `TEST.S3M` matches the DOS
-reference render byte-for-byte.
-
-**Files added:**
-
-| Path | What |
-|---|---|
-| `core/include/fx/fx.h` | Public API: `fx_workspace_size`, `fx_load`, `fx_render_frames`, `fx_close`, `fx_err`, `fx_config` |
-| `core/engine/fx.c` | API dispatch — wires format/mixer/engine together |
-| `core/util/calc.c` | `s3m_calc_speed`, `s3m_divide_64bit` (replaces `#pragma aux`) |
-| `core/format/s3m.c` | Buffer-based S3M loader + pattern decode + render block loop |
-| `core/effect/efc_s3m.c` | Full S3M effect set (A–Z) |
-| `core/mixer/mixer_scalar.c` | 32-bit scalar mixing path + soft-clip master volume |
-| `tests/render_s3m/main.c` | Test binary: renders TEST.S3M → WAV |
-| `cmake/check_sha256.cmake` | CTest sha256 assertion helper |
-
-**Key decisions made during port:**
-- `S3M_SampleAddress` / `g_ChannelSampleAddress` use `uintptr_t` (not
-  `uint32_t`) — the original DOS code assumed 32-bit flat pointers; on
-  64-bit Linux the upper 32 bits would be silently truncated otherwise.
-- `render_s3m` takes an optional `max_frames` argument.  TEST.S3M loops
-  forever; the CTest passes `1441792` (= 352 × 4096, matching the DOS
-  `-n:30` cap used to produce the reference render).
-- Bit-exact match achieved on first run — no tuning needed.
-
-### host/cli with miniaudio — COMPLETE ✓
-
-`build/host/cli/fxplayer <module.s3m>` plays S3M files in real time via
-miniaudio.  Usage: Ctrl+C to stop; auto-stops at song end.
-
-**Files added/changed:**
-
-| Path | What |
-|---|---|
-| `host/cli/third_party/miniaudio/miniaudio.h` | Vendored miniaudio 0.11.21 (single-header) |
-| `host/cli/miniaudio.c` | `MINIAUDIO_IMPLEMENTATION` translation unit (compiled as C) |
-| `host/cli/CMakeLists.txt` | Adds miniaudio TU; links `Threads::Threads`, `dl`, `m` |
-| `host/cli/main.cpp` | Arg parse → file read → `fx_load` → `ma_device` callback loop |
-
-**Key decisions:**
-- `fx_load` copies module data into workspace (`memcpy` at s3m.c:153), so the
-  file buffer can be freed immediately after `fx_load` returns.  Only
-  workspace needs to live until `fx_close`.
-- Config: 48 kHz, stereo S16, interpolation on, soft-clip on — matches the
-  reference render settings used for CTest bit-exact validation.
-- `data_callback` zero-fills the tail when `fx_render_frames` returns fewer
-  frames than requested (song end), then sets `g_stop` to exit the main loop.
-- `ma_sleep` is internal to miniaudio; replaced with
-  `std::this_thread::sleep_for`.
-
-### MOD / 669 format support — COMPLETE ✓ (bit-exact CTests passing)
-
-MOD and 669 formats ported to the C99 core.  `fx_detect_format` sniffs all
-three formats; `fx_load` / `fx_render_frames` dispatch automatically.  All six
-CTests pass bit-exact: `compare_s3m`, `compare_mod` (hul.mod, 8-channel),
-`compare_669` (purple.669).
-
-**Files added:**
-
-| Path | What |
-|---|---|
-| `core/format/mod.c` / `mod.h` | MOD loader, period-table expansion, render block |
-| `core/effect/efc_mod.c` / `efc_mod.h` | Full MOD effect set (0–15 + Exx extended) |
-| `core/format/m669.c` / `m669.h` | 669 loader (magic "if"), render block |
-| `core/effect/efc_669.c` / `efc_669.h` | 669 effects (0–7): portamento, glissando, vibrato |
-| `tests/render_mod/main.c` + `CMakeLists.txt` | CTest render harness for MOD + 669 |
-| `tests/_test_mods/` | Source test modules (S3M/MOD/669/IT/XM, + FX2.EXE) |
-| `BUGS.md` | Original + port bug log (see below) |
-
-**Key decisions made during port:**
-- MOD samples are **signed 8-bit** (Amiga Paula chip native) — no conversion needed.
-  Only 669 samples are unsigned; they are XOR'd with 0x80 during workspace copy,
-  matching the original `ConvU8MtoS8M` call.
-- `g_master_vol_table` moved from `s3m.c` to `mixer_scalar.c` so all format
-  loaders can set it without cross-module deps.
-- Format detection: S3M ("SCRM" at 44), 669 ("if" at 0), MOD (8 known 4-char
-  IDs at 1080 — 31-sample variants only; 15-sample MODs not auto-detected).
-- MOD big-endian 16-bit fields byte-swapped in workspace copy (not in-place on
-  caller's buffer).
-- MOD default panning is **LRRL** (`ch%4`: 0=L,1=R,2=R,3=L), master volume
-  scales by channel count: `(0x50 - channels*4) * 256`.
-
-**Bugs fixed to reach bit-exactness (see `BUGS.md` for full detail):**
-- **Master-vol soft-clip table (O-2):** `calcMasterVolume32` leaves `test`
-  uninitialised past `2*val` — it must persist (~⅔·MasterVolume), NOT reset to
-  128.  Only loud modules (669) reach those indices, so S3M masked it.  This was
-  the single biggest source of divergence.
-- MOD effect porting: arpeggio `PeriodeAdjust` sign, fine-portamento using full
-  `Info` byte, volume-slide order (`dec(y)` then `add(x)`), note-delay bitmask.
-- UB guards: S3M arpeggio out-of-bounds `S3M_NotePeriodes[]` reads + divide-by-
-  zero (original relies on DOS no-memory-protection; `stars.s3m` crashes the
-  original DOS player — the C99 port is more robust).
-- Misaligned 16-bit reads in `s3m_load` (odd `ord_num`) → byte-wise reads.
-
-**Test harness note:** `tests/render-dosbox.sh --native` now copies the module
-into `_work/` and references it by **8.3-safe** name on C: (DOS truncates long
-names; cross-drive `D:\` paths failed silently).
+- SIMD mixer variants (`mixer_x86_sse2.c` / `_avx2.c`) + ARM DSP, each
+  validated bit-exact against `mixer_scalar.c`.
+- Encapsulate the global-array state into a struct (only after the suite is
+  green — it now is).
+- XM / IT formats (planned in the original, never implemented).
 
 ## Notes on collaborator
 

@@ -41,6 +41,76 @@ through the system audio device.  Ctrl+C to stop; auto-stops at song end.
 
 ---
 
+### 2026-06-20 — MOD + 669 playback ported; bit-exact CTests pass
+
+MOD (4- and 8-channel) and 669 formats added to the C99 core.
+`fx_detect_format` now sniffs all three formats; `fx_load` /
+`fx_render_frames` dispatch automatically.  All six CTests pass
+byte-for-byte: `compare_s3m`, `compare_mod` (hul.mod, 8-channel "8CHN"),
+`compare_669` (purple.669).
+
+#### What was ported
+
+| Original (DOS) | C99 port | Notes |
+|---|---|---|
+| `dat_mod.cpp` | `core/format/mod.c` / `mod.h` | Loader, big-endian field swap, period-table octave expansion, render block |
+| `efc_mod.cpp` | `core/effect/efc_mod.c` / `efc_mod.h` | Full MOD effect set (0–15 + Exx extended) |
+| `dat_669.cpp` | `core/format/m669.c` / `m669.h` | 669 loader (magic `0x6669` "if"), render block |
+| `efc_669.cpp` | `core/effect/efc_669.c` / `efc_669.h` | 669 effects 0–7: portamento, glissando, vibrato, retrig |
+
+#### Non-obvious porting decisions
+
+- **MOD samples are signed 8-bit** (Amiga Paula native) — no conversion.
+  Only 669 samples are unsigned; XOR'd with 0x80 during the workspace copy,
+  matching the original `ConvU8MtoS8M`.
+- **`g_master_vol_table`** moved from `s3m.c` to `mixer_scalar.c` so all
+  three format loaders can set it without cross-module dependencies.
+- **Format detection:** S3M ("SCRM" @44), 669 ("if" @0), MOD (8 known
+  4-char IDs @1080 — 31-sample variants only; 15-sample MODs not sniffed).
+- **MOD big-endian** 16-bit fields byte-swapped into the workspace copy,
+  never in-place on the caller's buffer.
+- **MOD default panning** is LRRL (`ch%4`: 0=L,1=R,2=R,3=L); master volume
+  scales by channel count: `(0x50 - channels*4) * 256`.
+
+#### Bugs found reaching bit-exactness (full detail in `BUGS.md`)
+
+- **Master-vol soft-clip table (O-2)** — the dominant divergence.  The
+  original `calcMasterVolume32` lets `test` persist (~⅔·MasterVolume) past
+  table index `2*val` rather than resetting to 128 (no `else` branch).  An
+  early port added `else test=128`, which only loud modules (669,
+  MasterVolume 12288) ever reached — quiet/mono S3M modules masked it.
+- **MOD effects** — corrected arpeggio `PeriodeAdjust` formula, fine
+  portamento using the full `Info` byte, volume-slide ordering
+  (`dec(y)` then `add(x)`), and note-delay bitmask.
+- **UB guards** — bounds-check `S3M_NotePeriodes[]` reads and guard
+  divide-by-zero in `Calc_st3periode`.  The original relies on DOS having
+  no memory protection; `stars.s3m` actually crashes the original DOS
+  player (its WAV is left with an unpatched header — `closeWAV` never ran).
+  The C99 port is more robust and is bit-exact up to the DOS crash point.
+- **Misaligned 16-bit reads** in `s3m_load` (odd `ord_num`) → byte-wise.
+
+#### Test harness
+
+- `tests/render_mod/` runs `compare_mod` (hul.mod) and `compare_669`
+  (purple.669) against hardcoded reference SHA-256s.
+- `render-dosbox.sh --native` now copies the module into `_work/` and refers
+  to it by **8.3-safe** name on C: — DOS truncates long names, and the old
+  cross-drive `D:\` path failed silently, producing empty WAVs.
+- Reference source modules committed to `tests/reference_renders/`
+  (`hul.mod`, `purple.669`); large scratch set under `tests/_test_mods/`
+  is gitignored.  New `BUGS.md` logs original-vs-port bugs + module status.
+
+#### Validation
+
+```
+ctest --test-dir build   # 6/6 pass
+```
+
+- `compare_mod`: sha256 == `dfa8b22ccc142463dc837d82bcee9411d491d6ec906c489633abfef6a80dec3a`
+- `compare_669`: sha256 == `10089bc3010836b22cd9afe89a74b27524060afb96c953fa9efbfc32a752ff5d`
+
+---
+
 ### 2026-06-20 — S3M playback path ported to C99; CTest passes bit-exact
 
 First working milestone of the cross-platform port.  `core/` now builds
