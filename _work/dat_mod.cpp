@@ -18,8 +18,8 @@
 //#include "format.h"
 #include "dat_calc.h"
 
-#include "dat_MOD.h"
-#include "efc_MOD.h"
+#include "dat_mod.h"
+#include "efc_mod.h"
 
 #include "convert.h"
 #include "mixer.h"

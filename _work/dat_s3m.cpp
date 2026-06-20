@@ -18,8 +18,8 @@
 //#include "format.h"
 #include "dat_calc.h"
 
-#include "dat_S3M.h"
-#include "efc_S3M.h"
+#include "dat_s3m.h"
+#include "efc_s3m.h"
 
 #include "convert.h"
 #include "mixer.h"

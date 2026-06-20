@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
 # Render a module to WAV by running FX.EXE in DOSBox-X.
 #
-# Usage: tests/render-dosbox.sh [-t seconds] <module> [output.wav]
+# Usage: tests/render-dosbox.sh [--native] [-t seconds] <module> [output.wav]
 #
-# -t seconds   Max recording time (default 120). Required for looping modules.
-#              FX.EXE exits automatically for non-looping ones.
+# --native     Use FX.EXE's built-in WAV writer (-w:/-n: switches).
+#              No soundcard emulation or PulseAudio capture needed.
+#              Renders as fast as possible — deterministic output.
+#              This is the preferred mode for reference renders.
 #
-# Audio is captured via parecord on the PulseAudio/PipeWire default sink monitor.
-# DOSBox-X audio goes through PulseAudio (SB16 emulation → SDL audio → PA sink).
-# No xdotool or window manipulation required.
+# (default)    Capture audio via parecord from the PulseAudio/PipeWire default
+#              sink monitor. DOSBox-X SB16 emulation → SDL audio → PA sink.
+#              Required: parecord (pulseaudio-utils).
 #
-# Requirements: dosbox-x (Flatpak), parecord (pulseaudio-utils)
+# -t seconds   Max render/recording time (default 120). Required for looping
+#              modules in either mode; non-looping modules exit on their own.
+#
+# Requirements: dosbox-x (Flatpak or system)
 
 set -euo pipefail
 
@@ -18,17 +23,19 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK_DIR="$REPO_ROOT/_work"
 
 DURATION=120
+MODE=pulseaudio   # "pulseaudio" or "native"
 
-# Parse -t option
+# Parse options
 while [[ $# -gt 0 && "$1" == -* ]]; do
     case "$1" in
-        -t) DURATION="$2"; shift 2 ;;
-        *)  echo "Unknown option: $1" >&2; exit 1 ;;
+        -t)       DURATION="$2"; shift 2 ;;
+        --native) MODE=native; shift ;;
+        *)        echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
 
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 [-t seconds] <module.s3m|.mod|.669> [output.wav]" >&2
+    echo "Usage: $0 [--native] [-t seconds] <module.s3m|.mod|.669> [output.wav]" >&2
     exit 1
 fi
 
@@ -45,6 +52,79 @@ pkill -f "com.dosbox_x.DOSBox-X" 2>/dev/null || true
 sleep 0.5
 
 TMPCONF="$(mktemp "$HOME/.fx-dosbox-XXXXXX.conf")"
+trap 'rm -f "$TMPCONF"' EXIT
+
+# Locate dosbox-x: use flatpak run (not the export wrapper which exits early).
+if command -v dosbox-x &>/dev/null && [[ "$(command -v dosbox-x)" != */flatpak/exports/* ]]; then
+    DOSBOX_CMD=dosbox-x
+else
+    DOSBOX_CMD="flatpak run com.dosbox_x.DOSBox-X"
+fi
+
+echo "==> Rendering: $MODULE_FILE  (max ${DURATION}s, mode=${MODE})"
+echo "    Work dir: $WORK_DIR"
+echo "    Output:   $OUTPUT_WAV"
+
+# ---------------------------------------------------------------------------
+# Native WAV mode: FX.EXE writes the WAV itself — no audio device needed.
+# ---------------------------------------------------------------------------
+if [ "$MODE" = native ]; then
+    # DOS 8.3 temp name on the C: drive (= WORK_DIR on the host).
+    DOSOUT="FXOUT.WAV"
+    HOST_OUT="$WORK_DIR/$DOSOUT"
+    rm -f "$HOST_OUT"
+
+    cat > "$TMPCONF" <<EOF
+[dosbox]
+fastbioslogo = true
+startbanner = false
+
+[cpu]
+core = dynamic
+cycles = max
+
+[autoexec]
+mount c $WORK_DIR
+mount d $MODULE_DIR
+c:
+FX /w:$DOSOUT /n:$DURATION D:\\$MODULE_FILE
+exit
+EOF
+
+    $DOSBOX_CMD -conf "$TMPCONF" &
+    DBPID=$!
+
+    ELAPSED=0
+    while [ "$ELAPSED" -lt "$DURATION" ]; do
+        kill -0 "$DBPID" 2>/dev/null || { echo "    DOSBox-X exited after ${ELAPSED}s"; break; }
+        sleep 1
+        ELAPSED=$((ELAPSED + 1))
+    done
+
+    if [ "$ELAPSED" -ge "$DURATION" ]; then
+        echo "    Timeout after ${DURATION}s — killing DOSBox-X"
+    fi
+
+    kill -- -"$DBPID" 2>/dev/null || true
+    sleep 1
+    kill -9 -- -"$DBPID" 2>/dev/null || true
+    pkill -9 -x "dosbox-x" 2>/dev/null || true
+    wait "$DBPID" 2>/dev/null || true
+
+    if [ ! -s "$HOST_OUT" ]; then
+        echo "ERROR: $HOST_OUT is missing or empty — did FX.EXE start?" >&2
+        exit 1
+    fi
+
+    mv "$HOST_OUT" "$OUTPUT_WAV"
+    echo "==> Output: $OUTPUT_WAV"
+    sha256sum "$OUTPUT_WAV"
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# PulseAudio capture mode (original behaviour).
+# ---------------------------------------------------------------------------
 TMPWAV="$(mktemp "$HOME/.fx-capture-XXXXXX.wav")"
 trap 'rm -f "$TMPCONF" "$TMPWAV"' EXIT
 
@@ -71,17 +151,6 @@ c:
 FX /t:1 /d:5 /i:7 D:\\$MODULE_FILE
 exit
 EOF
-
-# Locate dosbox-x: use flatpak run (not the export wrapper which exits early).
-if command -v dosbox-x &>/dev/null && [[ "$(command -v dosbox-x)" != */flatpak/exports/* ]]; then
-    DOSBOX_CMD=dosbox-x
-else
-    DOSBOX_CMD="flatpak run com.dosbox_x.DOSBox-X"
-fi
-
-echo "==> Rendering: $MODULE_FILE  (max ${DURATION}s)"
-echo "    Work dir: $WORK_DIR"
-echo "    Output:   $OUTPUT_WAV"
 
 # Start recording the default sink monitor BEFORE DOSBox-X opens,
 # so we don't miss the first note.

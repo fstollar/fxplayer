@@ -12,6 +12,7 @@
 #include "device.h"
 #include "dev_sb.h"
 #include "dev_wss.h"
+#include "dev_wav.h"
 
 //#include "format.h"
 //#include "dat_wav.h"
@@ -42,6 +43,7 @@ static unsigned long clearvalue = 0;
   #define WSS_4232   4
   #define WSS_4232A  5
 #define GUS 3
+#define WAV 4
 
 // ******************* Sound Devices for the F/X Player *********************
 
@@ -97,6 +99,9 @@ switch ( CardType )
                    break;
         case GUS :                          // Gravis Ultrasound
                    break;
+        case WAV :                          // WAV file output
+                   printf("WAV file output to: %s\n", wav_outfile);
+                   break;
 
        }
 
@@ -123,6 +128,8 @@ long checkCard ( unsigned long CardType, unsigned long Address)
                     break;
          case GUS :                          // Gravis Ultrasound
                     break;
+         case WAV :                          // WAV file output — no hardware to detect
+                    return 0;
         }
 
 return 0;
@@ -149,9 +156,17 @@ long initCard ( )
                     break;
          case GUS :                          // Gravis Ultrasound
                     break;
+         case WAV :                          // WAV file output
+                    {
+                     long r = initWAV( buffer_length << 1 );
+                     if (r == 1) { puts("Cannot open WAV output file !"); return 1; }
+                     if (r == 2) { puts("Memory error for WAV buffer !"); return 2; }
+                     clearvalue = flag_16bit ? (flag_signed?0x0000:0x8000) : (flag_signed?0x0000:0x8080);
+                     return 0;              // skip DMA/IRQ setup — not needed for WAV
+                    }
         }
 
- value = setNewIRQ (IRQ, PlainInterupt, 0);
+ value = setNewIRQ (IRQ, PlainInterrupt, 0);
 
  if (value != 0)
     {
@@ -220,6 +235,8 @@ void startCard ( unsigned long Length, unsigned long Speed)
                     break;
          case GUS :                          // Gravis Ultrasound
                     break;
+         case WAV :                          // WAV file output — nothing to start
+                    return;
         }
 return;
 }
@@ -227,6 +244,8 @@ return;
 
 void stopCard ()
 {
+ if (CardType == WAV) return;              // no DMA to stop for WAV output
+
  stopDMA( DMA );
 
  switch (CardType)
@@ -261,6 +280,8 @@ void stopCard ()
 
 void clearCard ()
 {
+ if (CardType == WAV) { closeWAV(); return; }  // WAV: close file, free buffer, skip DMA/IRQ
+
  stopDMA( DMA );
 
  switch (CardType)
@@ -285,9 +306,9 @@ void clearCard ()
 return;
 }
 
-// *** This interrupt is calles everytime a IRQ from the card occours ***
+// *** This interrupt is called everytime a IRQ from the card occurs ***
 
-void PlainInterupt ()
+void PlainInterrupt ()
 {
  switch (CardType)
         {
@@ -301,7 +322,8 @@ void PlainInterupt ()
                     break;
          case GUS :                    // Gravis Ultrasound interrupt
                     break;
-         case 4   :
+         case WAV :                    // WAV file output — toggle block for pointer flip
+                    Mixer_Block = Mixer_Block ? 0 : 1;
                     break;
         }
 

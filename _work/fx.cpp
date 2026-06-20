@@ -21,6 +21,7 @@
 #include "keyctrl.h"
 #include "command.h"
 #include "device.h"
+#include "dev_wav.h"
 #include "format.h"
 #include "mixer.h"
 
@@ -140,16 +141,33 @@ puts("Loaded !!");
 
 // *** loop untill end of song or key is pressed
 
-
 escape = 0;
-while ( escape == 0 )
-      {
-       while( (test = kbhit() == 0) && (flag_DatReady == 1) );
 
-       if ( !test )  escape = getkey();
+if ( CardType == 4 )
+   {
+    // WAV output: drive mixer synchronously, write each block to file
+    unsigned long max_bytes = 0;
+    if ( wav_max_seconds > 0 )
+        max_bytes = wav_max_seconds * MixSpeed * (unsigned long)(1 << (flag_stereo + flag_16bit));
 
-       if ( flag_DatReady != 1 )  escape = 1;
-      }
+    while ( flag_DatReady == 1 )
+          {
+           if ( max_bytes > 0 && wav_data_bytes >= max_bytes )  break;
+           PlainInterrupt();
+           writeWAV();
+          }
+   }
+else
+   {
+    while ( escape == 0 )
+          {
+           while( (test = kbhit() == 0) && (flag_DatReady == 1) );
+
+           if ( !test )  escape = getkey();
+
+           if ( flag_DatReady != 1 )  escape = 1;
+          }
+   }
 
 
 //system("command.com");

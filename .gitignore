@@ -26,3 +26,17 @@ _watcom2/
 
 # DOSBox-X intermediate WAV captures (not ground truth)
 tests/captures/
+
+# Reference render WAVs — large binaries; sha256 hardcoded in cmake/
+tests/reference_renders/*.wav
+
+# _work/ build artefacts
+_work/*.obj
+_work/*.OBJ
+_work/*.err
+_work/*.ERR
+_work/*.map
+_work/*.MAP
+
+# Claude Code project state
+.claude/

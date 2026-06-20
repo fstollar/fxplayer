@@ -6,6 +6,7 @@
 
 #include "fx.h"
 #include "command.h"
+#include "dev_wav.h"
 
 //#include "irq.h"
 //#include "dma.h"
@@ -198,7 +199,7 @@ short comline(int argc, char **argv)
 
                                      if ( i > 64000 )
                                         {
-                                         printf("This frequence is not possible !\n");
+                                         printf("This frequency is not possible !\n");
                                          return -1;
                                         }
                                      MixSpeed = i;
@@ -206,6 +207,44 @@ short comline(int argc, char **argv)
                                  else
                                     {
                                      printf("The switch looks like 'f:MIXSPEED' !\n");
+                                     return -1;
+                                    }
+                                 break;
+                         case 7:                         // -w:filename  (WAV output)
+                                 if ( argv[count][t+1] == ':' )
+                                    {
+                                     t+=2;
+                                     if ( argv[count][t] == '\0' )
+                                        {
+                                         printf("The switch 'w:' needs an output filename !\n");
+                                         return -1;
+                                        }
+                                     strcpy( wav_outfile, argv[count]+t );
+                                     CardType = 4;       // select WAV output device
+                                     t = length - 1;     // filename consumed the rest of this arg
+                                    }
+                                 else
+                                    {
+                                     printf("The switch looks like 'w:FILENAME' !\n");
+                                     return -1;
+                                    }
+                                 break;
+                         case 8:                         // -n:seconds  (max render time for WAV)
+                                 if ( argv[count][t+1] == ':' )
+                                    {
+                                     t+=2;
+                                     i = strtoul ( argv[count]+t , &point, 10 );
+                                     if ( point == argv[count]+t )
+                                        {
+                                         printf("The switch 'n:' needs a time in seconds !\n");
+                                         return -1;
+                                        }
+                                     t = point - argv[count] - 1;
+                                     wav_max_seconds = i;
+                                    }
+                                 else
+                                    {
+                                     printf("The switch looks like 'n:SECONDS' !\n");
                                      return -1;
                                     }
                                  break;
@@ -235,6 +274,10 @@ short check_switch(char sw)
                    return 5;
          case 'f': case 'F':
                    return 6;
+         case 'w': case 'W':
+                   return 7;
+         case 'n': case 'N':      // -n:SECONDS max render time (note: 't' is already card Type)
+                   return 8;
          default:
                   printf("Switch \"%c\" is not allowed !!\nTry >FX -h< for help !\n", sw );
                   return 1;
@@ -274,6 +317,9 @@ void helpline()
  printf("          0 = hard (linear), 1 = soft (logarithmic) (default:soft)\n");
  printf("  (p    : interpolation on or off  (default:on)\n");
  printf("  (l    : sets loop mode for playing the song continuose)\n");
+ printf("  w:#  : write output to WAV file # (implies WAV output, no soundcard needed)\n");
+ printf("  n:#  : max render time in seconds for WAV output (0 = until end, default)\n");
+ printf("         Note: 't' is already used for card Type; use 'n' for Number of seconds\n");
 
  printf("\n  file : soundfile to load and start immediatly , path is allowed\n");
  printf("           Following formats are supported:\n");
