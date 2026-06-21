@@ -5,6 +5,7 @@ find_package(Threads REQUIRED)
 add_executable(fxplayer
     miniaudio.c
     main.cpp
+    tty.cpp
 )
 
 target_include_directories(fxplayer PRIVATE
