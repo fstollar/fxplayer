@@ -15,6 +15,58 @@ static const char fx_version_str[] =
     FX_STR(FX_VERSION_PATCH);
 
 static fx_format g_loaded_fmt = FX_FORMAT_UNKNOWN;
+static uint8_t   g_ui_volume  = 64;
+
+void fx_set_volume(uint8_t vol)
+{
+    if (vol > 64) vol = 64;
+    g_ui_volume = vol;
+    if (g_master_vol_table)
+        mixer_calc_master_vol32(g_MasterVolume * vol / 64u, g_master_vol_table);
+}
+
+uint8_t fx_get_volume(void)
+{
+    return g_ui_volume;
+}
+
+void fx_order_jump(int delta)
+{
+    int target;
+
+    switch (g_loaded_fmt) {
+
+    case FX_FORMAT_S3M:
+        target = (int)S3M_Order + delta;
+        if (target < 0) target = 0;
+        if (target >= (int)S3M_OrderNum) target = (int)S3M_OrderNum - 1;
+        S3M_nextorder = (uint32_t)target;
+        S3M_nextrow   = 0;
+        S3M_jump      = 1;
+        break;
+
+    case FX_FORMAT_MOD:
+        target = (int)MOD_Order + delta;
+        if (target < 0) target = 0;
+        if (target >= (int)MOD_OrderNum) target = (int)MOD_OrderNum - 1;
+        MOD_nextorder = (uint32_t)target;
+        MOD_nextrow   = 0;
+        MOD_jump      = 1;
+        break;
+
+    case FX_FORMAT_669:
+        target = (int)M669_Order + delta;
+        if (target < 0) target = 0;
+        if (target >= (int)M669_OrderNum) target = (int)M669_OrderNum - 1;
+        M669_Order   = (uint32_t)target;
+        M669_Pattern = M669_Orderlist[target];
+        M669_row     = 0;
+        break;
+
+    default:
+        break;
+    }
+}
 
 const char *fx_version_string(void)
 {
@@ -87,6 +139,7 @@ fx_err fx_load(const void *data, size_t size,
     fmt = fx_detect_format(data, size);
     mixer_reset();
     g_loaded_fmt = FX_FORMAT_UNKNOWN;
+    g_ui_volume  = 64;
 
     switch (fmt) {
     case FX_FORMAT_S3M:

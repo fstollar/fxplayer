@@ -84,6 +84,22 @@ size_t fx_render_frames(void *out, size_t frame_count,
 /* Release engine state. Safe to call even if fx_load failed. */
 void fx_close(void);
 
+/*
+ * UI volume control: 0 = silent, 64 = full (default after fx_load).
+ * Scales the module's own master-volume table entry — the soft-clip knee
+ * tracks volume correctly rather than attenuating post-clip output.
+ * Thread note: call only from the audio callback thread (see host README).
+ */
+void    fx_set_volume(uint8_t vol);
+uint8_t fx_get_volume(void);
+
+/*
+ * Jump the order list by delta (-1 = back, +1 = forward).
+ * Clamped to [0, OrderNum-1]. Takes effect at the next row boundary
+ * (S3M/MOD) or immediately (669). Call only from the audio callback thread.
+ */
+void fx_order_jump(int delta);
+
 #ifdef __cplusplus
 }
 #endif
