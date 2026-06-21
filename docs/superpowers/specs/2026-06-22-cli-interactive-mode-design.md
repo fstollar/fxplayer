@@ -63,7 +63,7 @@ FxKey  tty_read_key();      // non-blocking; returns KEY_NONE if no input
 ```cpp
 enum class FxKey {
     NONE,
-    SPACE,
+    PAUSE,
     QUIT,
     ORDER_FWD,
     ORDER_BWD,
@@ -95,7 +95,7 @@ enum class FxKey {
 After `ma_device_start`, print one line:
 
 ```
-[space] pause  [,/.] order  [+/-] volume  [q/Esc] quit
+[space] pause  [←/,  →/.] order  [↑/+  ↓/-] volume  [q/Esc] quit
 ```
 
 ### Pause
@@ -109,7 +109,7 @@ Replace the bare `sleep_for(50ms)` loop with:
 ```cpp
 while (!g_stop) {
     switch (tty_read_key()) {
-    case FxKey::SPACE:     ctx.paused ^= true; break;
+    case FxKey::PAUSE:     ctx.paused ^= 1;    break;
     case FxKey::QUIT:      g_stop = true;      break;
     case FxKey::ORDER_FWD: fx_order_jump(+1);  break;
     case FxKey::ORDER_BWD: fx_order_jump(-1);  break;
