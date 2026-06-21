@@ -5,12 +5,6 @@
 *.MAP
 *.err
 
-# Historical subdirs (identical to _original -- no point duplicating)
-BAK/
-BEO/
-PUBLIC/
-ZIP/
-
 # DOS extender binaries (unchanged)
 PMODEW.EXE
 PMWLITE.EXE
