@@ -55,22 +55,46 @@ extern int32_t  MOD_PeriodeAdjust[MOD_MAXCHANNELS];
 extern uint32_t MOD_Frequence[MOD_MAXCHANNELS];
 
 /* API */
+
+/* Parse the MOD header and return the required workspace buffer size. Returns 0 on error. */
 size_t  mod_workspace_bytes(const uint8_t *data, size_t size);
+
+/* Load a MOD module into caller-supplied workspace. Returns 0=ok, -1=format error, -2=workspace too small. */
 int     mod_load(const uint8_t *data, size_t size,
                  uint8_t *ws, size_t ws_size);
+
 void    mod_close(void);
+
+/* Mix block_frames frames into the global mixer accumulator and advance the sequencer. */
 void    mod_render_block(uint32_t block_frames);
+
+/* Returns non-zero when the song has played through and looped back to the start. */
 uint8_t mod_is_done(void);
 
 /* Called by effect module */
+
+/* Reset all playback state variables to start-of-song defaults. */
 void MOD_initvariables(void);
+
+/* Decode a 4-byte-per-channel MOD pattern row into MOD_RowBuffer. */
 void MOD_unpack_row(uint32_t pat_nr, uint32_t row_nr);
+
+/* Reload sample pointer, length, and loop bounds for the channel from the instrument list. */
 void MOD_GetNewSample(uint32_t channel);
+
+/* Compute the playback period/frequency for the current note on the given channel. */
 void MOD_GetNewNote(uint32_t channel);
+
+/* Store and prepare effect parameters from the current row for all active channels. */
 void MOD_GetNewEffect(void);
+
+/* Decode one row from the current pattern and dispatch notes/effects to all channels. */
 void MOD_read_row(void);
+
+/* Advance to the next row, or the next order-list entry when the pattern ends. Handles jump effects. */
 void MOD_goRowOrder(void);
 
+/* Convert Amiga MOD note index + finetune to the Amiga hardware period (Paula clock divisor). */
 uint32_t Calc_AMIGAperiode(uint32_t note, uint32_t finetune);
 
 #endif /* FX_FORMAT_MOD_H */

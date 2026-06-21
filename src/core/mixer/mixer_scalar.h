@@ -9,15 +9,15 @@
 
 /* Global mixer config (set by fx_load from fx_config) */
 extern uint32_t g_MixSpeed;
-extern uint32_t g_MasterVolume;
-extern uint32_t g_flag_stereo;      /* 0=mono, 1=stereo */
+extern uint32_t g_MasterVolume;        /* format-specific volume scale; NOT a 0-64 UI value */
+extern uint32_t g_flag_stereo;         /* 0=mono, 1=stereo */
 extern uint32_t g_flag_interpolate;
 extern uint32_t g_flag_soft_clip;
-extern uint32_t g_ChannelSeperation;
-extern uint32_t g_GlobalVolume;
+extern uint32_t g_ChannelSeperation;   /* stereo separation width: 0=centre, 128=full L/R split */
+extern uint32_t g_GlobalVolume;        /* in-song global volume (S3M Vxx effect), 0-64 */
 
 /* Mixer address and state */
-extern uint32_t g_MixerAddress;
+extern uint32_t g_MixerAddress;        /* current write offset into the 32-bit mix accumulator */
 extern uint32_t g_ChannelUsed, g_ChannelLast;
 
 /* Per-channel arrays [FX_MAXCHANNELS] */
@@ -54,11 +54,27 @@ extern uint32_t g_NextChannelActiv[FX_MAXCHANNELS];
 extern int32_t *g_master_vol_table;
 
 /* API called by format loaders and engine/fx.c */
+
+/* Zero all mixer state. Called by fx_load before loading a new module. */
 void mixer_reset(void);
+
+/* Zero only the 32-bit mix accumulator buffers, leaving per-channel config intact.
+   Called at the start of each render block before accumulating channels. */
 void mixer_clear(void);
+
+/* Accumulate all active channels into the 32-bit mix buffer for mix_length frames. */
 void mixer_do_pre_mixing(uint32_t mix_length);
+
+/* Apply master_vol_table lookup and clip/convert the 32-bit accumulator to interleaved s16 PCM. */
 void mixer_convert_to_s16(int16_t *out, uint32_t frame_count,
                           const int32_t *master_vol_table);
+
+/*
+ * Build the 16385-entry soft-clip volume lookup table at table_centre.
+ * The table maps 32-bit accumulator values to s16 output samples, scaled by
+ * master_volume. Called by format loaders at load time and by fx_set_volume
+ * when the user changes the volume.
+ */
 void mixer_calc_master_vol32(uint32_t master_volume, int32_t *table_centre);
 
 #endif

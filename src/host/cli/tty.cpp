@@ -45,11 +45,17 @@ FxKey tty_read_key()
     case '-':  return FxKey::VOL_DOWN;
 
     case 0x1b: {
+        /*
+         * Disambiguate bare Esc from VT100 arrow-key escape sequences.
+         * Arrow keys send three bytes: ESC '[' followed by A/B/C/D.
+         * A bare Esc has nothing following it, so the next read returns 0
+         * bytes (stdin is O_NONBLOCK). Any other sequence is discarded.
+         */
         unsigned char seq[2] = {0, 0};
         if (read(STDIN_FILENO, &seq[0], 1) != 1)
-            return FxKey::QUIT;   /* bare Esc */
+            return FxKey::QUIT;   /* bare Esc — no continuation byte */
         if (seq[0] != '[')
-            return FxKey::NONE;   /* unknown escape */
+            return FxKey::NONE;   /* unknown escape sequence */
         if (read(STDIN_FILENO, &seq[1], 1) != 1)
             return FxKey::NONE;
         switch (seq[1]) {

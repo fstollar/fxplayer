@@ -57,22 +57,46 @@ extern uint8_t *M669_Speedlist;
 extern uint8_t *M669_Breaklist;
 
 /* API */
+
+/* Parse the 669 header and return the required workspace buffer size. Returns 0 on error. */
 size_t  m669_workspace_bytes(const uint8_t *data, size_t size);
+
+/* Load a 669 module into caller-supplied workspace. Returns 0=ok, -1=format error, -2=workspace too small. */
 int     m669_load(const uint8_t *data, size_t size,
                   uint8_t *ws, size_t ws_size);
+
 void    m669_close(void);
+
+/* Mix block_frames frames into the global mixer accumulator and advance the sequencer. */
 void    m669_render_block(uint32_t block_frames);
+
+/* Returns non-zero when the song has played through and looped back to the start. */
 uint8_t m669_is_done(void);
 
 /* Called by effect module */
+
+/* Reset all playback state variables to start-of-song defaults. */
 void M669_initvariables(void);
+
+/* Decode a 5-byte-per-channel 669 pattern row into M669_RowBuffer. */
 void M669_unpack_row(uint32_t pat_nr, uint32_t row_nr);
+
+/* Reload sample pointer, length, and loop bounds for the channel from the instrument list. */
 void M669_GetNewSample(uint32_t channel);
+
+/* Compute the playback period/frequency for the current note on the given channel. */
 void M669_GetNewNote(uint32_t channel);
+
+/* Store and prepare effect parameters from the current row for all active channels. */
 void M669_GetNewEffect(void);
+
+/* Decode one row from the current pattern and dispatch notes/effects to all channels. */
 void M669_read_row(void);
+
+/* Advance to the next row, or the next order-list entry when the pattern ends. */
 void M669_goRowOrder(void);
 
+/* Convert 669 note index + finetune to the mixer period value. */
 uint32_t Calc_669periode(uint32_t note, uint32_t finetune);
 
 #endif /* FX_FORMAT_M669_H */
