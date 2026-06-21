@@ -114,6 +114,13 @@ blow-by-blow logs here.
 - Encapsulate the global-array state into a struct (only after the suite is
   green — it now is).
 - XM / IT formats (planned in the original, never implemented).
+- **CLI UX** — proper argument parsing (sample rate, channels, output device,
+  volume, loop count), friendlier startup banner showing format/title/channels/BPM.
+- **CLI interactive mode** — terminal keyboard handling: pause/resume, quit,
+  jump pattern forward/backward, volume up/down (no ncurses dependency preferred).
+- **Web host** — WebAssembly build of the C99 core; browser page with basic
+  transport controls. Candidate: Emscripten + a small JS/HTML shell, or a
+  Rust/wasm-bindgen thin wrapper around the C core.
 
 ## Reference docs
 
