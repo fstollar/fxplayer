@@ -41,6 +41,46 @@ through the system audio device.  Ctrl+C to stop; auto-stops at song end.
 
 ---
 
+### 2026-06-22 — Deferred-jump unification + S3M bounds fix
+
+#### Deferred order-jump for 669; goRowOrder normalized across all formats
+
+669 previously applied order jumps immediately inside `fx_order_jump`
+(direct assignment to `M669_Order`/`M669_Pattern`/`M669_row`).  MOD and
+S3M already used a deferred approach: set `nextorder`/`nextrow`/`jump` and
+apply at end-of-row in `goRowOrder`.  669 now follows the same pattern.
+
+Additional normalization applied to all three formats:
+
+- Branch structure unified to `if (jump == 0) { normal } else { jump }`.
+  669 used an inverted early-return guard; now all three are consistent.
+- `nextrow`/`nextorder` are always cleared after the jump branch, even when
+  the bounds check rejects the target.  MOD and S3M previously returned
+  early on an out-of-bounds jump, leaving stale values in those variables.
+- Dead code removed from MOD: the post-apply
+  `if (MOD_Order >= MOD_OrderNum)` block could never be true because the
+  entry guard already checked `MOD_nextorder < MOD_OrderNum`.
+
+#### S3M order-jump off-by-one fix (see BUGS.md O-3)
+
+The jump-branch guard used `S3M_nextorder <= S3M_OrderNum` (note: `<=`).
+`S3M_OrderNum` is the count of entries in the order list; valid indices are
+`0 … OrderNum-1`.  Accepting `nextorder == OrderNum` reads one byte past
+the order list — into the instrument parapointer table.
+
+Two real paths could produce `nextorder == OrderNum`:
+- Effect `Bxx` with operand equal to `OrderNum` (no clamping in the effect handler).
+- Effect `Cxx` (break to row) on the **last order position**:
+  sets `nextorder = CurrentOrder + 1`, which equals `OrderNum` when
+  `CurrentOrder == OrderNum - 1`.
+
+Changed to strict `<`.  Correct songs are unaffected: normal end-of-song
+wrapping is handled by the `Pattern == 255` sentinel check that runs inside
+the guard.  Documented in `BUGS.md` as O-3 for follow-up investigation in
+the original DOS source.
+
+---
+
 ### 2026-06-20 — MOD + 669 playback ported; bit-exact CTests pass
 
 MOD (4- and 8-channel) and 669 formats added to the C99 core.
