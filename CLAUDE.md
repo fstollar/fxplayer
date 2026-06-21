@@ -83,7 +83,7 @@ The mixer's output is fully deterministic, so:
 
 ## Current status
 
-**Per-change history lives in `CHANGES.md`; known bugs/quirks in `BUGS.md`.**
+**Per-change history lives in `CHANGELOG.md`; known bugs/quirks in `BUGS.md`.**
 This section is a one-line-per-milestone index only — don't duplicate the
 blow-by-blow logs here.
 
@@ -97,7 +97,7 @@ blow-by-blow logs here.
 - **Validation harness** — `tests/render-dosbox.sh --native` renders DOS
   reference WAVs; CTests compare sha256 against hardcoded reference hashes.
 
-**Durable facts worth keeping in context** (rationale in CHANGES.md / BUGS.md):
+**Durable facts worth keeping in context** (rationale in CHANGELOG.md / BUGS.md):
 - Sample addresses use `uintptr_t`, not `uint32_t` (64-bit host pointer width).
 - `g_master_vol_table` lives in `mixer_scalar.c`, shared by all format loaders.
 - MOD samples are signed 8-bit (no conversion); only 669 samples are XOR'd 0x80.
