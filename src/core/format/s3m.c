@@ -584,7 +584,7 @@ void S3M_goRowOrder(void)
         }
     } else {
         S3M_jump = 0;
-        if (S3M_nextrow <= 63 && S3M_nextorder <= S3M_OrderNum) {
+        if (S3M_nextrow <= 63 && S3M_nextorder < S3M_OrderNum) {
             S3M_row     = S3M_nextrow;
             S3M_Order   = S3M_nextorder;
             S3M_Pattern = s_order[S3M_Order];

@@ -81,6 +81,34 @@ reproduces the original exactly — `test` persists across iterations, no `else`
 
 ---
 
+### O-3: S3M `Bxx` / `Cxx` order-jump bounds check is off-by-one (latent OOB read)
+
+**Where:** `_original/EFC_S3M.CPP` effects `B` (jump to order) and `C` (break to row).
+
+**What:** The original sequencer in `DAT_S3M.CPP` accepts a jump target
+`nextorder` when `nextorder <= OrdNum` (i.e. equal-to is allowed). The order
+list in the file has exactly `OrdNum` entries (indices 0 … OrdNum-1). An index
+of `OrdNum` reads one byte past the end of the order list — into the first byte
+of the instrument parapointer table — and uses that arbitrary byte as a pattern
+number. Two paths can produce `nextorder == OrdNum`:
+
+- Effect `Bxx` with operand equal to `OrdNum` (malformed but possible in
+  the wild).
+- Effect `Cxx` (break to row) when issued on the **last order position**:
+  the sequencer sets `nextorder = CurrentOrder + 1`, which equals `OrdNum`
+  when `CurrentOrder == OrdNum - 1`.
+
+**Port handling:** the C99 core changed the guard to strict `<`, blocking the
+out-of-bounds read. Modules that rely on the `Cxx`-at-last-order behaviour to
+wrap back to order 0 are handled by the `S3M_Pattern == 255` sentinel check
+that follows when the jump is applied, so correct songs are unaffected.
+
+**To investigate in the original:** check whether the original `DAT_S3M.CPP`
+sequencer loop also stops on the `== OrdNum` slot (i.e. whether the off-by-one
+is load-bearing for end-of-song detection or is simply a latent OOB).
+
+---
+
 ## Port quirks (not bugs, but easy to trip over)
 
 ### P-1: DOS 8.3 filename truncation in the render harness
