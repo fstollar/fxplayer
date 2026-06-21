@@ -115,6 +115,14 @@ blow-by-blow logs here.
   green — it now is).
 - XM / IT formats (planned in the original, never implemented).
 
+## Reference docs
+
+- **`docs/open-watcom-v2.md`** — consult when working on the DOS build, `makefile.dos`,
+  `wasm`/`wcc386`/`wcl386` flags, OW V2 C99 compliance, or CMake toolchain integration
+  for the DOS target.
+- **`docs/openwatcom-v2-bugs.md`** — consult before diagnosing wasm/wpp386 errors; lists
+  known OW V2 bugs with workarounds (`@@` local labels, `-wcd=<n>`, `model flat,prolog`).
+
 ## Notes on collaborator
 
 - User is the original author (Apollo) — deep expertise in x86 assembler optimization, Pentium U/V pipeline scheduling, and demoscene-era cycle-counting.
