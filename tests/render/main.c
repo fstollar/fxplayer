@@ -50,10 +50,10 @@ int main(int argc, char **argv)
     size_t   all_used  = 0;
     size_t   rendered;
     uint32_t total_frames = 0;
-    uint32_t max_frames   = 0;
+    uint32_t max_frames   = 0;  /* 0 = no limit */
 
     if (argc < 3) {
-        fprintf(stderr, "Usage: render_mod <input.mod> <output.wav> [max_frames]\n");
+        fprintf(stderr, "Usage: render <input.mod|.s3m|.669> <output.wav> [max_frames]\n");
         return 1;
     }
     if (argc >= 4) max_frames = (uint32_t)atol(argv[3]);
