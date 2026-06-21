@@ -95,7 +95,8 @@ blow-by-blow logs here.
   vs. the DOS reference. `fx_detect_format` dispatches all three. 6/6 CTests
   pass (`compare_s3m` / `compare_mod` / `compare_669`).
 - **CLI host (`src/host/cli/`)** — `fxplayer <module>` real-time playback via
-  miniaudio.
+  miniaudio. Interactive keyboard controls: pause/resume (SPACE), quit (Q/Esc),
+  order jump (←/→), volume (↑/↓). POSIX termios raw-mode TTY input, no ncurses.
 - **Validation harness** — `tests/render-dosbox.sh --native` renders DOS
   reference WAVs; CTests compare sha256 against hardcoded reference hashes.
 
@@ -106,6 +107,11 @@ blow-by-blow logs here.
 - The mixer's master-volume soft-clip table has a faithful original quirk
   (BUGS.md O-2) — do not "fix" it; it's required for bit-exactness.
 - DOS reference renders need **8.3-safe filenames** on the C: mount.
+- All three formats use the same deferred-jump pattern: `fx_order_jump` sets
+  `nextorder`/`nextrow`/`jump`; `goRowOrder` applies at end-of-row. Never apply
+  jumps immediately — all three `goRowOrder` functions must stay symmetric.
+- S3M order-jump bounds use strict `<` (not `<=`) against `S3M_OrderNum` —
+  the `<=` in the original is an off-by-one OOB read (BUGS.md O-3).
 
 ### Next milestones (not yet started)
 
@@ -116,8 +122,6 @@ blow-by-blow logs here.
 - XM / IT formats (planned in the original, never implemented).
 - **CLI UX** — proper argument parsing (sample rate, channels, output device,
   volume, loop count), friendlier startup banner showing format/title/channels/BPM.
-- **CLI interactive mode** — terminal keyboard handling: pause/resume, quit,
-  jump pattern forward/backward, volume up/down (no ncurses dependency preferred).
 - **Web host** — WebAssembly build of the C99 core; browser page with basic
   transport controls. Candidate: Emscripten + a small JS/HTML shell, or a
   Rust/wasm-bindgen thin wrapper around the C core.
