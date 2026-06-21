@@ -121,6 +121,10 @@ blow-by-blow logs here.
 - **Web host** — WebAssembly build of the C99 core; browser page with basic
   transport controls. Candidate: Emscripten + a small JS/HTML shell, or a
   Rust/wasm-bindgen thin wrapper around the C core.
+- **Bug audit** — systematically work through `BUGS.md`, classify each quirk
+  as (a) faithful reproduction required for bit-exactness, (b) fixable in the
+  C99 core without breaking bit-exactness, or (c) fixable only in the DOS
+  original; for (b)/(c) decide whether/how to fix and document the decision.
 
 ## Reference docs
 
