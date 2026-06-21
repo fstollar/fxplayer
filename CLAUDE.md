@@ -45,30 +45,32 @@ These are settled — don't relitigate without reason.
   - `MIXER_SCALAR_C` — portable reference; the bit-exact ground truth all variants must match
 - **Self-modifying code stays in the DOS build only.** Modern OSes enforce W^X; on modern OoO cores, SMC is *slower* than a memory load. Modern x86 build replaces patch sites with `rip`-relative loads from a per-mixer state struct.
 
-## Planned repo layout
+## Repo layout
 
 ```
 fxplayer/
 ├── CLAUDE.md                  # this file
 ├── _original/                 # 1998 source, untouched
-├── core/                      # C99, no deps, no I/O, no alloc
-│   ├── include/fx/            # public C API headers
-│   ├── engine/                # state, channel mgmt, mix dispatch
-│   ├── format/                # mod.c, s3m.c, m669.c, wav.c
-│   ├── effect/                # efc_mod.c, efc_s3m.c, efc_669.c
-│   └── mixer/
-│       ├── mixer_scalar.c     # portable reference
-│       ├── mixer_x86_sse2.c
-│       ├── mixer_x86_avx2.c
-│       ├── mixer_armcm_dsp.c
-│       └── mixer_x86_p5.asm   # original (DOS only)
-├── host/
-│   ├── cli/                   # C++ CLI player (miniaudio)
-│   ├── dos/                   # DOS host (original DEV_SB/DEV_WSS/DMA/IRQ)
-│   └── mcu_example/           # bare-metal STM32 I2S DMA example
+├── src/
+│   ├── core/                  # C99, no deps, no I/O, no alloc
+│   │   ├── include/fx/        # public C API headers
+│   │   ├── engine/            # state, channel mgmt, mix dispatch
+│   │   ├── format/            # mod.c, s3m.c, m669.c, wav.c
+│   │   ├── effect/            # efc_mod.c, efc_s3m.c, efc_669.c
+│   │   └── mixer/
+│   │       ├── mixer_scalar.c     # portable reference
+│   │       ├── mixer_x86_sse2.c
+│   │       ├── mixer_x86_avx2.c
+│   │       ├── mixer_armcm_dsp.c
+│   │       └── mixer_x86_p5.asm   # original (DOS only)
+│   └── host/
+│       ├── cli/               # C++ CLI player (miniaudio)
+│       ├── dos/               # DOS host (original DEV_SB/DEV_WSS/DMA/IRQ)
+│       └── mcu_example/       # bare-metal STM32 I2S DMA example
 ├── tests/
 │   ├── reference_renders/     # bit-exact WAV ground truths
 │   └── ...
+├── cmake/                     # CMake helper scripts
 ├── CMakeLists.txt             # hosted CLI build
 └── makefile.dos               # DOS/Watcom build
 ```
@@ -89,10 +91,10 @@ blow-by-blow logs here.
 
 - **DOS build (`_work/`)** — builds with OpenWatcom V2 on Linux → `FX.EXE`
   (156 K, PMode/W). `DEV_WAV` file-output device (`-w:`/`-n:` switches).
-- **C99 core (`core/`)** — S3M, MOD (4/8-ch), and 669 all play **bit-exact**
+- **C99 core (`src/core/`)** — S3M, MOD (4/8-ch), and 669 all play **bit-exact**
   vs. the DOS reference. `fx_detect_format` dispatches all three. 6/6 CTests
   pass (`compare_s3m` / `compare_mod` / `compare_669`).
-- **CLI host (`host/cli/`)** — `fxplayer <module>` real-time playback via
+- **CLI host (`src/host/cli/`)** — `fxplayer <module>` real-time playback via
   miniaudio.
 - **Validation harness** — `tests/render-dosbox.sh --native` renders DOS
   reference WAVs; CTests compare sha256 against hardcoded reference hashes.

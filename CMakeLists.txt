@@ -23,10 +23,10 @@ endif()
 option(FX_BUILD_CLI   "Build the C++ CLI host"      ON)
 option(FX_BUILD_TESTS "Build unit / regression tests" OFF)
 
-add_subdirectory(core)
+add_subdirectory(src/core)
 
 if(FX_BUILD_CLI)
-    add_subdirectory(host/cli)
+    add_subdirectory(src/host/cli)
 endif()
 
 if(FX_BUILD_TESTS)
