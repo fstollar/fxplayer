@@ -18,3 +18,10 @@ target_link_libraries(fxplayer PRIVATE
     ${CMAKE_DL_LIBS}
     m
 )
+
+# Copy the binary to release/ at the repo root after every successful build.
+add_custom_command(TARGET fxplayer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/release
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fxplayer> ${CMAKE_SOURCE_DIR}/release/fxplayer
+    COMMENT "Copied fxplayer -> release/"
+)

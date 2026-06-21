@@ -1,3 +1,6 @@
+# Release binaries (built locally, not tracked in git)
+release/
+
 # CMake build output
 build/
 cmake-build-*/
