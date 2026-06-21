@@ -140,7 +140,7 @@ uint32_t M669_LastPattern = 0xFFFFu;
 uint32_t M669_LastRow     = 0xFFFFu;
 uint32_t M669_TickLength  = 0;
 
-uint32_t M669_row = 0, M669_jump = 0;
+uint32_t M669_row = 0, M669_jump = 0, M669_nextrow = 0, M669_nextorder = 0;
 uint32_t M669_tick = 0, M669_Order = 0, M669_Pattern = 0;
 uint32_t M669_buffer_rest = 0, M669_tick_rest = 0;
 
@@ -311,6 +311,8 @@ int m669_load(const uint8_t *data, size_t size,
     M669_tick_rest  = M669_TickLength;
     M669_row        = 0;
     M669_jump       = 0;
+    M669_nextrow    = 0;
+    M669_nextorder  = 0;
     M669_tick       = 0;
     M669_Order      = 0;
     M669_Pattern    = M669_Orderlist[0];
@@ -347,7 +349,7 @@ void M669_initvariables(void)
     M669_LastPattern = 0xFFFFu;
     M669_LastRow     = 0xFFFFu;
     M669_TickLength  = 0;
-    M669_row = M669_jump = 0;
+    M669_row = M669_jump = M669_nextrow = M669_nextorder = 0;
     M669_tick = M669_Order = M669_Pattern = 0;
     M669_buffer_rest = M669_tick_rest = 0;
     M669_tempo = 78;
@@ -476,18 +478,29 @@ void M669_goRowOrder(void)
 {
     if (s_dat_ready != 1) return;
 
-    M669_row++;
+    if (M669_jump == 0) {
+        M669_row++;
 
-    if (M669_row >= (uint32_t)(M669_Breaklist[M669_Pattern] + 1u)) {
-        M669_Order++;
-        M669_row    = 0;
-        M669_Pattern = M669_Orderlist[M669_Order];
+        if (M669_row >= (uint32_t)(M669_Breaklist[M669_Pattern] + 1u)) {
+            M669_Order++;
+            M669_row    = 0;
+            M669_Pattern = M669_Orderlist[M669_Order];
 
-        if (M669_Pattern == 0xFFu) {
-            M669_Order   = 0;
-            M669_Pattern = M669_Orderlist[0];
-            s_dat_ready  = 2;
+            if (M669_Pattern == 0xFFu) {
+                M669_Order   = 0;
+                M669_Pattern = M669_Orderlist[0];
+                s_dat_ready  = 2;
+            }
         }
+    } else {
+        M669_jump = 0;
+        if (M669_nextorder < M669_OrderNum) {
+            M669_Order   = M669_nextorder;
+            M669_Pattern = M669_Orderlist[M669_Order];
+            M669_row     = M669_nextrow;
+        }
+        M669_nextorder = 0;
+        M669_nextrow   = 0;
     }
 }
 

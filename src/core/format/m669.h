@@ -21,7 +21,7 @@ extern uint8_t  M669_RowBuffer[M669_CHANNELS * 5];
 
 extern uint32_t M669_LastPattern, M669_LastRow;
 extern uint32_t M669_TickLength;
-extern uint32_t M669_row, M669_jump;
+extern uint32_t M669_row, M669_jump, M669_nextrow, M669_nextorder;
 extern uint32_t M669_tick, M669_Order, M669_Pattern;
 extern uint32_t M669_buffer_rest, M669_tick_rest;
 

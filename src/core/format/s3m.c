@@ -584,25 +584,24 @@ void S3M_goRowOrder(void)
         }
     } else {
         S3M_jump = 0;
-        if (S3M_nextrow   > 63)           return;
-        if (S3M_nextorder > S3M_OrderNum) return;
-        S3M_row       = S3M_nextrow;
-        S3M_nextrow   = 0;
-        S3M_Order     = S3M_nextorder;
-        S3M_nextorder = 0;
-
-        S3M_Pattern = s_order[S3M_Order];
-
-        while (S3M_Pattern == 254) {
-            S3M_Order++;
+        if (S3M_nextrow <= 63 && S3M_nextorder <= S3M_OrderNum) {
+            S3M_row     = S3M_nextrow;
+            S3M_Order   = S3M_nextorder;
             S3M_Pattern = s_order[S3M_Order];
-        }
 
-        if (S3M_Pattern == 255) {
-            S3M_Order   = 0;
-            S3M_Pattern = s_order[0];
-            s_dat_ready = 2;
+            while (S3M_Pattern == 254) {
+                S3M_Order++;
+                S3M_Pattern = s_order[S3M_Order];
+            }
+
+            if (S3M_Pattern == 255) {
+                S3M_Order   = 0;
+                S3M_Pattern = s_order[0];
+                s_dat_ready = 2;
+            }
         }
+        S3M_nextrow   = 0;
+        S3M_nextorder = 0;
     }
 }
 

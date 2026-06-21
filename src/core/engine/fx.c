@@ -58,9 +58,9 @@ void fx_order_jump(int delta)
         target = (int)M669_Order + delta;
         if (target < 0) target = 0;
         if (target >= (int)M669_OrderNum) target = (int)M669_OrderNum - 1;
-        M669_Order   = (uint32_t)target;
-        M669_Pattern = M669_Orderlist[target];
-        M669_row     = 0;
+        M669_nextorder = (uint32_t)target;
+        M669_nextrow   = 0;
+        M669_jump      = 1;
         break;
 
     default:

@@ -525,17 +525,13 @@ void MOD_goRowOrder(void)
         }
     } else {
         MOD_jump = 0;
-        if (MOD_nextrow > 63u || MOD_nextorder >= MOD_OrderNum) return;
-        MOD_row       = MOD_nextrow;
-        MOD_nextrow   = 0;
-        MOD_Order     = MOD_nextorder;
-        MOD_nextorder = 0;
-        MOD_Pattern   = s_order[MOD_Order];
-        if (MOD_Order >= MOD_OrderNum) {
-            MOD_Order = 0;
-            MOD_Pattern = s_order[0];
-            s_dat_ready = 2;
+        if (MOD_nextrow <= 63u && MOD_nextorder < MOD_OrderNum) {
+            MOD_row     = MOD_nextrow;
+            MOD_Order   = MOD_nextorder;
+            MOD_Pattern = s_order[MOD_Order];
         }
+        MOD_nextrow   = 0;
+        MOD_nextorder = 0;
     }
 }
 
