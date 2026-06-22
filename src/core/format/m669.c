@@ -179,7 +179,8 @@ static uint8_t  *s_buf    = NULL;
 static uint8_t **s_ins    = NULL;
 static uint8_t **s_smp    = NULL;
 static uint8_t **s_pat    = NULL;
-static uint8_t   s_dat_ready = 0;
+static uint8_t   s_dat_ready  = 0;
+static uint32_t  s_song_loops = 0;
 
 /* ---- workspace sizing ---- */
 
@@ -214,7 +215,8 @@ int m669_load(const uint8_t *data, size_t size,
     size_t ptr_align, module_aligned;
     uint32_t i, t;
 
-    s_dat_ready = 0;
+    s_dat_ready  = 0;
+    s_song_loops = 0;
 
     if (size < 0x1f1u)  return -1;
     if (ws_size < m669_workspace_bytes(data, size)) return -2;
@@ -328,17 +330,17 @@ int m669_load(const uint8_t *data, size_t size,
 
 void m669_close(void)
 {
-    s_dat_ready = 0;
+    s_dat_ready  = 0;
+    s_song_loops = 0;
     s_buf = NULL;
     s_ins = s_smp = s_pat = NULL;
     M669_Orderlist = M669_Speedlist = M669_Breaklist = NULL;
     g_master_vol_table = NULL;
 }
 
-uint8_t m669_is_done(void)
-{
-    return s_dat_ready == 2u;
-}
+uint8_t  m669_is_done(void)    { return s_dat_ready == 2u; }
+uint32_t m669_song_loops(void) { return s_song_loops; }
+void     m669_restart(void)    { if (s_dat_ready == 2) s_dat_ready = 1; }
 
 /* ---- initialisation ---- */
 
@@ -489,6 +491,7 @@ void M669_goRowOrder(void)
             if (M669_Pattern == 0xFFu) {
                 M669_Order   = 0;
                 M669_Pattern = M669_Orderlist[0];
+                s_song_loops++;
                 s_dat_ready  = 2;
             }
         }

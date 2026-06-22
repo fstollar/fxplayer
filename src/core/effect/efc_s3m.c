@@ -254,6 +254,7 @@ void S3M_GlobalEffect(void)
 
             case 2:  /* Bxx: jump to order */
                 if (jumpbreak) break;
+                if ((uint32_t)info <= S3M_Order) s3m_mark_looped();
                 S3M_nextorder = info;
                 S3M_nextrow   = 0;
                 S3M_jump      = 1;

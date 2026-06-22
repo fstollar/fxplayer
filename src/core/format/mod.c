@@ -172,7 +172,8 @@ static uint8_t **s_ins     = NULL;
 static uint8_t **s_smp     = NULL;
 static uint8_t **s_pat     = NULL;
 static uint8_t  *s_order   = NULL;
-static uint8_t   s_dat_ready = 0;
+static uint8_t   s_dat_ready  = 0;
+static uint32_t  s_song_loops = 0;
 
 /* ---- helpers ---- */
 
@@ -213,7 +214,8 @@ int mod_load(const uint8_t *data, size_t size,
     uint32_t smpcount, channels;
     uint32_t base_pat, base_smp;
 
-    s_dat_ready = 0;
+    s_dat_ready  = 0;
+    s_song_loops = 0;
 
     if (size < 600u) return -1;
     if (ws_size < mod_workspace_bytes(data, size)) return -2;
@@ -368,17 +370,18 @@ int mod_load(const uint8_t *data, size_t size,
 
 void mod_close(void)
 {
-    s_dat_ready = 0;
+    s_dat_ready  = 0;
+    s_song_loops = 0;
     s_buf = NULL;
     s_ins = s_smp = s_pat = NULL;
     s_order = NULL;
     g_master_vol_table = NULL;
 }
 
-uint8_t mod_is_done(void)
-{
-    return s_dat_ready == 2u;
-}
+uint8_t  mod_is_done(void)    { return s_dat_ready == 2u; }
+uint32_t mod_song_loops(void) { return s_song_loops; }
+void     mod_mark_looped(void) { s_song_loops++; }
+void     mod_restart(void)    { if (s_dat_ready == 2) s_dat_ready = 1; }
 
 /* ---- initialisation ---- */
 
@@ -519,6 +522,7 @@ void MOD_goRowOrder(void)
             MOD_row = 0;
             if (MOD_Order >= MOD_OrderNum) {
                 MOD_Order = 0;
+                s_song_loops++;
                 s_dat_ready = 2;
             }
             MOD_Pattern = s_order[MOD_Order];

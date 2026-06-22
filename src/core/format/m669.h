@@ -70,8 +70,14 @@ void    m669_close(void);
 /* Mix block_frames frames into the global mixer accumulator and advance the sequencer. */
 void    m669_render_block(uint32_t block_frames);
 
-/* Returns non-zero when the song has played through and looped back to the start. */
+/* Returns non-zero when the song has played through to a natural end (pattern 0xFF). */
 uint8_t m669_is_done(void);
+
+/* Returns how many times the song has looped (pattern 0xFF reached). */
+uint32_t m669_song_loops(void);
+
+/* Reset s_dat_ready to 1 so rendering resumes after a natural end. */
+void     m669_restart(void);
 
 /* Called by effect module */
 

@@ -9,9 +9,7 @@
 #include "miniaudio.h"
 #include "fx/fx.h"
 #include "tty.h"
-
-static constexpr uint32_t SAMPLE_RATE = 48000;
-static constexpr uint32_t CHANNELS    = 2;
+#include "args.h"
 
 static std::atomic<bool> g_stop{false};
 
@@ -19,6 +17,8 @@ static void on_signal(int) { g_stop = true; tty_raw_disable(); }
 
 struct AudioCtx {
     fx_config            cfg;
+    int                  loop;         /* -1=infinite, 0=no loop, N=N repeats */
+    uint32_t             prev_loops;   /* fx_song_loops() value last callback */
     std::atomic<bool>    done{false};
     std::atomic<bool>    paused{false};
     std::atomic<int>     vol_cmd{-1};
@@ -30,7 +30,6 @@ static void data_callback(ma_device *dev, void *out, const void * /*in*/, ma_uin
 {
     auto *ctx = static_cast<AudioCtx *>(dev->pUserData);
 
-    /* Apply pending commands before any rendering */
     int vol = ctx->vol_cmd.exchange(-1, std::memory_order_relaxed);
     if (vol >= 0) {
         fx_set_volume(static_cast<uint8_t>(vol));
@@ -41,16 +40,39 @@ static void data_callback(ma_device *dev, void *out, const void * /*in*/, ma_uin
         fx_order_jump(ord);
 
     if (ctx->paused.load(std::memory_order_relaxed) || ctx->done.load(std::memory_order_relaxed)) {
-        std::memset(out, 0, frame_count * CHANNELS * sizeof(int16_t));
+        std::memset(out, 0, frame_count * ctx->cfg.channels * sizeof(int16_t));
         return;
     }
 
     size_t rendered = fx_render_frames(out, frame_count, &ctx->cfg);
+
+    /* Zero the tail on a natural end (pattern 255 / order list exhausted). */
     if (rendered < frame_count) {
-        size_t tail = (frame_count - rendered) * CHANNELS * sizeof(int16_t);
-        std::memset(static_cast<int16_t *>(out) + rendered * CHANNELS, 0, tail);
-        ctx->done = true;
-        g_stop    = true;
+        size_t tail = (frame_count - rendered) * ctx->cfg.channels * sizeof(int16_t);
+        std::memset(static_cast<int16_t *>(out) + rendered * ctx->cfg.channels, 0, tail);
+    }
+
+    /*
+     * Detect song loops: both Bxx-to-order-0 effects (counter incremented by
+     * the effect engine mid-render) and natural ends (pattern 255, also sets
+     * rendered < frame_count) bump fx_song_loops(). Check after every render.
+     */
+    uint32_t cur_loops = fx_song_loops();
+    if (cur_loops != ctx->prev_loops) {
+        ctx->prev_loops = cur_loops;
+        if (ctx->loop == 0) {
+            /* No looping: stop on the first loop event. */
+            ctx->done = true;
+            g_stop    = true;
+        } else if (ctx->loop > 0 && (int)cur_loops >= ctx->loop) {
+            /* N repeats exhausted. */
+            ctx->done = true;
+            g_stop    = true;
+        } else if (rendered < frame_count) {
+            /* Infinite or still has repeats left: un-stick engine after natural end. */
+            fx_restart();
+        }
+        /* Bxx-loop case with repeats remaining: engine already jumped, no action needed. */
     }
 }
 
@@ -72,18 +94,25 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     return buf;
 }
 
+static const char *format_name(fx_format fmt)
+{
+    switch (fmt) {
+    case FX_FORMAT_S3M: return "S3M";
+    case FX_FORMAT_MOD: return "MOD";
+    case FX_FORMAT_669: return "669";
+    default:            return "???";
+    }
+}
+
 int main(int argc, char **argv)
 {
-    std::printf("F/X Player %s\n", fx_version_string());
-
-    if (argc < 2) {
-        std::fprintf(stderr, "Usage: %s <module.s3m>\n", argv[0]);
+    FxArgs fxargs;
+    if (!fx_parse_args(argc, argv, fxargs))
         return 1;
-    }
 
     size_t   file_size = 0;
-    uint8_t *file_buf  = read_file(argv[1], &file_size);
-    if (!file_buf) { std::fprintf(stderr, "Cannot read: %s\n", argv[1]); return 1; }
+    uint8_t *file_buf  = read_file(fxargs.module_path.c_str(), &file_size);
+    if (!file_buf) { std::fprintf(stderr, "Cannot read: %s\n", fxargs.module_path.c_str()); return 1; }
 
     fx_format fmt = fx_detect_format(file_buf, file_size);
     if (fmt == FX_FORMAT_UNKNOWN) {
@@ -104,23 +133,28 @@ int main(int argc, char **argv)
     }
 
     fx_err err = fx_load(file_buf, file_size, workspace, ws_bytes);
-    free(file_buf);   /* loader copied everything into workspace */
+    free(file_buf);
     if (err != FX_OK) {
         std::fprintf(stderr, "fx_load failed: %d\n", (int)err);
         free(workspace); return 1;
     }
 
+    fx_set_volume((uint8_t)fxargs.volume);
+
     AudioCtx ctx;
-    ctx.cfg.sample_rate   = SAMPLE_RATE;
-    ctx.cfg.channels      = CHANNELS;
+    ctx.cfg.sample_rate   = fxargs.sample_rate;
+    ctx.cfg.channels      = fxargs.channels;
     ctx.cfg.output_format = FX_OUTPUT_S16;
-    ctx.cfg.interpolate   = 1;
-    ctx.cfg.soft_clip     = 1;
+    ctx.cfg.interpolate   = fxargs.no_interp   ? 0 : 1;
+    ctx.cfg.soft_clip     = fxargs.no_softclip ? 0 : 1;
+    ctx.loop              = fxargs.loop;
+    ctx.prev_loops        = 0;
+    ctx.cur_vol.store((uint8_t)fxargs.volume, std::memory_order_relaxed);
 
     ma_device_config dcfg = ma_device_config_init(ma_device_type_playback);
     dcfg.playback.format   = ma_format_s16;
-    dcfg.playback.channels = CHANNELS;
-    dcfg.sampleRate        = SAMPLE_RATE;
+    dcfg.playback.channels = fxargs.channels;
+    dcfg.sampleRate        = fxargs.sample_rate;
     dcfg.dataCallback      = data_callback;
     dcfg.pUserData         = &ctx;
 
@@ -133,7 +167,12 @@ int main(int argc, char **argv)
     signal(SIGINT,  on_signal);
     signal(SIGTERM, on_signal);
 
-    std::printf("Playing: %s\n", argv[1]);
+    std::printf("F/X Player %s\n", fx_version_string());
+    std::printf("Playing: %s  [%s, %u Hz, %s]\n",
+        fxargs.module_path.c_str(),
+        format_name(fmt),
+        fxargs.sample_rate,
+        fxargs.channels == 1 ? "mono" : "stereo");
     std::printf("[space] pause  [\xe2\x86\x90/,  \xe2\x86\x92/.] order  [\xe2\x86\x91/+  \xe2\x86\x93/-] volume  [q/Esc] quit\n");
 
     ma_device_start(&device);

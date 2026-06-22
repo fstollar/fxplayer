@@ -65,8 +65,17 @@ void     s3m_close(void);
 /* Mix block_frames frames into the global mixer accumulator and advance the sequencer. */
 void     s3m_render_block(uint32_t block_frames);
 
-/* Returns non-zero when the song has played through and looped back to the start. */
+/* Returns non-zero when the song has played through to a natural end (pattern 255). */
 uint8_t  s3m_is_done(void);
+
+/* Returns how many times the song has looped (Bxx to order 0, or pattern 255). */
+uint32_t s3m_song_loops(void);
+
+/* Mark one song loop; called by the effect engine on Bxx to order 0. */
+void     s3m_mark_looped(void);
+
+/* Reset s_dat_ready to 1 so rendering resumes after a natural end. */
+void     s3m_restart(void);
 
 /* Called by effect module */
 

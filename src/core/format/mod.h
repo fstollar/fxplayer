@@ -68,8 +68,17 @@ void    mod_close(void);
 /* Mix block_frames frames into the global mixer accumulator and advance the sequencer. */
 void    mod_render_block(uint32_t block_frames);
 
-/* Returns non-zero when the song has played through and looped back to the start. */
+/* Returns non-zero when the song has played through to a natural end (order list exhausted). */
 uint8_t mod_is_done(void);
+
+/* Returns how many times the song has looped (B effect to order 0, or order list exhausted). */
+uint32_t mod_song_loops(void);
+
+/* Mark one song loop; called by the effect engine on B effect to order 0. */
+void     mod_mark_looped(void);
+
+/* Reset s_dat_ready to 1 so rendering resumes after a natural end. */
+void     mod_restart(void);
 
 /* Called by effect module */
 

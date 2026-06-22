@@ -15,6 +15,7 @@ find_package(Threads REQUIRED)
 
 add_executable(fxplayer
     miniaudio.c
+    args.cpp
     main.cpp
     tty.cpp
 )

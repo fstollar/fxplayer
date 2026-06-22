@@ -175,6 +175,7 @@ void MOD_GlobalEffect(void)
         case 0xFFu: break;
 
         case 11u:  /* B - pattern jump */
+            if (info <= MOD_Order) mod_mark_looped();
             MOD_nextorder = info;
             MOD_nextrow   = 0;
             MOD_jump      = 1;

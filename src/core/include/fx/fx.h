@@ -100,6 +100,22 @@ uint8_t fx_get_volume(void);
  */
 void fx_order_jump(int delta);
 
+/*
+ * Returns the number of times the song has looped since fx_load:
+ *   - Incremented by Bxx/B-effect jumping to order 0 (loop via effect).
+ *   - Incremented when the order list is exhausted (pattern 255 / natural end).
+ * Poll this after each fx_render_frames call to implement loop-count logic.
+ * Call only from the audio callback thread.
+ */
+uint32_t fx_song_loops(void);
+
+/*
+ * Resume rendering after a natural end (order list exhausted / pattern 255).
+ * Has no effect unless the engine has reached a natural end.
+ * Call only from the audio callback thread.
+ */
+void fx_restart(void);
+
 #ifdef __cplusplus
 }
 #endif

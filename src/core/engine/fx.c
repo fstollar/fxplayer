@@ -207,6 +207,26 @@ size_t fx_render_frames(void *out, size_t frame_count,
     return rendered;
 }
 
+uint32_t fx_song_loops(void)
+{
+    switch (g_loaded_fmt) {
+    case FX_FORMAT_S3M: return s3m_song_loops();
+    case FX_FORMAT_MOD: return mod_song_loops();
+    case FX_FORMAT_669: return m669_song_loops();
+    default:            return 0;
+    }
+}
+
+void fx_restart(void)
+{
+    switch (g_loaded_fmt) {
+    case FX_FORMAT_S3M: s3m_restart(); break;
+    case FX_FORMAT_MOD: mod_restart(); break;
+    case FX_FORMAT_669: m669_restart(); break;
+    default: break;
+    }
+}
+
 void fx_close(void)
 {
     switch (g_loaded_fmt) {

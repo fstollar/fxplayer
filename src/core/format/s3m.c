@@ -60,6 +60,7 @@ static uint8_t      **s_pat      = NULL;   /* PatternPointer[]    */
 static const uint8_t *s_order    = NULL;
 static const uint8_t *s_chansets = NULL;
 static uint8_t        s_dat_ready = 0;     /* 0=unloaded, 1=playing, 2=done */
+static uint32_t       s_song_loops = 0;
 
 /* ---- S3M on-disk header layout (64 bytes) ---- */
 #pragma pack(push,1)
@@ -132,7 +133,8 @@ int s3m_load(const uint8_t *data, size_t size,
     uint32_t channel, i;
     const uint16_t *tp;
 
-    s_dat_ready = 0;
+    s_dat_ready  = 0;
+    s_song_loops = 0;
 
     if (size < 64)                                 return -1;
     if (memcmp(hdr->scrm, "SCRM", 4) != 0)        return -1;
@@ -262,7 +264,8 @@ int s3m_load(const uint8_t *data, size_t size,
 
 void s3m_close(void)
 {
-    s_dat_ready = 0;
+    s_dat_ready  = 0;
+    s_song_loops = 0;
     s_buf = NULL; s_ins = NULL; s_smp = NULL; s_pat = NULL;
     s_order = NULL; s_chansets = NULL;
     g_master_vol_table = NULL;
@@ -271,7 +274,10 @@ void s3m_close(void)
     s_last_row_ptr = NULL;
 }
 
-uint8_t s3m_is_done(void) { return (s_dat_ready == 2); }
+uint8_t  s3m_is_done(void)    { return (s_dat_ready == 2); }
+uint32_t s3m_song_loops(void) { return s_song_loops; }
+void     s3m_mark_looped(void) { s_song_loops++; }
+void     s3m_restart(void)    { if (s_dat_ready == 2) s_dat_ready = 1; }
 
 /* ---- pattern decoding ---- */
 
@@ -579,6 +585,7 @@ void S3M_goRowOrder(void)
             if (S3M_Pattern == 255) {
                 S3M_Order   = 0;
                 S3M_Pattern = s_order[0];
+                s_song_loops++;
                 s_dat_ready = 2;
             }
         }
@@ -597,6 +604,7 @@ void S3M_goRowOrder(void)
             if (S3M_Pattern == 255) {
                 S3M_Order   = 0;
                 S3M_Pattern = s_order[0];
+                s_song_loops++;
                 s_dat_ready = 2;
             }
         }
