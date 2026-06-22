@@ -22,6 +22,15 @@ endif()
 
 include(cmake/get_cpm.cmake)
 
+# valgrind/callgrind (3.22) can't decode the AVX-512 that -march=native emits on this CPU and
+# aborts with SIGILL. Configure a dedicated dir with -DVALGRIND_BUILD=ON to drop AVX-512 (AVX2
+# codegen, which valgrind handles) for profiling instruction counts. OFF for normal builds.
+option(VALGRIND_BUILD "Disable AVX-512 so the binary runs under valgrind/callgrind" OFF)
+set(FX_ARCH_FLAGS -march=native)
+if(VALGRIND_BUILD)
+    list(APPEND FX_ARCH_FLAGS -mno-avx512f)
+endif()
+
 option(FX_BUILD_CLI   "Build the C++ CLI host"      ON)
 option(FX_BUILD_TESTS "Build unit / regression tests" OFF)
 

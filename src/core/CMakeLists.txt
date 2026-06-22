@@ -46,27 +46,16 @@ target_compile_definitions(fxcore PRIVATE
     FX_MIXER_${FX_MIXER}=1
 )
 
-# valgrind/callgrind (3.22) can't decode the AVX-512 that -march=native emits on this CPU and
-# aborts with SIGILL. Configure a dedicated dir with -DVALGRIND_BUILD=ON to drop AVX-512 (AVX2
-# codegen, which valgrind handles) for profiling instruction counts. OFF for normal builds.
-option(VALGRIND_BUILD "Disable AVX-512 so the binary runs under valgrind/callgrind" OFF)
-set(ARCH_FLAGS -march=native)
-if(VALGRIND_BUILD)
-    list(APPEND ARCH_FLAGS -mno-avx512f)
-endif()
-
 if(MSVC)
     target_compile_options(fxcore PRIVATE /W4)
 else()
     target_compile_options(fxcore PRIVATE
-     -Wall -Wextra -Wpedantic
-     -O3
-     ${ARCH_FLAGS}
-     -ffast-math
-     -funroll-loops
-     -flto=auto
-     -fwhole-program
-     )
+        -Wall -Wextra -Wpedantic
+        -O3
+        ${FX_ARCH_FLAGS}
+        -funroll-loops
+        -flto=auto
+    )
 endif()
 
 message(STATUS "fxcore: mixer variant = ${FX_MIXER}")
