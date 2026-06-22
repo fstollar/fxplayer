@@ -53,6 +53,7 @@ else()
         -Wall -Wextra -Wpedantic
         -O3
         ${FX_ARCH_FLAGS}
+        -ffast-math   # mixer_scalar.c uses double for vol-table init; TODO: replace with fixed-point
         -funroll-loops
         -flto=auto
     )

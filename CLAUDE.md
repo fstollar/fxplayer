@@ -138,6 +138,10 @@ blow-by-blow logs here.
   as (a) faithful reproduction required for bit-exactness, (b) fixable in the
   C99 core without breaking bit-exactness, or (c) fixable only in the DOS
   original; for (b)/(c) decide whether/how to fix and document the decision.
+- **Remove floating-point from `src/core/`** — `mixer_scalar.c` uses `double`
+  for the master-volume table init (`build_vol_table`, lines ~604-631). Replace
+  with fixed-point arithmetic. Until done, `-ffast-math` is kept on `fxcore`
+  (noted in `src/core/CMakeLists.txt`).
 
 ## Reference docs
 
