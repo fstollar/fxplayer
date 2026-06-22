@@ -210,12 +210,6 @@ Bit-exact match achieved on first run.
 
 ---
 
-## _work/ — Working DOS build (OpenWatcom + TASM, runs in DOSBox-X)
-
-All changes are in `_work/`. The `_original/` source is never touched.
-
----
-
 ### 2026-06-19 — DEV_WAV file-output device + render harness
 
 #### New: `dev_wav.cpp` / `dev_wav.h` — WAV file output (CardType 4)

@@ -45,12 +45,17 @@ These are settled — don't relitigate without reason.
   - `MIXER_SCALAR_C` — portable reference; the bit-exact ground truth all variants must match
 - **Self-modifying code stays in the DOS build only.** Modern OSes enforce W^X; on modern OoO cores, SMC is *slower* than a memory load. Modern x86 build replaces patch sites with `rip`-relative loads from a per-mixer state struct.
 
+## _work/ — Working DOS build (OpenWatcom + TASM, runs in DOSBox-X)
+
+All changes are in `_work/`. The `_original/` source is never touched.
+
 ## Repo layout
 
 ```
 fxplayer/
 ├── CLAUDE.md                  # this file
 ├── _original/                 # 1998 source, untouched
+├── _work/                     # work copy of _original/ with incorporated bug fixes etc
 ├── src/
 │   ├── core/                  # C99, no deps, no I/O, no alloc
 │   │   ├── include/fx/        # public C API headers
