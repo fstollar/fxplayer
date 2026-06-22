@@ -75,7 +75,7 @@ fxplayer/
 ├── tests/
 │   ├── reference_renders/     # bit-exact WAV ground truths
 │   └── ...
-├── cmake/                     # CMake helper scripts
+├── cmake/                     # CMake helper scripts (get_cpm.cmake — CPM 0.42.3)
 ├── CMakeLists.txt             # hosted CLI build
 └── makefile.dos               # DOS/Watcom build
 ```
@@ -117,6 +117,9 @@ blow-by-blow logs here.
   jumps immediately — all three `goRowOrder` functions must stay symmetric.
 - S3M order-jump bounds use strict `<` (not `<=`) against `S3M_OrderNum` —
   the `<=` in the original is an off-by-one OOB read (BUGS.md O-3).
+- **CPM** (`cmake/get_cpm.cmake`, v0.42.3) manages host-only deps: miniaudio 0.11.21
+  and cxxopts 3.2.0. Both download to `build/_deps/` at configure time. Set
+  `CPM_SOURCE_CACHE=~/.cache/cpm` (or env var) to share across projects.
 
 ### Next milestones (not yet started)
 
@@ -127,6 +130,7 @@ blow-by-blow logs here.
 - XM / IT formats (planned in the original, never implemented).
 - **CLI UX** — proper argument parsing (sample rate, channels, output device,
   volume, loop count), friendlier startup banner showing format/title/channels/BPM.
+  cxxopts 3.2.0 is already linked (`cxxopts::cxxopts`) — just wire it into main.cpp.
 - **Web host** — WebAssembly build of the C99 core; browser page with basic
   transport controls. Candidate: Emscripten + a small JS/HTML shell, or a
   Rust/wasm-bindgen thin wrapper around the C core.

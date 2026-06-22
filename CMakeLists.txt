@@ -20,6 +20,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         Debug Release RelWithDebInfo MinSizeRel)
 endif()
 
+include(cmake/get_cpm.cmake)
+
 option(FX_BUILD_CLI   "Build the C++ CLI host"      ON)
 option(FX_BUILD_TESTS "Build unit / regression tests" OFF)
 

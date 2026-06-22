@@ -6,7 +6,7 @@
 #include <csignal>
 #include <thread>
 
-#include "miniaudio/miniaudio.h"
+#include "miniaudio.h"
 #include "fx/fx.h"
 #include "tty.h"
 

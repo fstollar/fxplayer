@@ -1,5 +1,16 @@
 # fxplayer-cli — command-line player host.
 
+CPMAddPackage(
+    NAME miniaudio
+    GITHUB_REPOSITORY mackron/miniaudio
+    GIT_TAG 0.11.21
+    DOWNLOAD_ONLY YES
+)
+add_library(miniaudio INTERFACE)
+target_include_directories(miniaudio INTERFACE ${miniaudio_SOURCE_DIR})
+
+CPMAddPackage("gh:jarro2783/cxxopts@3.2.0")
+
 find_package(Threads REQUIRED)
 
 add_executable(fxplayer
@@ -9,11 +20,13 @@ add_executable(fxplayer
 )
 
 target_include_directories(fxplayer PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(fxplayer PRIVATE
     fx::core
+    miniaudio
+    cxxopts::cxxopts
     Threads::Threads
     ${CMAKE_DL_LIBS}
     m
