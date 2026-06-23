@@ -10,6 +10,7 @@ class FxWorkletProcessor extends AudioWorkletProcessor
         this._playing        = false;
         this._blockCount     = 0;
         this._lastModuleSize = 0;
+        this._volume         = 64;   /* mirrors fx_get_volume(); restored after each load */
         // Report state every ~19 blocks ≈ 50 ms at 44100 Hz / 128 frames per block.
         this._STATE_INTERVAL = 19;
         this.port.onmessage = (event) => this._handleMessage(event.data);
@@ -29,14 +30,18 @@ class FxWorkletProcessor extends AudioWorkletProcessor
                 break;
             case 'stop':
                 this._playing = false;
-                // Re-call wasm_load() — module bytes still live in g_module_buf.
                 if (this._wasm && this._lastModuleSize > 0)
+                {
+                    // Re-call wasm_load() — module bytes still live in g_module_buf.
                     this._wasm.wasm_load(this._lastModuleSize);
+                    this._wasm.fx_set_volume(this._volume);
+                }
                 if (this._wasm) this._reportState();
                 this.port.postMessage({ type: 'stopped' });
                 break;
             case 'volume':
-                if (this._wasm) this._wasm.fx_set_volume(msg.value);
+                this._volume = msg.value;
+                if (this._wasm) this._wasm.fx_set_volume(this._volume);
                 break;
             case 'order':
                 if (this._wasm) this._wasm.fx_order_jump(msg.delta);
@@ -88,6 +93,9 @@ class FxWorkletProcessor extends AudioWorkletProcessor
                 this.port.postMessage({ type: 'error', message: `fx_load failed: ${loadErr}` });
                 return;
             }
+
+            // Restore volume — wasm_load() resets engine state to default (64).
+            wasm.fx_set_volume(this._volume);
 
             const title = this._readCString(wasm.fx_song_title());
             this._lastModuleSize = moduleBytes.byteLength;
