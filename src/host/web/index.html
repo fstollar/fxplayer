@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F/X Player</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #111;
+      color: #ccc;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    h1   { color: #fff; margin-bottom: 4px; }
+    #fx-title  { color: #aef; margin: 0 0 16px; font-size: 1.1em; }
+    #fx-status { color: #fa0; margin: 0 0 16px; }
+
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    button {
+      background: #333; color: #ccc; border: 1px solid #555;
+      padding: 6px 14px; cursor: pointer; font-family: monospace;
+    }
+    button:hover:not(:disabled) { background: #444; }
+    button:disabled { opacity: 0.4; cursor: default; }
+
+    input[type=range] { accent-color: #aef; }
+
+    #fx-state {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 2px 16px;
+      font-size: 0.9em;
+      margin-bottom: 24px;
+    }
+    #fx-state span:nth-child(odd)  { color: #888; }
+    #fx-state span:nth-child(even) { color: #ddd; }
+
+    #drop-zone {
+      border: 2px dashed #555;
+      padding: 24px;
+      text-align: center;
+      color: #888;
+    }
+    #drop-zone.drag-over { border-color: #aef; color: #aef; }
+    label.file-label { color: #aef; cursor: pointer; text-decoration: underline; }
+    #file-input { display: none; }
+  </style>
+</head>
+<body>
+  <h1>F/X Player</h1>
+  <p id="fx-title">—</p>
+  <p id="fx-status">Click Start to begin</p>
+
+  <div class="controls">
+    <button id="btn-start">Start</button>
+    <button id="btn-play"  disabled>Play</button>
+    <button id="btn-pause" disabled>Pause</button>
+    <button id="btn-stop"  disabled>Stop</button>
+    <button id="btn-prev"  disabled>◀ Order</button>
+    <button id="btn-next"  disabled>Order ▶</button>
+  </div>
+
+  <div class="controls">
+    <label>Volume <input type="range" id="volume" min="0" max="64" value="64" disabled></label>
+  </div>
+
+  <div id="fx-state">
+    <span>Order</span>   <span id="fx-order">—</span>
+    <span>Pattern</span> <span id="fx-pattern">—</span>
+    <span>Row</span>     <span id="fx-row">—</span>
+    <span>Channels</span><span id="fx-channels">—</span>
+    <span>Loops</span>   <span id="fx-loops">—</span>
+  </div>
+
+  <div id="drop-zone">
+    Drop a .s3m / .mod / .669 here, or
+    <label class="file-label">browse<input type="file" id="file-input" accept=".s3m,.mod,.669"></label>
+  </div>
+
+  <script src="fx-main.js"></script>
+  <script>
+    const player = new FxPlayer();
+    const controls = ['btn-play','btn-pause','btn-stop','btn-prev','btn-next','volume'];
+
+    document.getElementById('btn-start').addEventListener('click', async () => {
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('fx-status').textContent = 'Initialising…';
+      try {
+        await player.init();
+        controls.forEach(id => document.getElementById(id).disabled = false);
+      } catch (err) {
+        document.getElementById('fx-status').textContent = 'Init failed: ' + err.message;
+        document.getElementById('btn-start').disabled = false;
+      }
+    });
+
+    document.getElementById('btn-play') .addEventListener('click', () => player.play());
+    document.getElementById('btn-pause').addEventListener('click', () => player.pause());
+    document.getElementById('btn-stop') .addEventListener('click', () => player.stop());
+    document.getElementById('btn-prev') .addEventListener('click', () => player.orderJump(-1));
+    document.getElementById('btn-next') .addEventListener('click', () => player.orderJump(1));
+    document.getElementById('volume')   .addEventListener('input',
+      (e) => player.setVolume(+e.target.value));
+
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover',  (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) player.loadModule(await file.arrayBuffer());
+    });
+
+    document.getElementById('file-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) player.loadModule(await file.arrayBuffer());
+    });
+  </script>
+</body>
+</html>

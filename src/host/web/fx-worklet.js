@@ -51,47 +51,55 @@ class FxWorkletProcessor extends AudioWorkletProcessor
 
     _load(moduleBytes)
     {
-        const wasm = this._wasm;
-        if (!wasm)
+        try
         {
-            this.port.postMessage({ type: 'error', message: 'Wasm not ready' });
-            return;
-        }
+            const wasm = this._wasm;
+            if (!wasm)
+            {
+                this.port.postMessage({ type: 'error', message: 'Wasm not ready' });
+                return;
+            }
 
-        const capacity = wasm.wasm_module_buf_size();
-        if (moduleBytes.byteLength > capacity)
+            if (moduleBytes.byteLength > wasm.wasm_module_buf_size())
+            {
+                this.port.postMessage({ type: 'error', message: 'Module too large (> 4 MB)' });
+                return;
+            }
+
+            // Copy module bytes into Wasm linear memory, then load.
+            const bufPtr = wasm.wasm_module_buf();
+            new Uint8Array(wasm.memory.buffer).set(new Uint8Array(moduleBytes), bufPtr);
+
+            // sampleRate is a global in AudioWorkletGlobalScope.
+            wasm.wasm_set_config(sampleRate, 1, 1);
+
+            const loadErr = wasm.wasm_load(moduleBytes.byteLength);
+            if (loadErr !== 0)
+            {
+                this.port.postMessage({ type: 'error', message: `fx_load failed: ${loadErr}` });
+                return;
+            }
+
+            const title = this._readCString(wasm.fx_song_title());
+            this._playing    = true;
+            this._blockCount = 0;
+            this.port.postMessage({ type: 'loaded', title });
+        }
+        catch (err)
         {
-            this.port.postMessage({ type: 'error', message: 'Module too large (> 4 MB)' });
-            return;
+            this.port.postMessage({ type: 'error', message: `_load threw: ${err}` });
         }
-
-        // Copy module bytes into Wasm linear memory, then load.
-        const bufPtr = wasm.wasm_module_buf();
-        new Uint8Array(wasm.memory.buffer).set(new Uint8Array(moduleBytes), bufPtr);
-
-        // Set sample rate from the AudioWorklet global (matches AudioContext.sampleRate).
-        wasm.wasm_set_config(sampleRate, 1, 1);
-
-        const loadErr = wasm.wasm_load(moduleBytes.byteLength);
-        if (loadErr !== 0)
-        {
-            this.port.postMessage({ type: 'error', message: `fx_load failed: ${loadErr}` });
-            return;
-        }
-
-        const title = this._readCString(wasm.fx_song_title());
-        this._playing    = true;
-        this._blockCount = 0;
-        this.port.postMessage({ type: 'loaded', title });
     }
 
     // Read a null-terminated C string from Wasm linear memory at ptr.
+    // AudioWorklet scope lacks TextDecoder; decode as Latin-1 with fromCharCode.
     _readCString(ptr)
     {
         const mem = new Uint8Array(this._wasm.memory.buffer);
-        let end = ptr;
-        while (mem[end] !== 0) end++;
-        return new TextDecoder().decode(mem.subarray(ptr, end));
+        let result = '';
+        for (let index = ptr; mem[index] !== 0; index++)
+            result += String.fromCharCode(mem[index]);
+        return result;
     }
 
     _reportState()
