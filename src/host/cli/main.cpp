@@ -199,14 +199,6 @@ int main(int argc, char **argv)
 
     std::printf("F/X Player %s\n", fx_version_string());
 
-    const char *title = fx_song_title();
-    /* Skip title line if it is blank or all spaces */
-    {
-        const char *p = title;
-        while (*p == ' ') ++p;
-        if (*p) std::printf("\"%s\"\n", title);
-    }
-
     std::printf("%s  [%s \xc2\xb7 %u Hz \xc2\xb7 %s \xc2\xb7 %s \xc2\xb7 %s \xc2\xb7 %s]\n",
         fxargs.module_path.c_str(),
         format_name(fmt),
@@ -215,6 +207,14 @@ int main(int argc, char **argv)
         fxargs.no_interp   ? "no-interp"  : "interp",
         fxargs.no_softclip ? "no-clip"    : "soft-clip",
         loop_str);
+
+    {
+        const char *title = fx_song_title();
+        const char *p = title;
+        while (*p == ' ') ++p;
+        if (*p) std::printf("\"%s\"\n", title);
+    }
+
     std::printf("[space] pause  [\xe2\x86\x90/,  \xe2\x86\x92/.] order  [\xe2\x86\x91/+  \xe2\x86\x93/-] volume  [q/Esc] quit\n");
 
     ma_device_start(&device);

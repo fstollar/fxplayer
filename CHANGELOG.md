@@ -31,8 +31,8 @@ updates in-place every 50 ms:
 
 ```
 F/X Player 0.67.0
-"Song Title"
 module.s3m  [S3M · 48000 Hz · stereo · interp · soft-clip · no loop]
+"Song Title"
 [space] pause  [←/,  →/.] order  [↑/+  ↓/-] volume  [q/Esc] quit
   Ord  0/15  Pat  3  Row 42/64  Ch 6/8  Vol 64  [PAUSED]
 ```
