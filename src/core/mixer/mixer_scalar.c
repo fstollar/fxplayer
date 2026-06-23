@@ -53,31 +53,31 @@ static int32_t s_mix_scratch[FX_INTERNAL_BLOCK * 2];
 
 void mixer_reset(void)
 {
-    uint32_t ch;
+    uint32_t channel_index;
     g_ChannelUsed = 0; g_ChannelLast = 0;
-    for (ch = 0; ch < FX_MAXCHANNELS; ch++) {
-        g_ChannelActiv[ch]           = 0;
-        g_ChannelFlag[ch]            = 0;
-        g_ChannelSampleNr[ch]        = 0;
-        g_ChannelVolume[ch]          = 0;
-        g_ChannelPanning[ch]         = 128;
-        g_ChannelSampleBits[ch]      = 0;
-        g_ChannelSampleMode[ch]      = 0;
-        g_ChannelSampleAddress[ch]   = 0;
-        g_ChannelSampleLength[ch]    = 0;
-        g_ChannelSamplePosition[ch]  = 0;
-        g_ChannelSampleFraction[ch]  = 0;
-        g_ChannelSampleFrequence[ch] = 0;
-        g_ChannelLoopMode[ch]        = 0;
-        g_ChannelLoopBegin[ch]       = 0;
-        g_ChannelLoopEnd[ch]         = 0;
-        g_ChannelVolumeLeft[ch]      = 0;
-        g_ChannelVolumeRight[ch]     = 0;
-        g_DeltaSamplePosition[ch]    = 0;
-        g_DeltaSampleFraction[ch]    = 0;
-        g_NextSamplePosition[ch]     = 0;
-        g_NextSampleFraction[ch]     = 0;
-        g_NextChannelActiv[ch]       = 0;
+    for (channel_index = 0; channel_index < FX_MAXCHANNELS; channel_index++) {
+        g_ChannelActiv[channel_index]           = 0;
+        g_ChannelFlag[channel_index]            = 0;
+        g_ChannelSampleNr[channel_index]        = 0;
+        g_ChannelVolume[channel_index]          = 0;
+        g_ChannelPanning[channel_index]         = 128;
+        g_ChannelSampleBits[channel_index]      = 0;
+        g_ChannelSampleMode[channel_index]      = 0;
+        g_ChannelSampleAddress[channel_index]   = 0;
+        g_ChannelSampleLength[channel_index]    = 0;
+        g_ChannelSamplePosition[channel_index]  = 0;
+        g_ChannelSampleFraction[channel_index]  = 0;
+        g_ChannelSampleFrequence[channel_index] = 0;
+        g_ChannelLoopMode[channel_index]        = 0;
+        g_ChannelLoopBegin[channel_index]       = 0;
+        g_ChannelLoopEnd[channel_index]         = 0;
+        g_ChannelVolumeLeft[channel_index]      = 0;
+        g_ChannelVolumeRight[channel_index]     = 0;
+        g_DeltaSamplePosition[channel_index]    = 0;
+        g_DeltaSampleFraction[channel_index]    = 0;
+        g_NextSamplePosition[channel_index]     = 0;
+        g_NextSampleFraction[channel_index]     = 0;
+        g_NextChannelActiv[channel_index]       = 0;
     }
 }
 
@@ -104,7 +104,7 @@ static uint32_t calc_scaling(uint32_t channel)
  *   16-bit: mix[i] += (int16_t)s16[pos] * vol
  * The MasterVol path divides by 0x800000 = 8388608.
  */
-static void mix32_channel(uint32_t ch, uint32_t count, uint32_t mix_pos)
+static void mix32_channel(uint32_t channel_index, uint32_t count, uint32_t mix_pos)
 {
     uint32_t vol, vol_l, vol_r;
     uint32_t pos, frac;
@@ -113,25 +113,25 @@ static void mix32_channel(uint32_t ch, uint32_t count, uint32_t mix_pos)
     int32_t *mb;
 
     if (count == 0) return;
-    vol = (g_ChannelVolume[ch] * g_GlobalVolume + 128u) >> 8;
+    vol = (g_ChannelVolume[channel_index] * g_GlobalVolume + 128u) >> 8;
     if (vol == 0) return;
 
-    pos   = g_ChannelSamplePosition[ch];
-    frac  = g_ChannelSampleFraction[ch];
-    dpos  = g_DeltaSamplePosition[ch];
-    dfrac = g_DeltaSampleFraction[ch];
+    pos   = g_ChannelSamplePosition[channel_index];
+    frac  = g_ChannelSampleFraction[channel_index];
+    dpos  = g_DeltaSamplePosition[channel_index];
+    dfrac = g_DeltaSampleFraction[channel_index];
 
     if (g_flag_stereo) {
-        vol_l = (g_ChannelVolumeLeft[ch]  * g_GlobalVolume + 128u) >> 8;
-        vol_r = (g_ChannelVolumeRight[ch] * g_GlobalVolume + 128u) >> 8;
+        vol_l = (g_ChannelVolumeLeft[channel_index]  * g_GlobalVolume + 128u) >> 8;
+        vol_r = (g_ChannelVolumeRight[channel_index] * g_GlobalVolume + 128u) >> 8;
     } else {
         vol_l = vol_r = vol;
     }
 
     mb = s_mix_scratch + (g_flag_stereo ? mix_pos * 2u : mix_pos);
 
-    if (g_ChannelSampleBits[ch] == 8) {
-        const uint8_t *s8 = (const uint8_t *)g_ChannelSampleAddress[ch];
+    if (g_ChannelSampleBits[channel_index] == 8) {
+        const uint8_t *s8 = (const uint8_t *)g_ChannelSampleAddress[channel_index];
         if (!g_flag_stereo) {
             for (i = 0; i < count; i++) {
                 mb[i] += (int32_t)(int8_t)s8[pos] * (int32_t)vol * 256;
@@ -150,7 +150,7 @@ static void mix32_channel(uint32_t ch, uint32_t count, uint32_t mix_pos)
             }
         }
     } else {  /* 16-bit */
-        const int16_t *s16 = (const int16_t *)g_ChannelSampleAddress[ch];
+        const int16_t *s16 = (const int16_t *)g_ChannelSampleAddress[channel_index];
         if (!g_flag_stereo) {
             for (i = 0; i < count; i++) {
                 mb[i] += (int32_t)s16[pos] * (int32_t)vol;
@@ -177,7 +177,7 @@ static void mix32_channel(uint32_t ch, uint32_t count, uint32_t mix_pos)
  *   8-bit:  interp = (s0<<16) + (s1-s0)*frac; mix[i] += interp * vol >> 8
  *   16-bit: interp = (s0<<8)  + (s1-s0)*frac/256; mix[i] += interp * vol >> 8
  */
-static void mix32_ichannel(uint32_t ch, uint32_t count, uint32_t mix_pos)
+static void mix32_ichannel(uint32_t channel_index, uint32_t count, uint32_t mix_pos)
 {
     uint32_t vol, vol_l, vol_r;
     uint32_t pos, frac;
@@ -186,25 +186,25 @@ static void mix32_ichannel(uint32_t ch, uint32_t count, uint32_t mix_pos)
     int32_t *mb;
 
     if (count == 0) return;
-    vol = (g_ChannelVolume[ch] * g_GlobalVolume + 128u) >> 8;
+    vol = (g_ChannelVolume[channel_index] * g_GlobalVolume + 128u) >> 8;
     if (vol == 0) return;
 
-    pos   = g_ChannelSamplePosition[ch];
-    frac  = g_ChannelSampleFraction[ch];
-    dpos  = g_DeltaSamplePosition[ch];
-    dfrac = g_DeltaSampleFraction[ch];
+    pos   = g_ChannelSamplePosition[channel_index];
+    frac  = g_ChannelSampleFraction[channel_index];
+    dpos  = g_DeltaSamplePosition[channel_index];
+    dfrac = g_DeltaSampleFraction[channel_index];
 
     if (g_flag_stereo) {
-        vol_l = (g_ChannelVolumeLeft[ch]  * g_GlobalVolume + 128u) >> 8;
-        vol_r = (g_ChannelVolumeRight[ch] * g_GlobalVolume + 128u) >> 8;
+        vol_l = (g_ChannelVolumeLeft[channel_index]  * g_GlobalVolume + 128u) >> 8;
+        vol_r = (g_ChannelVolumeRight[channel_index] * g_GlobalVolume + 128u) >> 8;
     } else {
         vol_l = vol_r = vol;
     }
 
     mb = s_mix_scratch + (g_flag_stereo ? mix_pos * 2u : mix_pos);
 
-    if (g_ChannelSampleBits[ch] == 8) {
-        const uint8_t *s8 = (const uint8_t *)g_ChannelSampleAddress[ch];
+    if (g_ChannelSampleBits[channel_index] == 8) {
+        const uint8_t *s8 = (const uint8_t *)g_ChannelSampleAddress[channel_index];
         if (!g_flag_stereo) {
             for (i = 0; i < count; i++) {
                 int32_t s0 = (int8_t)s8[pos];
@@ -228,7 +228,7 @@ static void mix32_ichannel(uint32_t ch, uint32_t count, uint32_t mix_pos)
             }
         }
     } else {
-        const int16_t *s16 = (const int16_t *)g_ChannelSampleAddress[ch];
+        const int16_t *s16 = (const int16_t *)g_ChannelSampleAddress[channel_index];
         if (!g_flag_stereo) {
             for (i = 0; i < count; i++) {
                 int32_t s0 = s16[pos];
@@ -258,42 +258,42 @@ static void mix32_ichannel(uint32_t ch, uint32_t count, uint32_t mix_pos)
  * Single-sample interpolated write for the "carry" segment at loop/end boundaries.
  * Translates Mix32ICarry from mixer.cpp (already in C in the original).
  */
-static void mix32_icarry(uint32_t ch, uint32_t pos1, uint32_t pos2,
+static void mix32_icarry(uint32_t channel_index, uint32_t pos1, uint32_t pos2,
                           uint32_t fraction, uint32_t mix_pos)
 {
     uint32_t vol;
     int32_t  s1, s2, interp;
 
-    vol = (g_ChannelVolume[ch] * g_GlobalVolume + 128u) / 256u;
+    vol = (g_ChannelVolume[channel_index] * g_GlobalVolume + 128u) / 256u;
     if (vol == 0) return;
 
     if (!g_flag_stereo) {
         int32_t *block = s_mix_scratch + mix_pos;
-        if (g_ChannelSampleBits[ch] == 8) {
-            const uint8_t *base = (const uint8_t *)g_ChannelSampleAddress[ch];
+        if (g_ChannelSampleBits[channel_index] == 8) {
+            const uint8_t *base = (const uint8_t *)g_ChannelSampleAddress[channel_index];
             s1 = (int8_t)base[pos1];
             s2 = (int8_t)base[pos2];
             interp = (s2 - s1) * (int32_t)fraction + (s1 << 16);
             *block += (int32_t)((int64_t)interp * vol / 256);
         } else {
-            const int16_t *base = (const int16_t *)g_ChannelSampleAddress[ch];
+            const int16_t *base = (const int16_t *)g_ChannelSampleAddress[channel_index];
             s1 = base[pos1]; s2 = base[pos2];
             interp = (int32_t)((((int64_t)(s2 - s1) * fraction) / 256)) + (s1 << 8);
             *block += (int32_t)((int64_t)interp * vol / 256);
         }
     } else {
-        uint32_t vol_l = (g_ChannelVolumeLeft[ch]  * g_GlobalVolume + 128u) >> 8;
-        uint32_t vol_r = (g_ChannelVolumeRight[ch] * g_GlobalVolume + 128u) >> 8;
+        uint32_t vol_l = (g_ChannelVolumeLeft[channel_index]  * g_GlobalVolume + 128u) >> 8;
+        uint32_t vol_r = (g_ChannelVolumeRight[channel_index] * g_GlobalVolume + 128u) >> 8;
         int32_t *block = s_mix_scratch + mix_pos * 2u;
-        if (g_ChannelSampleBits[ch] == 8) {
-            const uint8_t *base = (const uint8_t *)g_ChannelSampleAddress[ch];
+        if (g_ChannelSampleBits[channel_index] == 8) {
+            const uint8_t *base = (const uint8_t *)g_ChannelSampleAddress[channel_index];
             s1 = (int8_t)base[pos1];
             s2 = (int8_t)base[pos2];
             interp = (s2 - s1) * (int32_t)fraction + (s1 << 16);
             block[0] += (int32_t)((int64_t)interp * vol_l / 256);
             block[1] += (int32_t)((int64_t)interp * vol_r / 256);
         } else {
-            const int16_t *base = (const int16_t *)g_ChannelSampleAddress[ch];
+            const int16_t *base = (const int16_t *)g_ChannelSampleAddress[channel_index];
             s1 = base[pos1]; s2 = base[pos2];
             interp = (int32_t)((((int64_t)(s2 - s1) * fraction) / 256)) + (s1 << 8);
             block[0] += (int32_t)((int64_t)interp * vol_l / 256);
@@ -306,7 +306,7 @@ static void mix32_icarry(uint32_t ch, uint32_t pos1, uint32_t pos2,
 
 static void do_mixing_32(uint32_t mix_length)
 {
-    uint32_t ch;
+    uint32_t channel_index;
     uint32_t counter, counter1, counter2;
     int32_t  delta_pos, delta_frac;
     uint32_t pos, frac;
@@ -316,18 +316,18 @@ static void do_mixing_32(uint32_t mix_length)
 
     if (!g_flag_interpolate) {
         /* ---- non-interpolated path ---- */
-        for (ch = 0; ch < g_ChannelLast; ch++) {
-            if (g_ChannelActiv[ch] != 1) continue;
+        for (channel_index = 0; channel_index < g_ChannelLast; channel_index++) {
+            if (g_ChannelActiv[channel_index] != 1) continue;
 
-            delta_pos = g_DeltaSamplePosition[ch];
-            delta_frac = g_DeltaSampleFraction[ch];
-            pos  = g_ChannelSamplePosition[ch];
-            frac = g_ChannelSampleFraction[ch];
+            delta_pos = g_DeltaSamplePosition[channel_index];
+            delta_frac = g_DeltaSampleFraction[channel_index];
+            pos  = g_ChannelSamplePosition[channel_index];
+            frac = g_ChannelSampleFraction[channel_index];
 
-            switch (g_ChannelLoopMode[ch]) {
+            switch (g_ChannelLoopMode[channel_index]) {
                 case 0: {  /* no loop */
                     uint32_t len_pos, len_frac;
-                    length  = g_ChannelSampleLength[ch];
+                    length  = g_ChannelSampleLength[channel_index];
                     len_pos = length - pos;
                     len_frac = (65536u - frac) & 65535u;
                     if (len_frac) len_pos--;
@@ -336,13 +336,13 @@ static void do_mixing_32(uint32_t mix_length)
                     if (g_div_fraction) counter++;
                     if (counter == 0) break;
                     if (counter > mix_length) counter = mix_length;
-                    mix32_channel(ch, counter, g_MixerAddress);
+                    mix32_channel(channel_index, counter, g_MixerAddress);
                     break;
                 }
                 case 1: {  /* loop forward */
                     uint32_t len_pos, len_frac;
-                    loop_begin = g_ChannelLoopBegin[ch];
-                    loop_end   = g_ChannelLoopEnd[ch];
+                    loop_begin = g_ChannelLoopBegin[channel_index];
+                    loop_end   = g_ChannelLoopEnd[channel_index];
                     mix_length_rest = mix_length;
                     mix_pos         = g_MixerAddress;
 
@@ -356,11 +356,11 @@ static void do_mixing_32(uint32_t mix_length)
                         if (counter == 0) { mix_length_rest = 0; break; }
                         if (counter > mix_length_rest) {
                             counter = mix_length_rest;
-                            mix32_channel(ch, counter, mix_pos);
+                            mix32_channel(channel_index, counter, mix_pos);
                             mix_pos         += counter;
                             mix_length_rest  = 0;
                         } else {
-                            mix32_channel(ch, counter, mix_pos);
+                            mix32_channel(channel_index, counter, mix_pos);
                             mix_pos         += counter;
                             mix_length_rest -= counter;
                         }
@@ -368,8 +368,8 @@ static void do_mixing_32(uint32_t mix_length)
                         pos  = (uint32_t)((int32_t)pos + delta_pos * (int32_t)counter) + (frac >> 16);
                         frac &= 65535u;
                         if (pos >= loop_end) pos = pos - loop_end + loop_begin;
-                        g_ChannelSamplePosition[ch] = pos;
-                        g_ChannelSampleFraction[ch] = frac;
+                        g_ChannelSamplePosition[channel_index] = pos;
+                        g_ChannelSampleFraction[channel_index] = frac;
                     }
                     break;
                 }
@@ -378,18 +378,18 @@ static void do_mixing_32(uint32_t mix_length)
         }
     } else {
         /* ---- interpolated path ---- */
-        for (ch = 0; ch < g_ChannelLast; ch++) {
-            if (g_ChannelActiv[ch] != 1) continue;
+        for (channel_index = 0; channel_index < g_ChannelLast; channel_index++) {
+            if (g_ChannelActiv[channel_index] != 1) continue;
 
-            delta_pos = g_DeltaSamplePosition[ch];
-            delta_frac = g_DeltaSampleFraction[ch];
-            pos  = g_ChannelSamplePosition[ch];
-            frac = g_ChannelSampleFraction[ch];
+            delta_pos = g_DeltaSamplePosition[channel_index];
+            delta_frac = g_DeltaSampleFraction[channel_index];
+            pos  = g_ChannelSamplePosition[channel_index];
+            frac = g_ChannelSampleFraction[channel_index];
 
-            switch (g_ChannelLoopMode[ch]) {
+            switch (g_ChannelLoopMode[channel_index]) {
                 case 0: {  /* no loop */
                     uint32_t len_pos, len_frac;
-                    length = g_ChannelSampleLength[ch];
+                    length = g_ChannelSampleLength[channel_index];
                     mix_length_rest = mix_length;
                     mix_pos         = g_MixerAddress;
 
@@ -410,14 +410,14 @@ static void do_mixing_32(uint32_t mix_length)
 
                     if (counter1 != 0) {
                         uint32_t c = (counter1 > mix_length_rest) ? mix_length_rest : counter1;
-                        mix32_ichannel(ch, c, mix_pos);
+                        mix32_ichannel(channel_index, c, mix_pos);
                         mix_pos         += c;
                         mix_length_rest -= c;
                         frac = (uint32_t)((int32_t)frac + delta_frac * (int32_t)c);
                         pos  = (uint32_t)((int32_t)pos + delta_pos * (int32_t)c) + (frac >> 16);
                         frac &= 65535u;
-                        g_ChannelSamplePosition[ch] = pos;
-                        g_ChannelSampleFraction[ch] = frac;
+                        g_ChannelSamplePosition[channel_index] = pos;
+                        g_ChannelSampleFraction[channel_index] = frac;
                     }
 
                     if (mix_length_rest == 0) break;
@@ -428,7 +428,7 @@ static void do_mixing_32(uint32_t mix_length)
                         for (k = 0; k < c; k++) {
                             end_pos = pos + 1u;
                             if (end_pos >= length) end_pos = length - 1u;
-                            mix32_icarry(ch, pos, end_pos, frac, mix_pos);
+                            mix32_icarry(channel_index, pos, end_pos, frac, mix_pos);
                             frac = (uint32_t)((int32_t)frac + delta_frac);
                             pos  = (uint32_t)((int32_t)pos + delta_pos) + (frac >> 16);
                             frac &= 65535u;
@@ -440,8 +440,8 @@ static void do_mixing_32(uint32_t mix_length)
                 }
                 case 1: {  /* loop forward */
                     uint32_t len_pos, len_frac;
-                    loop_begin = g_ChannelLoopBegin[ch];
-                    loop_end   = g_ChannelLoopEnd[ch];
+                    loop_begin = g_ChannelLoopBegin[channel_index];
+                    loop_end   = g_ChannelLoopEnd[channel_index];
                     mix_length_rest = mix_length;
                     mix_pos         = g_MixerAddress;
 
@@ -464,14 +464,14 @@ static void do_mixing_32(uint32_t mix_length)
                         if (counter1 != 0) {
                             uint32_t c = (counter1 > mix_length_rest) ? mix_length_rest : counter1;
                             mix_length_rest -= c;
-                            mix32_ichannel(ch, c, mix_pos);
+                            mix32_ichannel(channel_index, c, mix_pos);
                             mix_pos += c;
                             frac = (uint32_t)((int32_t)frac + delta_frac * (int32_t)c);
                             pos  = (uint32_t)((int32_t)pos + delta_pos * (int32_t)c) + (frac >> 16);
                             frac &= 65535u;
                             if (pos >= loop_end) pos = pos - loop_end + loop_begin;
-                            g_ChannelSamplePosition[ch] = pos;
-                            g_ChannelSampleFraction[ch] = frac;
+                            g_ChannelSamplePosition[channel_index] = pos;
+                            g_ChannelSampleFraction[channel_index] = frac;
                         }
 
                         if (mix_length_rest == 0) break;
@@ -483,7 +483,7 @@ static void do_mixing_32(uint32_t mix_length)
                                 end_pos = pos + 1u;
                                 if (end_pos >= loop_end)
                                     end_pos = end_pos - loop_end + loop_begin;
-                                mix32_icarry(ch, pos, end_pos, frac, mix_pos);
+                                mix32_icarry(channel_index, pos, end_pos, frac, mix_pos);
                                 frac = (uint32_t)((int32_t)frac + delta_frac);
                                 pos  = (uint32_t)((int32_t)pos + delta_pos) + (frac >> 16);
                                 frac &= 65535u;
@@ -492,8 +492,8 @@ static void do_mixing_32(uint32_t mix_length)
                             mix_length_rest -= c;
                             if (pos >= loop_end) pos = pos - loop_end + loop_begin;
                         }
-                        g_ChannelSamplePosition[ch] = pos;
-                        g_ChannelSampleFraction[ch] = frac;
+                        g_ChannelSamplePosition[channel_index] = pos;
+                        g_ChannelSampleFraction[channel_index] = frac;
                     }
                     break;
                 }
@@ -507,65 +507,65 @@ static void do_mixing_32(uint32_t mix_length)
 
 static void prepare_mixing(void)
 {
-    uint32_t ch;
+    uint32_t channel_index;
     uint32_t scaling;
     int32_t  pan;
 
-    for (ch = 0; ch < g_ChannelLast; ch++) {
-        scaling = calc_scaling(ch);
-        if (scaling < 16) g_ChannelActiv[ch] = 0;
-        g_DeltaSamplePosition[ch] = (int32_t)(scaling >> 16);
-        g_DeltaSampleFraction[ch] = (int32_t)(scaling & 65535u);
+    for (channel_index = 0; channel_index < g_ChannelLast; channel_index++) {
+        scaling = calc_scaling(channel_index);
+        if (scaling < 16) g_ChannelActiv[channel_index] = 0;
+        g_DeltaSamplePosition[channel_index] = (int32_t)(scaling >> 16);
+        g_DeltaSampleFraction[channel_index] = (int32_t)(scaling & 65535u);
 
-        if (g_ChannelVolume[ch] > 256u) g_ChannelVolume[ch] = 256u;
+        if (g_ChannelVolume[channel_index] > 256u) g_ChannelVolume[channel_index] = 256u;
 
         if (g_flag_stereo) {
-            pan = (int32_t)(((int32_t)(g_ChannelPanning[ch] & 511u) - 128) *
+            pan = (int32_t)(((int32_t)(g_ChannelPanning[channel_index] & 511u) - 128) *
                             (int32_t)g_ChannelSeperation + 128) / 256;
 
-            g_ChannelVolumeLeft[ch]  = (pan > 0)
-                ? (g_ChannelVolume[ch] * (uint32_t)(128 - pan)) >> 7
-                : g_ChannelVolume[ch];
-            g_ChannelVolumeRight[ch] = (pan < 0)
-                ? (g_ChannelVolume[ch] * (uint32_t)(128 + pan)) >> 7
-                : g_ChannelVolume[ch];
+            g_ChannelVolumeLeft[channel_index]  = (pan > 0)
+                ? (g_ChannelVolume[channel_index] * (uint32_t)(128 - pan)) >> 7
+                : g_ChannelVolume[channel_index];
+            g_ChannelVolumeRight[channel_index] = (pan < 0)
+                ? (g_ChannelVolume[channel_index] * (uint32_t)(128 + pan)) >> 7
+                : g_ChannelVolume[channel_index];
         }
     }
 }
 
 void mixer_do_pre_mixing(uint32_t mix_length)
 {
-    uint32_t ch;
+    uint32_t channel_index;
     uint32_t pos, frac;
     int32_t  dpos, dfrac;
     uint32_t end_pos, end_frac;
 
     prepare_mixing();
 
-    for (ch = 0; ch < g_ChannelLast; ch++) {
-        pos  = g_ChannelSamplePosition[ch];
-        frac = g_ChannelSampleFraction[ch];
+    for (channel_index = 0; channel_index < g_ChannelLast; channel_index++) {
+        pos  = g_ChannelSamplePosition[channel_index];
+        frac = g_ChannelSampleFraction[channel_index];
 
-        if (pos >= g_ChannelLoopEnd[ch])   g_ChannelLoopMode[ch] = 0;
-        if (pos >= g_ChannelSampleLength[ch]) {
-            pos = g_ChannelSamplePosition[ch] = g_NextSamplePosition[ch] = 0;
-            frac = g_ChannelSampleFraction[ch] = g_NextSampleFraction[ch] = 0;
-            g_ChannelActiv[ch] = g_NextChannelActiv[ch] = 0;
+        if (pos >= g_ChannelLoopEnd[channel_index])   g_ChannelLoopMode[channel_index] = 0;
+        if (pos >= g_ChannelSampleLength[channel_index]) {
+            pos = g_ChannelSamplePosition[channel_index] = g_NextSamplePosition[channel_index] = 0;
+            frac = g_ChannelSampleFraction[channel_index] = g_NextSampleFraction[channel_index] = 0;
+            g_ChannelActiv[channel_index] = g_NextChannelActiv[channel_index] = 0;
         }
 
-        if (g_ChannelActiv[ch] == 1) {
-            dpos  = g_DeltaSamplePosition[ch];
-            dfrac = g_DeltaSampleFraction[ch];
+        if (g_ChannelActiv[channel_index] == 1) {
+            dpos  = g_DeltaSamplePosition[channel_index];
+            dfrac = g_DeltaSampleFraction[channel_index];
 
-            switch (g_ChannelLoopMode[ch]) {
+            switch (g_ChannelLoopMode[channel_index]) {
                 case 0: {
                     end_frac = frac + (uint32_t)((int32_t)dfrac * (int32_t)mix_length);
                     end_pos  = pos  + (uint32_t)((int32_t)dpos  * (int32_t)mix_length)
                                + (end_frac >> 16);
                     end_frac &= 65535u;
-                    g_NextChannelActiv[ch]   = (end_pos < g_ChannelSampleLength[ch]) ? 1u : 0u;
-                    g_NextSamplePosition[ch] = g_NextChannelActiv[ch] ? end_pos : 0u;
-                    g_NextSampleFraction[ch] = g_NextChannelActiv[ch] ? end_frac : 0u;
+                    g_NextChannelActiv[channel_index]   = (end_pos < g_ChannelSampleLength[channel_index]) ? 1u : 0u;
+                    g_NextSamplePosition[channel_index] = g_NextChannelActiv[channel_index] ? end_pos : 0u;
+                    g_NextSampleFraction[channel_index] = g_NextChannelActiv[channel_index] ? end_frac : 0u;
                     break;
                 }
                 case 1: {
@@ -573,11 +573,11 @@ void mixer_do_pre_mixing(uint32_t mix_length)
                     end_pos  = pos  + (uint32_t)((int32_t)dpos  * (int32_t)mix_length)
                                + (end_frac >> 16);
                     end_frac &= 65535u;
-                    while (end_pos >= g_ChannelLoopEnd[ch])
-                        end_pos = end_pos - g_ChannelLoopEnd[ch] + g_ChannelLoopBegin[ch];
-                    g_NextSamplePosition[ch] = end_pos;
-                    g_NextSampleFraction[ch] = end_frac;
-                    g_NextChannelActiv[ch]   = 1u;
+                    while (end_pos >= g_ChannelLoopEnd[channel_index])
+                        end_pos = end_pos - g_ChannelLoopEnd[channel_index] + g_ChannelLoopBegin[channel_index];
+                    g_NextSamplePosition[channel_index] = end_pos;
+                    g_NextSampleFraction[channel_index] = end_frac;
+                    g_NextChannelActiv[channel_index]   = 1u;
                     break;
                 }
                 default: break;
@@ -587,11 +587,11 @@ void mixer_do_pre_mixing(uint32_t mix_length)
 
     do_mixing_32(mix_length);
 
-    for (ch = 0; ch < g_ChannelLast; ch++) {
-        if (g_ChannelActiv[ch] == 1) {
-            g_ChannelSamplePosition[ch] = g_NextSamplePosition[ch];
-            g_ChannelSampleFraction[ch] = g_NextSampleFraction[ch];
-            g_ChannelActiv[ch]          = g_NextChannelActiv[ch];
+    for (channel_index = 0; channel_index < g_ChannelLast; channel_index++) {
+        if (g_ChannelActiv[channel_index] == 1) {
+            g_ChannelSamplePosition[channel_index] = g_NextSamplePosition[channel_index];
+            g_ChannelSampleFraction[channel_index] = g_NextSampleFraction[channel_index];
+            g_ChannelActiv[channel_index]          = g_NextChannelActiv[channel_index];
         }
     }
 }

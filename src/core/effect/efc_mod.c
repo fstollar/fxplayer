@@ -128,36 +128,36 @@ static uint32_t MOD_decPeriode(int32_t p, uint32_t value)
 
 /* ---- vibrato / tremolo ---- */
 
-static void MOD_MVibrato(uint32_t ch)
+static void MOD_MVibrato(uint32_t channel_index)
 {
-    if (MOD_VibratoSpeed[ch] == 0) return;
-    MOD_PeriodeAdjust[ch] =
-        (int32_t)MOD_Vibrato[ch][MOD_VibratoPosition[ch]] *
-        (int32_t)MOD_VibratoDepth[ch] / 64;
-    MOD_VibratoPosition[ch] =
-        (uint16_t)((MOD_VibratoPosition[ch] + MOD_VibratoSpeed[ch]) & 63u);
+    if (MOD_VibratoSpeed[channel_index] == 0) return;
+    MOD_PeriodeAdjust[channel_index] =
+        (int32_t)MOD_Vibrato[channel_index][MOD_VibratoPosition[channel_index]] *
+        (int32_t)MOD_VibratoDepth[channel_index] / 64;
+    MOD_VibratoPosition[channel_index] =
+        (uint16_t)((MOD_VibratoPosition[channel_index] + MOD_VibratoSpeed[channel_index]) & 63u);
 }
 
-static void MOD_MTremolo(uint32_t ch)
+static void MOD_MTremolo(uint32_t channel_index)
 {
-    if (MOD_VibratoSpeed[ch] == 0) return;
-    MOD_Volume[ch] = (uint8_t)MOD_addVolume(
-        (int16_t)MOD_TremoloVolume[ch],
-        (int16_t)((int32_t)MOD_Tremolo[ch][MOD_VibratoPosition[ch]] *
-                  MOD_VibratoDepth[ch] / 512));
-    MOD_VibratoPosition[ch] =
-        (uint16_t)((MOD_VibratoPosition[ch] + MOD_VibratoSpeed[ch]) & 63u);
+    if (MOD_VibratoSpeed[channel_index] == 0) return;
+    MOD_Volume[channel_index] = (uint8_t)MOD_addVolume(
+        (int16_t)MOD_TremoloVolume[channel_index],
+        (int16_t)((int32_t)MOD_Tremolo[channel_index][MOD_VibratoPosition[channel_index]] *
+                  MOD_VibratoDepth[channel_index] / 512));
+    MOD_VibratoPosition[channel_index] =
+        (uint16_t)((MOD_VibratoPosition[channel_index] + MOD_VibratoSpeed[channel_index]) & 63u);
 }
 
 /* ---- retrig ---- */
 
-static void MOD_Retrig(uint32_t ch, int8_t count)
+static void MOD_Retrig(uint32_t channel_index, int8_t count)
 {
-    MOD_RetrigCount[ch]--;
-    if (MOD_RetrigCount[ch] == 0) {
-        MOD_RetrigCount[ch]  = count;
-        MOD_SamplePosition[ch] = 0;
-        MOD_SampleFraction[ch] = 0;
+    MOD_RetrigCount[channel_index]--;
+    if (MOD_RetrigCount[channel_index] == 0) {
+        MOD_RetrigCount[channel_index]  = count;
+        MOD_SamplePosition[channel_index] = 0;
+        MOD_SampleFraction[channel_index] = 0;
     }
 }
 
@@ -165,11 +165,11 @@ static void MOD_Retrig(uint32_t ch, int8_t count)
 
 void MOD_GlobalEffect(void)
 {
-    uint32_t ch, effect, info;
+    uint32_t channel_index, effect, info;
 
-    for (ch = 0; ch < MOD_channels; ch++) {
-        effect = MOD_Effect[ch];
-        info   = MOD_EffectInfo[ch];
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        effect = MOD_Effect[channel_index];
+        info   = MOD_EffectInfo[channel_index];
 
         switch (effect) {
         case 0xFFu: break;
@@ -233,42 +233,42 @@ void MOD_GlobalEffect(void)
 
 void MOD_beforeEffect(void)
 {
-    uint32_t ch, effect, info;
+    uint32_t channel_index, effect, info;
 
-    for (ch = 0; ch < MOD_channels; ch++) {
-        effect = MOD_Effect[ch];
-        info   = MOD_EffectInfo[ch];
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        effect = MOD_Effect[channel_index];
+        info   = MOD_EffectInfo[channel_index];
         (void)info;
 
         switch (effect) {
         case 3u:  /* portamento to note */
         case 5u: {
-            uint8_t note = MOD_RowBuffer[ch*4+0];
+            uint8_t note = MOD_RowBuffer[channel_index*4+0];
             if (note != 0xFFu && note < 84u) {
-                MOD_GlissNote[ch] = note;
-                MOD_GlissPeriode[ch] =
-                    MOD_Periodes[MOD_SampleFinetune[ch]][note] << 4u;
-                MOD_GlissFlag[ch] = 1;
-                MOD_RowBuffer[ch*4+0] = 0xFFu;  /* suppress note trigger */
+                MOD_GlissNote[channel_index] = note;
+                MOD_GlissPeriode[channel_index] =
+                    MOD_Periodes[MOD_SampleFinetune[channel_index]][note] << 4u;
+                MOD_GlissFlag[channel_index] = 1;
+                MOD_RowBuffer[channel_index*4+0] = 0xFFu;  /* suppress note trigger */
             }
             break;
         }
         case 14u: {  /* extended: note delay */
-            uint32_t bx = MOD_EffectInfo[ch] >> 4;
+            uint32_t bx = MOD_EffectInfo[channel_index] >> 4;
             if (bx == 13u) {  /* ED - note delay */
                 uint8_t bval;
-                MOD_NoteDelayFlag[ch] = 0;
-                bval = MOD_RowBuffer[ch*4+0];
+                MOD_NoteDelayFlag[channel_index] = 0;
+                bval = MOD_RowBuffer[channel_index*4+0];
                 if (bval != 0xFFu) {
-                    MOD_NoteDelayNote[ch] = bval;
-                    MOD_RowBuffer[ch*4+0] = 0xFFu;
-                    MOD_NoteDelayFlag[ch] |= 1u;
+                    MOD_NoteDelayNote[channel_index] = bval;
+                    MOD_RowBuffer[channel_index*4+0] = 0xFFu;
+                    MOD_NoteDelayFlag[channel_index] |= 1u;
                 }
-                bval = MOD_RowBuffer[ch*4+1];
+                bval = MOD_RowBuffer[channel_index*4+1];
                 if (bval != 0) {
-                    MOD_NoteDelayInst[ch] = bval;
-                    MOD_RowBuffer[ch*4+1] = 0;
-                    MOD_NoteDelayFlag[ch] |= 2u;
+                    MOD_NoteDelayInst[channel_index] = bval;
+                    MOD_RowBuffer[channel_index*4+1] = 0;
+                    MOD_NoteDelayFlag[channel_index] |= 2u;
                 }
             }
             break;
@@ -281,11 +281,11 @@ void MOD_beforeEffect(void)
 
 void MOD_RowEffect(void)
 {
-    uint32_t ch, effect, info, x, y;
+    uint32_t channel_index, effect, info, x, y;
 
-    for (ch = 0; ch < MOD_channels; ch++) {
-        effect = MOD_Effect[ch];
-        info   = MOD_EffectInfo[ch];
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        effect = MOD_Effect[channel_index];
+        info   = MOD_EffectInfo[channel_index];
         x      = info >> 4;
         y      = info & 0x0Fu;
 
@@ -294,123 +294,123 @@ void MOD_RowEffect(void)
 
         case 0u:   /* arpeggio — on row tick use base note period (same formula as tick) */
             if (info) {
-                MOD_PeriodeAdjust[ch] =
-                    (int32_t)(MOD_Periodes[MOD_SampleFinetune[ch]][MOD_Note[ch]] << 4u) -
-                    (int32_t)MOD_Periode[ch];
+                MOD_PeriodeAdjust[channel_index] =
+                    (int32_t)(MOD_Periodes[MOD_SampleFinetune[channel_index]][MOD_Note[channel_index]] << 4u) -
+                    (int32_t)MOD_Periode[channel_index];
             }
-            MOD_VibratoPosition[ch] = 0;
+            MOD_VibratoPosition[channel_index] = 0;
             break;
 
         case 1u:  /* portamento up */
         case 2u:  /* portamento down */
-            MOD_PeriodeAdjust[ch] = 0;
+            MOD_PeriodeAdjust[channel_index] = 0;
             break;
 
         case 3u:  /* portamento to note */
-            if (info) MOD_GlissSpeed[ch] = (uint8_t)info;
-            if (MOD_GlissFlag[ch] == 1) {
-                MOD_GlissFlag[ch] = 2;
+            if (info) MOD_GlissSpeed[channel_index] = (uint8_t)info;
+            if (MOD_GlissFlag[channel_index] == 1) {
+                MOD_GlissFlag[channel_index] = 2;
             }
-            if (MOD_GlissPeriode[ch] != MOD_Periode[ch]) {
-                MOD_VibratoPosition[ch] = 0;
-                MOD_PeriodeAdjust[ch]   = 0;
-                MOD_GlissFlag[ch]       = 2;
+            if (MOD_GlissPeriode[channel_index] != MOD_Periode[channel_index]) {
+                MOD_VibratoPosition[channel_index] = 0;
+                MOD_PeriodeAdjust[channel_index]   = 0;
+                MOD_GlissFlag[channel_index]       = 2;
             }
             break;
 
         case 4u:  /* vibrato */
-            if (x) MOD_VibratoSpeed[ch] = (uint8_t)x;
-            if (y) MOD_VibratoDepth[ch] = (uint8_t)y;
+            if (x) MOD_VibratoSpeed[channel_index] = (uint8_t)x;
+            if (y) MOD_VibratoDepth[channel_index] = (uint8_t)y;
             break;
 
         case 5u:  /* portamento + volume slide */
-            MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
-            MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-            MOD_TremoloVolume[ch] = MOD_Volume[ch];
-            if (MOD_GlissFlag[ch] == 1) {
-                MOD_GlissPeriode[ch] =
-                    MOD_Periodes[MOD_SampleFinetune[ch]][MOD_GlissNote[ch]] << 4u;
-                MOD_GlissFlag[ch] = 2;
+            MOD_Volume[channel_index] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[channel_index], (int16_t)y);
+            MOD_Volume[channel_index] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[channel_index], (int16_t)x);
+            MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
+            if (MOD_GlissFlag[channel_index] == 1) {
+                MOD_GlissPeriode[channel_index] =
+                    MOD_Periodes[MOD_SampleFinetune[channel_index]][MOD_GlissNote[channel_index]] << 4u;
+                MOD_GlissFlag[channel_index] = 2;
             }
-            if (MOD_GlissPeriode[ch] != MOD_Periode[ch]) {
-                MOD_VibratoPosition[ch] = 0;
-                MOD_PeriodeAdjust[ch]   = 0;
-                MOD_GlissFlag[ch]       = 2;
+            if (MOD_GlissPeriode[channel_index] != MOD_Periode[channel_index]) {
+                MOD_VibratoPosition[channel_index] = 0;
+                MOD_PeriodeAdjust[channel_index]   = 0;
+                MOD_GlissFlag[channel_index]       = 2;
             }
             break;
 
         case 6u:  /* vibrato + volume slide */
-            MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
-            MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-            MOD_TremoloVolume[ch] = MOD_Volume[ch];
+            MOD_Volume[channel_index] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[channel_index], (int16_t)y);
+            MOD_Volume[channel_index] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[channel_index], (int16_t)x);
+            MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
             break;
 
         case 7u:  /* tremolo */
-            if (x) MOD_VibratoSpeed[ch] = (uint8_t)x;
-            if (y) MOD_VibratoDepth[ch] = (uint8_t)y;
+            if (x) MOD_VibratoSpeed[channel_index] = (uint8_t)x;
+            if (y) MOD_VibratoDepth[channel_index] = (uint8_t)y;
             break;
 
         case 8u:  /* set panning */
-            MOD_Panning[ch] = (uint8_t)(info * 100u / 255u);
+            MOD_Panning[channel_index] = (uint8_t)(info * 100u / 255u);
             break;
 
         case 9u:  /* sample offset */
             if (info) {
-                MOD_SamplePosition[ch] = (uint32_t)info << 8;
-                MOD_SampleFraction[ch] = 0;
+                MOD_SamplePosition[channel_index] = (uint32_t)info << 8;
+                MOD_SampleFraction[channel_index] = 0;
             }
             break;
 
         case 10u: /* volume slide */
-            MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
-            MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-            MOD_TremoloVolume[ch] = MOD_Volume[ch];
+            MOD_Volume[channel_index] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[channel_index], (int16_t)y);
+            MOD_Volume[channel_index] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[channel_index], (int16_t)x);
+            MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
             break;
 
         case 12u: /* set volume */
-            MOD_Volume[ch] = (info > 64u) ? 64u : (uint8_t)info;
-            MOD_TremoloVolume[ch] = MOD_Volume[ch];
+            MOD_Volume[channel_index] = (info > 64u) ? 64u : (uint8_t)info;
+            MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
             break;
 
         case 14u: {  /* extended */
             switch (x) {
             case 0u:  /* amiga filter (ignore) */ break;
             case 1u:  /* fine porta up — slide amount is full Info byte */
-                MOD_Periode[ch] = MOD_decPeriode((int32_t)MOD_Periode[ch], info);
+                MOD_Periode[channel_index] = MOD_decPeriode((int32_t)MOD_Periode[channel_index], info);
                 break;
             case 2u:  /* fine porta down — slide amount is full Info byte */
-                MOD_Periode[ch] = MOD_addPeriode((int32_t)MOD_Periode[ch], info);
+                MOD_Periode[channel_index] = MOD_addPeriode((int32_t)MOD_Periode[channel_index], info);
                 break;
             case 3u:  /* set gliss control */
                 break;
             case 4u:  /* set vibrato waveform */
-                if ((y & 3u) == 0) MOD_Vibrato[ch] = MOD_Sinus;
-                if ((y & 3u) == 1) MOD_Vibrato[ch] = MOD_Ramp;
-                if ((y & 3u) == 2) MOD_Vibrato[ch] = MOD_Square;
-                if ((y & 3u) == 3) MOD_Vibrato[ch] = MOD_Random;
+                if ((y & 3u) == 0) MOD_Vibrato[channel_index] = MOD_Sinus;
+                if ((y & 3u) == 1) MOD_Vibrato[channel_index] = MOD_Ramp;
+                if ((y & 3u) == 2) MOD_Vibrato[channel_index] = MOD_Square;
+                if ((y & 3u) == 3) MOD_Vibrato[channel_index] = MOD_Random;
                 break;
             case 5u:  /* set finetune */
-                MOD_SampleFinetune[ch] = y;
+                MOD_SampleFinetune[channel_index] = y;
                 break;
             case 7u:  /* set tremolo waveform */
-                if ((y & 3u) == 0) MOD_Tremolo[ch] = MOD_Sinus;
-                if ((y & 3u) == 1) MOD_Tremolo[ch] = MOD_Ramp;
-                if ((y & 3u) == 2) MOD_Tremolo[ch] = MOD_Square;
-                if ((y & 3u) == 3) MOD_Tremolo[ch] = MOD_Random;
+                if ((y & 3u) == 0) MOD_Tremolo[channel_index] = MOD_Sinus;
+                if ((y & 3u) == 1) MOD_Tremolo[channel_index] = MOD_Ramp;
+                if ((y & 3u) == 2) MOD_Tremolo[channel_index] = MOD_Square;
+                if ((y & 3u) == 3) MOD_Tremolo[channel_index] = MOD_Random;
                 break;
             case 8u:  /* set coarse panning */
-                MOD_Panning[ch] = (uint8_t)(y * 17u);
+                MOD_Panning[channel_index] = (uint8_t)(y * 17u);
                 break;
             case 9u:  /* retrig note */
-                if (y) MOD_RetrigCount[ch] = (int8_t)y;
+                if (y) MOD_RetrigCount[channel_index] = (int8_t)y;
                 break;
             case 10u: /* fine volume up */
-                MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)y);
-                MOD_TremoloVolume[ch] = MOD_Volume[ch];
+                MOD_Volume[channel_index] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[channel_index], (int16_t)y);
+                MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
                 break;
             case 11u: /* fine volume down */
-                MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
-                MOD_TremoloVolume[ch] = MOD_Volume[ch];
+                MOD_Volume[channel_index] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[channel_index], (int16_t)y);
+                MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
                 break;
             case 12u: /* note cut on tick y */
                 break;
@@ -425,11 +425,11 @@ void MOD_RowEffect(void)
 
 void MOD_TickEffect(void)
 {
-    uint32_t ch, effect, info, x, y;
+    uint32_t channel_index, effect, info, x, y;
 
-    for (ch = 0; ch < MOD_channels; ch++) {
-        effect = MOD_Effect[ch];
-        info   = MOD_EffectInfo[ch];
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        effect = MOD_Effect[channel_index];
+        info   = MOD_EffectInfo[channel_index];
         x      = info >> 4;
         y      = info & 0x0Fu;
 
@@ -438,39 +438,39 @@ void MOD_TickEffect(void)
 
         case 0u:  /* arpeggio — PeriodeAdjust = period(arp_note) - Periode */
             if (info) {
-                uint32_t note = MOD_Note[ch];
+                uint32_t note = MOD_Note[channel_index];
                 uint32_t phase = MOD_tick % 3u;
                 if (phase == 1u) note += x;
                 if (phase == 2u) note += y;
-                MOD_PeriodeAdjust[ch] =
-                    (int32_t)(Calc_AMIGAperiode(note, MOD_SampleFinetune[ch])) -
-                    (int32_t)MOD_Periode[ch];
+                MOD_PeriodeAdjust[channel_index] =
+                    (int32_t)(Calc_AMIGAperiode(note, MOD_SampleFinetune[channel_index])) -
+                    (int32_t)MOD_Periode[channel_index];
             }
             break;
 
         case 1u:  /* portamento up */
-            MOD_Periode[ch] = MOD_decPeriode((int32_t)MOD_Periode[ch], info << 4);
+            MOD_Periode[channel_index] = MOD_decPeriode((int32_t)MOD_Periode[channel_index], info << 4);
             break;
 
         case 2u:  /* portamento down */
-            MOD_Periode[ch] = MOD_addPeriode((int32_t)MOD_Periode[ch], info << 4);
+            MOD_Periode[channel_index] = MOD_addPeriode((int32_t)MOD_Periode[channel_index], info << 4);
             break;
 
         case 3u:  /* portamento to note */
         case 5u:  /* porta + volslide */
             if (effect == 5u) {
-                MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
-                MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-                MOD_TremoloVolume[ch] = MOD_Volume[ch];
+                MOD_Volume[channel_index] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[channel_index], (int16_t)y);
+                MOD_Volume[channel_index] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[channel_index], (int16_t)x);
+                MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
             }
-            if (MOD_GlissFlag[ch] == 2) {
-                if (MOD_GlissPeriode[ch] == MOD_Periode[ch]) { MOD_GlissFlag[ch] = 0; break; }
-                if (MOD_GlissPeriode[ch] > MOD_Periode[ch]) {
-                    MOD_Periode[ch] = MOD_addPeriode((int32_t)MOD_Periode[ch], (uint32_t)MOD_GlissSpeed[ch] << 4);
-                    if (MOD_Periode[ch] > MOD_GlissPeriode[ch]) MOD_Periode[ch] = MOD_GlissPeriode[ch];
+            if (MOD_GlissFlag[channel_index] == 2) {
+                if (MOD_GlissPeriode[channel_index] == MOD_Periode[channel_index]) { MOD_GlissFlag[channel_index] = 0; break; }
+                if (MOD_GlissPeriode[channel_index] > MOD_Periode[channel_index]) {
+                    MOD_Periode[channel_index] = MOD_addPeriode((int32_t)MOD_Periode[channel_index], (uint32_t)MOD_GlissSpeed[channel_index] << 4);
+                    if (MOD_Periode[channel_index] > MOD_GlissPeriode[channel_index]) MOD_Periode[channel_index] = MOD_GlissPeriode[channel_index];
                 } else {
-                    MOD_Periode[ch] = MOD_decPeriode((int32_t)MOD_Periode[ch], (uint32_t)MOD_GlissSpeed[ch] << 4);
-                    if (MOD_Periode[ch] < MOD_GlissPeriode[ch]) MOD_Periode[ch] = MOD_GlissPeriode[ch];
+                    MOD_Periode[channel_index] = MOD_decPeriode((int32_t)MOD_Periode[channel_index], (uint32_t)MOD_GlissSpeed[channel_index] << 4);
+                    if (MOD_Periode[channel_index] < MOD_GlissPeriode[channel_index]) MOD_Periode[channel_index] = MOD_GlissPeriode[channel_index];
                 }
             }
             break;
@@ -478,43 +478,43 @@ void MOD_TickEffect(void)
         case 4u:  /* vibrato */
         case 6u:  /* vibrato + volslide */
             if (effect == 6u) {
-                MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
-                MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-                MOD_TremoloVolume[ch] = MOD_Volume[ch];
+                MOD_Volume[channel_index] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[channel_index], (int16_t)y);
+                MOD_Volume[channel_index] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[channel_index], (int16_t)x);
+                MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
             }
-            MOD_MVibrato(ch);
+            MOD_MVibrato(channel_index);
             break;
 
         case 7u:  /* tremolo */
-            MOD_MTremolo(ch);
+            MOD_MTremolo(channel_index);
             break;
 
         case 9u:  /* sample offset — tick only: retrig */
             break;
 
         case 10u: /* volume slide */
-            MOD_Volume[ch] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[ch], (int16_t)y);
-            MOD_Volume[ch] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[ch], (int16_t)x);
-            MOD_TremoloVolume[ch] = MOD_Volume[ch];
+            MOD_Volume[channel_index] = (uint8_t)MOD_decVolume((int16_t)MOD_Volume[channel_index], (int16_t)y);
+            MOD_Volume[channel_index] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[channel_index], (int16_t)x);
+            MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
             break;
 
         case 14u: {  /* extended tick effects */
             switch (x) {
             case 9u:  /* retrig */
-                if (y) MOD_Retrig(ch, (int8_t)y);
+                if (y) MOD_Retrig(channel_index, (int8_t)y);
                 break;
             case 12u: /* note cut on tick */
-                if (MOD_tick == y) { MOD_Volume[ch] = 0; MOD_TremoloVolume[ch] = 0; }
+                if (MOD_tick == y) { MOD_Volume[channel_index] = 0; MOD_TremoloVolume[channel_index] = 0; }
                 break;
             case 13u: /* note delay — NoteDelayFlag is bitmask: bit1=inst, bit0=note */
-                if (MOD_tick == (uint32_t)(MOD_EffectInfo[ch] & 0x0Fu)) {
-                    if (MOD_NoteDelayFlag[ch] & 2u) {
-                        MOD_SampleNr[ch] = MOD_NoteDelayInst[ch];
-                        MOD_GetNewSample(ch);
+                if (MOD_tick == (uint32_t)(MOD_EffectInfo[channel_index] & 0x0Fu)) {
+                    if (MOD_NoteDelayFlag[channel_index] & 2u) {
+                        MOD_SampleNr[channel_index] = MOD_NoteDelayInst[channel_index];
+                        MOD_GetNewSample(channel_index);
                     }
-                    if (MOD_NoteDelayFlag[ch] & 1u) {
-                        MOD_Note[ch] = MOD_NoteDelayNote[ch];
-                        MOD_GetNewNote(ch);
+                    if (MOD_NoteDelayFlag[channel_index] & 1u) {
+                        MOD_Note[channel_index] = MOD_NoteDelayNote[channel_index];
+                        MOD_GetNewNote(channel_index);
                     }
                 }
                 break;
@@ -529,22 +529,22 @@ void MOD_TickEffect(void)
 
 void MOD_initEffects(void)
 {
-    uint32_t ch;
-    for (ch = 0; ch < MOD_MAXCHANNELS; ch++) {
-        MOD_Vibrato[ch]          = MOD_Sinus;
-        MOD_Tremolo[ch]          = MOD_Sinus;
-        MOD_GlissSpeed[ch]       = 0;
-        MOD_GlissNote[ch]        = 0;
-        MOD_GlissPeriode[ch]     = 0;
-        MOD_GlissFlag[ch]        = 0;
-        MOD_VibratoSpeed[ch]     = 0;
-        MOD_VibratoDepth[ch]     = 0;
-        MOD_VibratoPosition[ch]  = 0;
-        MOD_TremoloVolume[ch]    = 0;
-        MOD_RetrigCount[ch]      = 0;
-        MOD_NoteDelayFlag[ch]    = 0;
-        MOD_NoteDelayNote[ch]    = 0;
-        MOD_NoteDelayInst[ch]    = 0;
+    uint32_t channel_index;
+    for (channel_index = 0; channel_index < MOD_MAXCHANNELS; channel_index++) {
+        MOD_Vibrato[channel_index]          = MOD_Sinus;
+        MOD_Tremolo[channel_index]          = MOD_Sinus;
+        MOD_GlissSpeed[channel_index]       = 0;
+        MOD_GlissNote[channel_index]        = 0;
+        MOD_GlissPeriode[channel_index]     = 0;
+        MOD_GlissFlag[channel_index]        = 0;
+        MOD_VibratoSpeed[channel_index]     = 0;
+        MOD_VibratoDepth[channel_index]     = 0;
+        MOD_VibratoPosition[channel_index]  = 0;
+        MOD_TremoloVolume[channel_index]    = 0;
+        MOD_RetrigCount[channel_index]      = 0;
+        MOD_NoteDelayFlag[channel_index]    = 0;
+        MOD_NoteDelayNote[channel_index]    = 0;
+        MOD_NoteDelayInst[channel_index]    = 0;
     }
     MOD_PatLoopCount = 0;
     MOD_PatLoopRow   = 0;
@@ -554,34 +554,34 @@ void MOD_initEffects(void)
 
 void MOD_GetNewEffect(void)
 {
-    uint32_t ch, effect, info;
+    uint32_t channel_index, effect, info;
 
-    for (ch = 0; ch < MOD_channels; ch++) {
-        effect = MOD_Effect[ch];
-        info   = MOD_EffectInfo[ch];
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        effect = MOD_Effect[channel_index];
+        info   = MOD_EffectInfo[channel_index];
         (void)info;
 
         /* reset period adjust on new effect */
         switch (effect) {
         case 0xFFu:
         case 0u:
-            MOD_PeriodeAdjust[ch] = 0;
-            if (effect == 0u) MOD_VibratoPosition[ch] = 0;
+            MOD_PeriodeAdjust[channel_index] = 0;
+            if (effect == 0u) MOD_VibratoPosition[channel_index] = 0;
             break;
         case 1u:
         case 2u:
-            MOD_Periode[ch] = (uint32_t)((int32_t)MOD_Periode[ch] + MOD_PeriodeAdjust[ch]);
-            MOD_PeriodeAdjust[ch] = 0;
-            MOD_VibratoPosition[ch] = 0;
+            MOD_Periode[channel_index] = (uint32_t)((int32_t)MOD_Periode[channel_index] + MOD_PeriodeAdjust[channel_index]);
+            MOD_PeriodeAdjust[channel_index] = 0;
+            MOD_VibratoPosition[channel_index] = 0;
             break;
         case 3u:
-            MOD_VibratoPosition[ch] = 0;
+            MOD_VibratoPosition[channel_index] = 0;
             break;
         case 9u:
-            MOD_VibratoPosition[ch] = 0;
+            MOD_VibratoPosition[channel_index] = 0;
             break;
         case 10u:
-            MOD_PeriodeAdjust[ch] = 0;
+            MOD_PeriodeAdjust[channel_index] = 0;
             break;
         }
     }
@@ -592,37 +592,37 @@ void MOD_GetNewEffect(void)
 
 void MOD_read_row(void)
 {
-    uint32_t ch;
+    uint32_t channel_index;
     uint32_t value;
 
     /* load effects */
-    for (ch = 0; ch < MOD_channels; ch++) {
-        value = MOD_RowBuffer[ch*4+3];
-        if (MOD_EffectInfo[ch]) MOD_LastEffectInfo[ch] = MOD_EffectInfo[ch];
-        MOD_EffectInfo[ch] = (uint8_t)value;
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        value = MOD_RowBuffer[channel_index*4+3];
+        if (MOD_EffectInfo[channel_index]) MOD_LastEffectInfo[channel_index] = MOD_EffectInfo[channel_index];
+        MOD_EffectInfo[channel_index] = (uint8_t)value;
 
-        value = MOD_RowBuffer[ch*4+2];
-        if (MOD_Effect[ch] != 0xFFu) MOD_LastEffect[ch] = MOD_Effect[ch];
-        MOD_Effect[ch] = (uint8_t)value;
+        value = MOD_RowBuffer[channel_index*4+2];
+        if (MOD_Effect[channel_index] != 0xFFu) MOD_LastEffect[channel_index] = MOD_Effect[channel_index];
+        MOD_Effect[channel_index] = (uint8_t)value;
     }
 
     MOD_GetNewEffect();
 
     /* note / instrument */
     if (MOD_flag_note == 0) {
-        for (ch = 0; ch < MOD_channels; ch++) {
-            value = MOD_RowBuffer[ch*4+1];
+        for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+            value = MOD_RowBuffer[channel_index*4+1];
             if (value) {
-                MOD_SampleNr[ch] = (uint8_t)value;
-                MOD_GetNewSample(ch);
+                MOD_SampleNr[channel_index] = (uint8_t)value;
+                MOD_GetNewSample(channel_index);
             }
 
-            value = MOD_RowBuffer[ch*4+0];
+            value = MOD_RowBuffer[channel_index*4+0];
             if (value != 0xFFu) {
-                MOD_Note[ch] = (uint8_t)value;
-                MOD_GetNewNote(ch);
-                MOD_VibratoPosition[ch] = 0;
-                MOD_PeriodeAdjust[ch]   = 0;
+                MOD_Note[channel_index] = (uint8_t)value;
+                MOD_GetNewNote(channel_index);
+                MOD_VibratoPosition[channel_index] = 0;
+                MOD_PeriodeAdjust[channel_index]   = 0;
             }
         }
     }

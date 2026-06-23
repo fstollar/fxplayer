@@ -211,7 +211,7 @@ int mod_load(const uint8_t *data, size_t size,
 {
     uint8_t *p;
     size_t ptr_align, module_aligned;
-    uint32_t i, t, ch, value;
+    uint32_t i, t, channel_index, value;
     uint32_t smpcount, channels;
     uint32_t base_pat, base_smp;
 
@@ -294,24 +294,24 @@ int mod_load(const uint8_t *data, size_t size,
         uint8_t *ptr = s_buf + 20u;
         for (i = 0; i < smpcount; i++) {
             uint8_t *ins = ptr + i * 30u;
-            uint16_t len, lstart, llen;
+            uint16_t sample_length, loop_start, loop_length;
 
             ins[21] = 0;  /* terminate sample name */
 
-            len    = be16(ins + 22);
-            lstart = be16(ins + 26);
-            llen   = be16(ins + 28);
+            sample_length = be16(ins + 22);
+            loop_start    = be16(ins + 26);
+            loop_length   = be16(ins + 28);
 
             /* write back LE */
-            ins[22] = (uint8_t)(len    & 0xFF); ins[23] = (uint8_t)(len    >> 8);
-            ins[26] = (uint8_t)(lstart & 0xFF); ins[27] = (uint8_t)(lstart >> 8);
-            ins[28] = (uint8_t)(llen   & 0xFF); ins[29] = (uint8_t)(llen   >> 8);
+            ins[22] = (uint8_t)(sample_length & 0xFF); ins[23] = (uint8_t)(sample_length >> 8);
+            ins[26] = (uint8_t)(loop_start    & 0xFF); ins[27] = (uint8_t)(loop_start    >> 8);
+            ins[28] = (uint8_t)(loop_length   & 0xFF); ins[29] = (uint8_t)(loop_length   >> 8);
 
             /* clamp loop boundaries */
-            if (lstart > len) { lstart = 0; llen = 0;
+            if (loop_start > sample_length) { loop_start = 0; loop_length = 0;
                 ins[26]=ins[27]=ins[28]=ins[29]=0; }
-            if ((uint32_t)lstart + llen > len) {
-                uint16_t newlen = len - lstart;
+            if ((uint32_t)loop_start + loop_length > sample_length) {
+                uint16_t newlen = sample_length - loop_start;
                 ins[28] = (uint8_t)(newlen & 0xFF); ins[29] = (uint8_t)(newlen >> 8);
             }
         }
@@ -324,11 +324,11 @@ int mod_load(const uint8_t *data, size_t size,
         value = base_smp + MOD_patterns * channels * 64u * 4u;
         for (i = 0; i < smpcount; i++) {
             uint8_t  *ins = ptr + i * 30u;
-            uint32_t  len;
+            uint32_t  sample_length;
             s_ins[i] = ins;
             s_smp[i] = s_buf + value;
-            len = (uint32_t)(*(uint16_t *)(ins + 22)) * 2u;
-            value += len;
+            sample_length = (uint32_t)(*(uint16_t *)(ins + 22)) * 2u;
+            value += sample_length;
             if (value > size) return -1;
         }
     }
@@ -349,10 +349,10 @@ int mod_load(const uint8_t *data, size_t size,
     MOD_tempo = 128;
     MOD_speed = 6;
 
-    /* default panning: LRRL repeating (ch%4: 0=L, 1=R, 2=R, 3=L) */
-    for (ch = 0; ch < channels; ch++) {
-        uint32_t pos = ch & 3u;
-        MOD_Panning[ch] = (pos == 1u || pos == 2u) ? 100u : 28u;
+    /* default panning: LRRL repeating (channel_index%4: 0=L, 1=R, 2=R, 3=L) */
+    for (channel_index = 0; channel_index < channels; channel_index++) {
+        uint32_t panning_side = channel_index & 3u;
+        MOD_Panning[channel_index] = (panning_side == 1u || panning_side == 2u) ? 100u : 28u;
     }
 
     MOD_TickLength  = s3m_calc_speed(MOD_tempo, g_MixSpeed);
@@ -392,7 +392,7 @@ void     mod_restart(void)    { if (s_dat_ready == 2) s_dat_ready = 1; }
 
 void MOD_initvariables(void)
 {
-    uint32_t ch;
+    uint32_t channel_index;
 
     MOD_LastPattern = 0xFFFFu;
     MOD_LastRow     = 0xFFFFu;
@@ -405,27 +405,27 @@ void MOD_initvariables(void)
     MOD_tempo = 128;
     MOD_speed = 6;
 
-    for (ch = 0; ch < MOD_channels; ch++) {
-        MOD_ChannelActiv[ch]    = 0;
-        MOD_SampleNr[ch]        = 0;
-        MOD_SampleAddress[ch]   = 0;
-        MOD_SampleLength[ch]    = 0;
-        MOD_SamplePosition[ch]  = 0;
-        MOD_SampleFraction[ch]  = 0;
-        MOD_SampleLoop[ch]      = 0;
-        MOD_SampleLoopBegin[ch] = 0;
-        MOD_SampleLoopEnd[ch]   = 0;
-        MOD_SampleFinetune[ch]  = 0;
-        MOD_Volume[ch]          = 0;
-        MOD_Panning[ch]         = 0x40u;
-        MOD_Note[ch]            = 0xFFu;
-        MOD_Effect[ch]          = 0xFFu;
-        MOD_EffectInfo[ch]      = 0;
-        MOD_LastEffect[ch]      = 0xFFu;
-        MOD_LastEffectInfo[ch]  = 0;
-        MOD_Periode[ch]         = 0;
-        MOD_PeriodeAdjust[ch]   = 0;
-        MOD_Frequence[ch]       = 0;
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        MOD_ChannelActiv[channel_index]    = 0;
+        MOD_SampleNr[channel_index]        = 0;
+        MOD_SampleAddress[channel_index]   = 0;
+        MOD_SampleLength[channel_index]    = 0;
+        MOD_SamplePosition[channel_index]  = 0;
+        MOD_SampleFraction[channel_index]  = 0;
+        MOD_SampleLoop[channel_index]      = 0;
+        MOD_SampleLoopBegin[channel_index] = 0;
+        MOD_SampleLoopEnd[channel_index]   = 0;
+        MOD_SampleFinetune[channel_index]  = 0;
+        MOD_Volume[channel_index]          = 0;
+        MOD_Panning[channel_index]         = 0x40u;
+        MOD_Note[channel_index]            = 0xFFu;
+        MOD_Effect[channel_index]          = 0xFFu;
+        MOD_EffectInfo[channel_index]      = 0;
+        MOD_LastEffect[channel_index]      = 0xFFu;
+        MOD_LastEffectInfo[channel_index]  = 0;
+        MOD_Periode[channel_index]         = 0;
+        MOD_PeriodeAdjust[channel_index]   = 0;
+        MOD_Frequence[channel_index]       = 0;
     }
 }
 
@@ -444,7 +444,7 @@ static void mod_clear_row(void)
 
 void MOD_unpack_row(uint32_t pat_nr, uint32_t row_nr)
 {
-    uint32_t ch;
+    uint32_t channel_index;
     const uint8_t *p;
 
     if (pat_nr >= MOD_patterns) {
@@ -460,7 +460,7 @@ void MOD_unpack_row(uint32_t pat_nr, uint32_t row_nr)
 
     p = s_pat[pat_nr] + row_nr * MOD_channels * 4u;
 
-    for (ch = 0; ch < MOD_channels; ch++) {
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
         /* 4-byte MOD cell: [s_hi|p_hi] [p_lo] [s_lo|e] [e_inf] */
         uint32_t periode = (((uint32_t)p[0] & 0x0Fu) << 8) | p[1];
         uint32_t note = 0xFFu;
@@ -477,20 +477,20 @@ void MOD_unpack_row(uint32_t pat_nr, uint32_t row_nr)
                 if (dist < best_dist) { best_dist = dist; note = v; }
             }
         }
-        MOD_RowBuffer[ch*4+0] = (uint8_t)note;
+        MOD_RowBuffer[channel_index*4+0] = (uint8_t)note;
 
         val = ((uint32_t)p[0] & 0xF0u) | ((uint32_t)p[2] >> 4);
         if (val > MOD_samples) val = 0;
-        MOD_RowBuffer[ch*4+1] = (uint8_t)val;
+        MOD_RowBuffer[channel_index*4+1] = (uint8_t)val;
 
         val = (uint32_t)p[2] & 0x0Fu;
-        MOD_RowBuffer[ch*4+2] = (uint8_t)val;
+        MOD_RowBuffer[channel_index*4+2] = (uint8_t)val;
 
         val = (uint32_t)p[3];
-        MOD_RowBuffer[ch*4+3] = (uint8_t)val;
+        MOD_RowBuffer[channel_index*4+3] = (uint8_t)val;
 
-        if (MOD_RowBuffer[ch*4+2] == 0 && MOD_RowBuffer[ch*4+3] == 0)
-            MOD_RowBuffer[ch*4+2] = 0xFFu;
+        if (MOD_RowBuffer[channel_index*4+2] == 0 && MOD_RowBuffer[channel_index*4+3] == 0)
+            MOD_RowBuffer[channel_index*4+2] = 0xFFu;
 
         p += 4u;
     }
@@ -594,31 +594,31 @@ void MOD_GetNewNote(uint32_t channel)
 
 static void MOD_to_Mixer(void)
 {
-    uint32_t ch;
+    uint32_t channel_index;
 
     g_ChannelLast = MOD_channels;
 
-    for (ch = 0; ch < MOD_channels; ch++) {
-        if (MOD_Periode[ch] < 10u) MOD_ChannelActiv[ch] = 0;
-        g_ChannelActiv[ch]   = MOD_ChannelActiv[ch];
-        g_ChannelVolume[ch]  = (uint32_t)MOD_Volume[ch] << 2;
-        g_ChannelPanning[ch] = (uint32_t)MOD_Panning[ch] * 2u;
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        if (MOD_Periode[channel_index] < 10u) MOD_ChannelActiv[channel_index] = 0;
+        g_ChannelActiv[channel_index]   = MOD_ChannelActiv[channel_index];
+        g_ChannelVolume[channel_index]  = (uint32_t)MOD_Volume[channel_index] << 2;
+        g_ChannelPanning[channel_index] = (uint32_t)MOD_Panning[channel_index] * 2u;
 
-        if (MOD_ChannelActiv[ch]) {
-            g_ChannelSamplePosition[ch]  = MOD_SamplePosition[ch];
-            g_ChannelSampleFraction[ch]  = MOD_SampleFraction[ch];
-            MOD_Frequence[ch]            = Calc_AMIGAfrequence(ch);
-            g_ChannelSampleFrequence[ch] = (MOD_Frequence[ch] + 2u) >> 2;
+        if (MOD_ChannelActiv[channel_index]) {
+            g_ChannelSamplePosition[channel_index]  = MOD_SamplePosition[channel_index];
+            g_ChannelSampleFraction[channel_index]  = MOD_SampleFraction[channel_index];
+            MOD_Frequence[channel_index]            = Calc_AMIGAfrequence(channel_index);
+            g_ChannelSampleFrequence[channel_index] = (MOD_Frequence[channel_index] + 2u) >> 2;
 
-            if (MOD_SampleNr[ch] && g_ChannelSampleNr[ch] != MOD_SampleNr[ch]) {
-                g_ChannelSampleNr[ch]      = MOD_SampleNr[ch];
-                g_ChannelSampleBits[ch]    = 8;
-                g_ChannelSampleMode[ch]    = 0;
-                g_ChannelSampleAddress[ch] = MOD_SampleAddress[ch];
-                g_ChannelSampleLength[ch]  = MOD_SampleLength[ch];
-                g_ChannelLoopMode[ch]      = MOD_SampleLoop[ch];
-                g_ChannelLoopBegin[ch]     = MOD_SampleLoopBegin[ch];
-                g_ChannelLoopEnd[ch]       = MOD_SampleLoopEnd[ch];
+            if (MOD_SampleNr[channel_index] && g_ChannelSampleNr[channel_index] != MOD_SampleNr[channel_index]) {
+                g_ChannelSampleNr[channel_index]      = MOD_SampleNr[channel_index];
+                g_ChannelSampleBits[channel_index]    = 8;
+                g_ChannelSampleMode[channel_index]    = 0;
+                g_ChannelSampleAddress[channel_index] = MOD_SampleAddress[channel_index];
+                g_ChannelSampleLength[channel_index]  = MOD_SampleLength[channel_index];
+                g_ChannelLoopMode[channel_index]      = MOD_SampleLoop[channel_index];
+                g_ChannelLoopBegin[channel_index]     = MOD_SampleLoopBegin[channel_index];
+                g_ChannelLoopEnd[channel_index]       = MOD_SampleLoopEnd[channel_index];
             }
         }
     }
@@ -626,12 +626,12 @@ static void MOD_to_Mixer(void)
 
 static void Mixer_to_MOD(void)
 {
-    uint32_t ch;
-    for (ch = 0; ch < MOD_channels; ch++) {
-        if (MOD_ChannelActiv[ch]) {
-            MOD_SamplePosition[ch]  = g_ChannelSamplePosition[ch];
-            MOD_SampleFraction[ch]  = g_ChannelSampleFraction[ch];
-            MOD_ChannelActiv[ch]    = (uint8_t)g_ChannelActiv[ch];
+    uint32_t channel_index;
+    for (channel_index = 0; channel_index < MOD_channels; channel_index++) {
+        if (MOD_ChannelActiv[channel_index]) {
+            MOD_SamplePosition[channel_index]  = g_ChannelSamplePosition[channel_index];
+            MOD_SampleFraction[channel_index]  = g_ChannelSampleFraction[channel_index];
+            MOD_ChannelActiv[channel_index]    = (uint8_t)g_ChannelActiv[channel_index];
         }
     }
 }

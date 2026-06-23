@@ -38,14 +38,14 @@ static void data_callback(ma_device *dev, void *out, const void * /*in*/, ma_uin
 {
     auto *ctx = static_cast<AudioCtx *>(dev->pUserData);
 
-    int vol = ctx->vol_cmd.exchange(-1, std::memory_order_relaxed);
-    if (vol >= 0) {
-        fx_set_volume(static_cast<uint8_t>(vol));
-        ctx->cur_vol.store(static_cast<uint8_t>(vol), std::memory_order_relaxed);
+    int pending_volume = ctx->vol_cmd.exchange(-1, std::memory_order_relaxed);
+    if (pending_volume >= 0) {
+        fx_set_volume(static_cast<uint8_t>(pending_volume));
+        ctx->cur_vol.store(static_cast<uint8_t>(pending_volume), std::memory_order_relaxed);
     }
-    int ord = ctx->order_cmd.exchange(0, std::memory_order_relaxed);
-    if (ord != 0)
-        fx_order_jump(ord);
+    int order_delta = ctx->order_cmd.exchange(0, std::memory_order_relaxed);
+    if (order_delta != 0)
+        fx_order_jump(order_delta);
 
     if (ctx->paused.load(std::memory_order_relaxed) || ctx->done.load(std::memory_order_relaxed)) {
         std::memset(out, 0, frame_count * ctx->cfg.channels * sizeof(int16_t));
@@ -255,20 +255,20 @@ int main(int argc, char **argv)
         }
 
         {
-            uint32_t ord    = ctx.st_order.load(std::memory_order_relaxed);
-            uint32_t ordn   = ctx.st_order_count.load(std::memory_order_relaxed);
-            uint32_t pat    = ctx.st_pattern.load(std::memory_order_relaxed);
-            uint32_t row    = ctx.st_row.load(std::memory_order_relaxed);
-            uint32_t ch     = ctx.st_channels.load(std::memory_order_relaxed);
-            uint32_t cha    = ctx.st_channels_active.load(std::memory_order_relaxed);
-            uint8_t  vol    = ctx.cur_vol.load(std::memory_order_relaxed);
-            uint32_t loops  = ctx.st_loops.load(std::memory_order_relaxed);
-            bool     paused = ctx.paused.load(std::memory_order_relaxed);
+            uint32_t current_order        = ctx.st_order.load(std::memory_order_relaxed);
+            uint32_t order_count          = ctx.st_order_count.load(std::memory_order_relaxed);
+            uint32_t current_pattern      = ctx.st_pattern.load(std::memory_order_relaxed);
+            uint32_t row                  = ctx.st_row.load(std::memory_order_relaxed);
+            uint32_t channel_count        = ctx.st_channels.load(std::memory_order_relaxed);
+            uint32_t active_channel_count = ctx.st_channels_active.load(std::memory_order_relaxed);
+            uint8_t  volume               = ctx.cur_vol.load(std::memory_order_relaxed);
+            uint32_t loops                = ctx.st_loops.load(std::memory_order_relaxed);
+            bool     paused               = ctx.paused.load(std::memory_order_relaxed);
             char loop_info[16] = {0};
             if (loops > 0)
                 std::snprintf(loop_info, sizeof(loop_info), "  (looped: x%u)", loops);
             std::printf("\r\033[K  Ord %2u/%-2u  Pat %3u  Row %2u/64  Ch %u/%-2u  Vol %2u%s%s",
-                ord, ordn, pat, row, cha, ch, (uint32_t)vol,
+                current_order, order_count, current_pattern, row, active_channel_count, channel_count, (uint32_t)volume,
                 loop_info,
                 paused ? "  [PAUSED]" : "");
             std::fflush(stdout);
