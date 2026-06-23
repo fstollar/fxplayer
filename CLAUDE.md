@@ -192,8 +192,11 @@ blow-by-blow logs here.
 - Encapsulate the global-array state into a struct (only after the suite is
   green — it now is).
 - XM / IT formats (planned in the original, never implemented).
-- **Web host** — GitHub Pages deploy pending. Sources complete in
-  `src/host/web/`; build via `./build-web.sh`. Requires `lld-23`.
+- **Web host** — GitHub Pages not yet live (requires repo to be public).
+  Both `main` and `gh-pages` pushed to `https://github.com/fstollar/fxplayer`
+  (private). To enable Pages: make repo public, then Settings → Pages →
+  `gh-pages` branch / root. Build + deploy: `./build-web.sh`.
+  Dev server: `./serve-web.sh [--network]`. Requires `lld-23`.
   See `docs/superpowers/specs/2026-06-23-web-host-design.md`.
 - **Bug audit** — systematically work through `BUGS.md`, classify each quirk
   as (a) faithful reproduction required for bit-exactness, (b) fixable in the

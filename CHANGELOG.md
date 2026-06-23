@@ -4,6 +4,15 @@
 
 ---
 
+### 2026-06-24 — GitHub repo created; gh-pages branch pushed
+
+Private repo `https://github.com/fstollar/fxplayer` created. Both `main` and
+`gh-pages` branches pushed (HTTPS remote). GitHub Pages not yet enabled —
+requires the repo to be made public first. When ready: Settings → Pages →
+`gh-pages` branch / root. Future deploys via `./build-web.sh`.
+
+---
+
 ### 2026-06-23 — Web host initial implementation
 
 Self-contained static demo page. The C99 core is compiled to bare Wasm32 with
