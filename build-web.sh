@@ -11,8 +11,9 @@ WASM_OUT="$SCRIPT_DIR/fxcore.wasm"
 SOURCES=$(find "$SCRIPT_DIR/src/core" -name '*.c' | sort)
 
 clang --target=wasm32-unknown-unknown -nostdlib -fno-builtin \
-  -Wl,--no-entry -Wl,--export-all -Wl,--export=memory \
+  -Wl,--no-entry -Wl,--export-all \
   -O2 \
+  -I "$WEB_SRC/include" \
   -I "$SCRIPT_DIR/src/core/include" \
   -I "$SCRIPT_DIR/src/core" \
   -o "$WASM_OUT" \
