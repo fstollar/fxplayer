@@ -82,8 +82,8 @@ static void data_callback(ma_device *dev, void *out, const void * /*in*/, ma_uin
             /* No looping: stop on the first loop event. */
             ctx->done = true;
             g_stop    = true;
-        } else if (ctx->loop > 0 && (int)cur_loops >= ctx->loop) {
-            /* N repeats exhausted. */
+        } else if (ctx->loop > 0 && (int)cur_loops > ctx->loop) {
+            /* N repeats exhausted (cur_loops counts loop events; stop after N+1 total plays). */
             ctx->done = true;
             g_stop    = true;
         } else if (rendered < frame_count) {
