@@ -36,35 +36,48 @@ cp -r "$WEB_SRC/modules"        "$STAGE_DIR/"
 
 if [[ "$BIND" == "0.0.0.0" ]]; then
     LAN_IP="$(ip route get 1 2>/dev/null | awk '{print $7; exit}' || hostname -I | awk '{print $1}')"
-
-    # AudioWorklet requires a secure context on non-localhost origins.
-    # Generate a temporary self-signed certificate for HTTPS.
     CERT="$STAGE_DIR/cert.pem"
     KEY="$STAGE_DIR/key.pem"
-    openssl req -x509 -newkey rsa:2048 -keyout "$KEY" -out "$CERT" \
-        -days 1 -nodes -subj "/CN=$LAN_IP" -quiet 2>/dev/null
+
+    # Generate a temporary self-signed certificate (valid 1 day).
+    # AudioWorklet is blocked on plain HTTP for non-localhost origins.
+    openssl req -x509 -newkey rsa:2048 \
+        -keyout "$KEY" -out "$CERT" \
+        -days 1 -nodes \
+        -subj "/CN=$LAN_IP" 2>/dev/null
+
+    # Write the HTTPS server to a file — avoids heredoc-to-stdin fragility.
+    cat > "$STAGE_DIR/https_server.py" << 'PYEOF'
+import sys, ssl, http.server, os, signal
+
+port  = int(sys.argv[1])
+bind  = sys.argv[2]
+root  = sys.argv[3]
+cert  = sys.argv[4]
+key   = sys.argv[5]
+
+os.chdir(root)
+httpd = http.server.HTTPServer((bind, port), http.server.SimpleHTTPRequestHandler)
+ctx   = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ctx.load_cert_chain(cert, key)
+httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+try:
+    httpd.serve_forever()
+except KeyboardInterrupt:
+    pass
+PYEOF
 
     echo ""
     echo "  Serving at https://localhost:$PORT  (this machine)"
     echo "             https://$LAN_IP:$PORT  (LAN)"
     echo ""
-    echo "  Browser will warn about the self-signed certificate — click"
-    echo "  Advanced → Accept the Risk (Firefox) or Proceed anyway (Chrome)."
+    echo "  Browser will warn about the self-signed certificate —"
+    echo "  click Advanced → Accept the Risk (Firefox)"
+    echo "  or   Advanced → Proceed anyway  (Chrome/Edge)."
     echo ""
     echo "  Ctrl-C to stop"
     echo ""
-
-    # Python inline HTTPS server using the generated cert.
-    python3 - "$PORT" "$BIND" "$STAGE_DIR" "$CERT" "$KEY" <<'PYEOF'
-import sys, ssl, http.server, os
-port, bind, directory, cert, key = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
-os.chdir(directory)
-httpd = http.server.HTTPServer((bind, int(port)), http.server.SimpleHTTPRequestHandler)
-ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-ctx.load_cert_chain(cert, key)
-httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
-httpd.serve_forever()
-PYEOF
+    python3 "$STAGE_DIR/https_server.py" "$PORT" "$BIND" "$STAGE_DIR" "$CERT" "$KEY"
 
 else
     echo ""
