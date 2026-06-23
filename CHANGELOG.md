@@ -4,6 +4,42 @@
 
 ---
 
+### 2026-06-23 — Rich banner + live playback status line
+
+`fxplayer` now shows a formatted startup banner and a status line that
+updates in-place every 50 ms:
+
+```
+F/X Player 0.67.0
+"Song Title"
+module.s3m  [S3M · 48000 Hz · stereo · interp · soft-clip · no loop]
+[space] pause  [←/,  →/.] order  [↑/+  ↓/-] volume  [q/Esc] quit
+  Ord  0/15  Pat  3  Row 42/64  Ch 6/8  Vol 64  [PAUSED]
+```
+
+#### What was added / changed
+
+| File | What |
+|---|---|
+| `fx.h` | `fx_playback_state` struct; `fx_get_playback_state()`; `fx_song_title()` |
+| `fx.c` | Implements both — reads format globals, counts `ChannelActiv[]` for active channels |
+| `s3m.c` / `mod.c` / `m669.c` | Each stores song title at load time; exposes via `*_song_title()` |
+| `s3m.h` / `mod.h` / `m669.h` | Declarations for `*_song_title()` |
+| `main.cpp` | Banner with loop/interp/softclip labels; 6 `atomic<uint32_t>` fields on `AudioCtx` snapshotted in the audio callback; UI reads them every 50 ms; `\r\033[K` in-place update |
+
+#### Design notes
+
+- `fx_get_playback_state()` is audio-callback-only (same constraint as
+  `fx_song_loops()`). The callback snapshots into per-field atomics; the
+  UI thread reads them relaxed — a one-frame stale read is fine for display.
+- Song title: S3M 28-char field at buf[0..27]; MOD 20-char field at
+  buf[0..19]; 669 message at buf[2] (already null-terminated by the loader
+  at buf[109]). Blank/all-spaces titles are suppressed.
+- Status line uses `\r\033[K` (carriage-return + erase-to-EOL) and is
+  erased cleanly on exit, leaving no residue in the terminal.
+
+---
+
 ### 2026-06-20 — Real-time S3M playback via miniaudio
 
 `build/host/cli/fxplayer <module.s3m>` — plays S3M files in real time
