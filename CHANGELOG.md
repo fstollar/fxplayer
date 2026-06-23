@@ -4,6 +4,26 @@
 
 ---
 
+### 2026-06-23 — Loop counter in status line
+
+`(looped: xN)` appended to the status line after the first loop event,
+absent entirely during a no-loop or pre-loop play.
+
+| File | What |
+|---|---|
+| `main.cpp` | `st_loops` atomic on `AudioCtx`; set in loop-detection block; snprintf'd only when > 0 |
+
+---
+
+### 2026-06-23 — Loop-count off-by-one fix
+
+`-l N` is "take the loop N times" (play N+1 times total).  The previous
+guard `cur_loops >= N` fired on the first wrap for `-l 1`, stopping after
+a single play.  Fixed to `cur_loops > N` so the engine stops only after
+the (N+1)th loop event.
+
+---
+
 ### 2026-06-23 — Rich banner + live playback status line
 
 `fxplayer` now shows a formatted startup banner and a status line that

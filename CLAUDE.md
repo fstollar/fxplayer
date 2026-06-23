@@ -100,8 +100,13 @@ blow-by-blow logs here.
   vs. the DOS reference. `fx_detect_format` dispatches all three. 6/6 CTests
   pass (`compare_s3m` / `compare_mod` / `compare_669`).
 - **CLI host (`src/host/cli/`)** — `fxplayer <module>` real-time playback via
-  miniaudio. Interactive keyboard controls: pause/resume (SPACE), quit (Q/Esc),
+  miniaudio. Full arg parsing (`-r`/`-c`/`-l`/`-v`/`--no-interpolation`/`--no-softclip`).
+  Interactive keyboard controls: pause/resume (SPACE), quit (Q/Esc),
   order jump (←/→), volume (↑/↓). POSIX termios raw-mode TTY input, no ncurses.
+  Startup banner shows song title, format, Hz, channels, interp/softclip/loop flags.
+  Live status line (50 ms refresh): order, pattern, row, active channels, volume,
+  loop counter. Loop semantics: `-l 0` = no loop, `-l N` = loop N times (N+1 plays),
+  `-l -1` = infinite (default).
 - **Validation harness** — `tests/render-dosbox.sh --native` renders DOS
   reference WAVs; CTests compare sha256 against hardcoded reference hashes.
 
@@ -128,9 +133,6 @@ blow-by-blow logs here.
 - Encapsulate the global-array state into a struct (only after the suite is
   green — it now is).
 - XM / IT formats (planned in the original, never implemented).
-- **CLI UX** — proper argument parsing (sample rate, channels, output device,
-  volume, loop count), friendlier startup banner showing format/title/channels/BPM.
-  cxxopts 3.2.0 is already linked (`cxxopts::cxxopts`) — just wire it into main.cpp.
 - **Web host** — WebAssembly build of the C99 core; browser page with basic
   transport controls. Candidate: Emscripten + a small JS/HTML shell, or a
   Rust/wasm-bindgen thin wrapper around the C core.
