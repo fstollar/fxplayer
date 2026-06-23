@@ -641,16 +641,16 @@ void mixer_calc_master_vol32(uint32_t master_volume, int32_t *table_centre)
 void mixer_convert_to_s16(int16_t *out, uint32_t frame_count,
                           const int32_t *master_vol_table)
 {
-    uint32_t n = frame_count * (g_flag_stereo ? 2u : 1u);
+    uint32_t sample_count = frame_count * (g_flag_stereo ? 2u : 1u);
     uint32_t i;
-    for (i = 0; i < n; i++) {
-        int32_t v   = s_mix_scratch[i];
-        int32_t idx = v >> 18;          /* signed arithmetic shift */
-        int64_t sc  = (int64_t)v * master_vol_table[idx];
-        int32_t r   = (int32_t)(sc / 0x800000L) + 0x8000;
-        if (r & (int32_t)0xFFFF0000) {
-            r = (r < 0) ? 0 : 0xFFFF;
+    for (i = 0; i < sample_count; i++) {
+        int32_t mix_sample = s_mix_scratch[i];
+        int32_t idx        = mix_sample >> 18;          /* signed arithmetic shift */
+        int64_t scaled     = (int64_t)mix_sample * master_vol_table[idx];
+        int32_t result     = (int32_t)(scaled / 0x800000L) + 0x8000;
+        if (result & (int32_t)0xFFFF0000) {
+            result = (result < 0) ? 0 : 0xFFFF;
         }
-        out[i] = (int16_t)(r - 32768);
+        out[i] = (int16_t)(result - 32768);
     }
 }
