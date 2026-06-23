@@ -217,6 +217,61 @@ uint32_t fx_song_loops(void)
     }
 }
 
+const char *fx_song_title(void)
+{
+    switch (g_loaded_fmt) {
+    case FX_FORMAT_S3M: return s3m_song_title();
+    case FX_FORMAT_MOD: return mod_song_title();
+    case FX_FORMAT_669: return m669_song_title();
+    default:            return "";
+    }
+}
+
+void fx_get_playback_state(fx_playback_state *out)
+{
+    uint32_t i;
+    if (!out) return;
+    out->order           = 0;
+    out->order_count     = 0;
+    out->pattern         = 0;
+    out->row             = 0;
+    out->row_count       = 64;
+    out->channels        = 0;
+    out->channels_active = 0;
+
+    switch (g_loaded_fmt) {
+    case FX_FORMAT_S3M:
+        out->order       = S3M_Order;
+        out->order_count = S3M_OrderNum;
+        out->pattern     = S3M_Pattern;
+        out->row         = S3M_row;
+        out->channels    = S3M_channels;
+        for (i = 0; i < S3M_channels; i++)
+            if (S3M_ChannelActiv[i]) out->channels_active++;
+        break;
+    case FX_FORMAT_MOD:
+        out->order       = MOD_Order;
+        out->order_count = MOD_OrderNum;
+        out->pattern     = MOD_Pattern;
+        out->row         = MOD_row;
+        out->channels    = MOD_channels;
+        for (i = 0; i < MOD_channels; i++)
+            if (MOD_ChannelActiv[i]) out->channels_active++;
+        break;
+    case FX_FORMAT_669:
+        out->order       = M669_Order;
+        out->order_count = M669_OrderNum;
+        out->pattern     = M669_Pattern;
+        out->row         = M669_row;
+        out->channels    = M669_CHANNELS;
+        for (i = 0; i < M669_CHANNELS; i++)
+            if (M669_ChannelActiv[i]) out->channels_active++;
+        break;
+    default:
+        break;
+    }
+}
+
 void fx_restart(void)
 {
     switch (g_loaded_fmt) {

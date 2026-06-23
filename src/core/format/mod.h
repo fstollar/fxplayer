@@ -69,10 +69,13 @@ void    mod_close(void);
 void    mod_render_block(uint32_t block_frames);
 
 /* Returns non-zero when the song has played through to a natural end (order list exhausted). */
-uint8_t mod_is_done(void);
+uint8_t     mod_is_done(void);
 
 /* Returns how many times the song has looped (B effect to order 0, or order list exhausted). */
-uint32_t mod_song_loops(void);
+uint32_t    mod_song_loops(void);
+
+/* Returns the null-terminated song title (up to 20 chars). Empty string before load. */
+const char *mod_song_title(void);
 
 /* Mark one song loop; called by the effect engine on B effect to order 0. */
 void     mod_mark_looped(void);

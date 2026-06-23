@@ -338,9 +338,10 @@ void m669_close(void)
     g_master_vol_table = NULL;
 }
 
-uint8_t  m669_is_done(void)    { return s_dat_ready == 2u; }
-uint32_t m669_song_loops(void) { return s_song_loops; }
-void     m669_restart(void)    { if (s_dat_ready == 2) s_dat_ready = 1; }
+uint8_t     m669_is_done(void)    { return s_dat_ready == 2u; }
+uint32_t    m669_song_loops(void) { return s_song_loops; }
+const char *m669_song_title(void) { return s_buf ? (const char *)(s_buf + 2) : ""; }
+void        m669_restart(void)    { if (s_dat_ready == 2) s_dat_ready = 1; }
 
 /* ---- initialisation ---- */
 

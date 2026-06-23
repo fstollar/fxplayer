@@ -66,10 +66,13 @@ void     s3m_close(void);
 void     s3m_render_block(uint32_t block_frames);
 
 /* Returns non-zero when the song has played through to a natural end (pattern 255). */
-uint8_t  s3m_is_done(void);
+uint8_t     s3m_is_done(void);
 
 /* Returns how many times the song has looped (Bxx to order 0, or pattern 255). */
-uint32_t s3m_song_loops(void);
+uint32_t    s3m_song_loops(void);
+
+/* Returns the null-terminated song title (up to 28 chars). Empty string before load. */
+const char *s3m_song_title(void);
 
 /* Mark one song loop; called by the effect engine on Bxx to order 0. */
 void     s3m_mark_looped(void);

@@ -61,6 +61,7 @@ static const uint8_t *s_order    = NULL;
 static const uint8_t *s_chansets = NULL;
 static uint8_t        s_dat_ready = 0;     /* 0=unloaded, 1=playing, 2=done */
 static uint32_t       s_song_loops = 0;
+static char           s_title[29] = {0};
 
 /* ---- S3M on-disk header layout (64 bytes) ---- */
 #pragma pack(push,1)
@@ -151,6 +152,9 @@ int s3m_load(const uint8_t *data, size_t size,
 
     s_buf = ws;
     memcpy(s_buf, data, size);
+
+    memcpy(s_title, s_buf, 28);
+    s_title[28] = '\0';
 
     p     = ws + module_aligned;
     s_ins = (uint8_t **)p;
@@ -274,8 +278,9 @@ void s3m_close(void)
     s_last_row_ptr = NULL;
 }
 
-uint8_t  s3m_is_done(void)    { return (s_dat_ready == 2); }
-uint32_t s3m_song_loops(void) { return s_song_loops; }
+uint8_t     s3m_is_done(void)    { return (s_dat_ready == 2); }
+uint32_t    s3m_song_loops(void) { return s_song_loops; }
+const char *s3m_song_title(void) { return s_title; }
 void     s3m_mark_looped(void) { s_song_loops++; }
 void     s3m_restart(void)    { if (s_dat_ready == 2) s_dat_ready = 1; }
 

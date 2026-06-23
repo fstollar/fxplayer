@@ -101,6 +101,27 @@ uint8_t fx_get_volume(void);
 void fx_order_jump(int delta);
 
 /*
+ * Snapshot of current playback position. All fields are 0 before fx_load.
+ * Call only from the audio callback thread.
+ */
+typedef struct {
+    uint32_t order;            /* current order-list index */
+    uint32_t order_count;      /* total orders in the order list */
+    uint32_t pattern;          /* current pattern number */
+    uint32_t row;              /* current row within the pattern */
+    uint32_t row_count;        /* rows per pattern (64 for all formats) */
+    uint32_t channels;         /* total channels in the module */
+    uint32_t channels_active;  /* channels currently playing a note */
+} fx_playback_state;
+
+/* Write current playback position into *out. Call only from audio callback thread. */
+void fx_get_playback_state(fx_playback_state *out);
+
+/* Returns the null-terminated song title embedded in the module. Never NULL.
+   Empty string for formats without a title or before fx_load. */
+const char *fx_song_title(void);
+
+/*
  * Returns the number of times the song has looped since fx_load:
  *   - Incremented by Bxx/B-effect jumping to order 0 (loop via effect).
  *   - Incremented when the order list is exhausted (pattern 255 / natural end).

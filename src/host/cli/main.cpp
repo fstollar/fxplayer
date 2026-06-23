@@ -24,6 +24,13 @@ struct AudioCtx {
     std::atomic<int>     vol_cmd{-1};
     std::atomic<uint8_t> cur_vol{64};
     std::atomic<int>     order_cmd{0};
+    /* playback position — written by audio thread, read by UI thread */
+    std::atomic<uint32_t> st_order{0};
+    std::atomic<uint32_t> st_order_count{0};
+    std::atomic<uint32_t> st_pattern{0};
+    std::atomic<uint32_t> st_row{0};
+    std::atomic<uint32_t> st_channels{0};
+    std::atomic<uint32_t> st_channels_active{0};
 };
 
 static void data_callback(ma_device *dev, void *out, const void * /*in*/, ma_uint32 frame_count)
@@ -45,6 +52,17 @@ static void data_callback(ma_device *dev, void *out, const void * /*in*/, ma_uin
     }
 
     size_t rendered = fx_render_frames(out, frame_count, &ctx->cfg);
+
+    {
+        fx_playback_state ps;
+        fx_get_playback_state(&ps);
+        ctx->st_order.store(ps.order,           std::memory_order_relaxed);
+        ctx->st_order_count.store(ps.order_count, std::memory_order_relaxed);
+        ctx->st_pattern.store(ps.pattern,       std::memory_order_relaxed);
+        ctx->st_row.store(ps.row,               std::memory_order_relaxed);
+        ctx->st_channels.store(ps.channels,     std::memory_order_relaxed);
+        ctx->st_channels_active.store(ps.channels_active, std::memory_order_relaxed);
+    }
 
     /* Zero the tail on a natural end (pattern 255 / order list exhausted). */
     if (rendered < frame_count) {
@@ -167,16 +185,42 @@ int main(int argc, char **argv)
     signal(SIGINT,  on_signal);
     signal(SIGTERM, on_signal);
 
+    /* Build loop/interp/softclip label strings for the banner. */
+    char loop_buf[16];
+    const char *loop_str;
+    if (fxargs.loop < 0)       loop_str = "infinite loop";
+    else if (fxargs.loop == 0) loop_str = "no loop";
+    else {
+        std::snprintf(loop_buf, sizeof(loop_buf), "loop \xc3\x97%d", fxargs.loop);
+        loop_str = loop_buf;
+    }
+
     std::printf("F/X Player %s\n", fx_version_string());
-    std::printf("Playing: %s  [%s, %u Hz, %s]\n",
+
+    const char *title = fx_song_title();
+    /* Skip title line if it is blank or all spaces */
+    {
+        const char *p = title;
+        while (*p == ' ') ++p;
+        if (*p) std::printf("\"%s\"\n", title);
+    }
+
+    std::printf("%s  [%s \xc2\xb7 %u Hz \xc2\xb7 %s \xc2\xb7 %s \xc2\xb7 %s \xc2\xb7 %s]\n",
         fxargs.module_path.c_str(),
         format_name(fmt),
         fxargs.sample_rate,
-        fxargs.channels == 1 ? "mono" : "stereo");
+        fxargs.channels == 1 ? "mono" : "stereo",
+        fxargs.no_interp   ? "no-interp"  : "interp",
+        fxargs.no_softclip ? "no-clip"    : "soft-clip",
+        loop_str);
     std::printf("[space] pause  [\xe2\x86\x90/,  \xe2\x86\x92/.] order  [\xe2\x86\x91/+  \xe2\x86\x93/-] volume  [q/Esc] quit\n");
 
     ma_device_start(&device);
     tty_raw_enable();
+
+    /* Print the initial (blank) status line — will be overwritten in the loop. */
+    std::printf("  ...\r");
+    std::fflush(stdout);
 
     while (!g_stop) {
         switch (tty_read_key()) {
@@ -207,6 +251,22 @@ int main(int argc, char **argv)
         }
         default: break;
         }
+
+        {
+            uint32_t ord  = ctx.st_order.load(std::memory_order_relaxed);
+            uint32_t ordn = ctx.st_order_count.load(std::memory_order_relaxed);
+            uint32_t pat  = ctx.st_pattern.load(std::memory_order_relaxed);
+            uint32_t row  = ctx.st_row.load(std::memory_order_relaxed);
+            uint32_t ch   = ctx.st_channels.load(std::memory_order_relaxed);
+            uint32_t cha  = ctx.st_channels_active.load(std::memory_order_relaxed);
+            uint8_t  vol  = ctx.cur_vol.load(std::memory_order_relaxed);
+            bool     paused = ctx.paused.load(std::memory_order_relaxed);
+            std::printf("\r\033[K  Ord %2u/%-2u  Pat %3u  Row %2u/64  Ch %u/%-2u  Vol %2u%s",
+                ord, ordn, pat, row, cha, ch, (uint32_t)vol,
+                paused ? "  [PAUSED]" : "");
+            std::fflush(stdout);
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
@@ -214,6 +274,7 @@ int main(int argc, char **argv)
     ma_device_uninit(&device);
     fx_close();
     free(workspace);
-    std::printf("\n");
+    std::printf("\r\033[K");   /* clear status line */
+    std::fflush(stdout);
     return 0;
 }

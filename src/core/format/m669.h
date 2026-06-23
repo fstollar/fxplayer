@@ -71,10 +71,13 @@ void    m669_close(void);
 void    m669_render_block(uint32_t block_frames);
 
 /* Returns non-zero when the song has played through to a natural end (pattern 0xFF). */
-uint8_t m669_is_done(void);
+uint8_t     m669_is_done(void);
 
 /* Returns how many times the song has looped (pattern 0xFF reached). */
-uint32_t m669_song_loops(void);
+uint32_t    m669_song_loops(void);
+
+/* Returns the null-terminated song message/title (up to 107 chars). Empty string before load. */
+const char *m669_song_title(void);
 
 /* Reset s_dat_ready to 1 so rendering resumes after a natural end. */
 void     m669_restart(void);
