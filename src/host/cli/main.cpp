@@ -212,7 +212,7 @@ int main(int argc, char **argv)
         const char *title = fx_song_title();
         const char *p = title;
         while (*p == ' ') ++p;
-        if (*p) std::printf("\"%s\"\n", title);
+        if (*p) std::printf("Song Title: \"%s\"\n", title);
     }
 
     std::printf("[space] pause  [\xe2\x86\x90/,  \xe2\x86\x92/.] order  [\xe2\x86\x91/+  \xe2\x86\x93/-] volume  [q/Esc] quit\n");
