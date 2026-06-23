@@ -62,7 +62,7 @@
   </div>
 
   <div class="controls">
-    <label>Volume <input type="range" id="volume" min="0" max="64" value="64" disabled></label>
+    <label>Volume <input type="range" id="volume" min="0" max="64" value="64" disabled autocomplete="off"></label>
   </div>
 
   <div id="fx-state">
@@ -97,6 +97,7 @@
 
     document.getElementById('btn-start').addEventListener('click', async () => {
       document.getElementById('btn-start').disabled = true;
+      document.getElementById('volume').value = 64;
       document.getElementById('fx-status').textContent = 'Initialising…';
       try {
         await player.init();
