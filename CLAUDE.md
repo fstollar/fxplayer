@@ -160,6 +160,12 @@ blow-by-blow logs here.
   Live status line (50 ms refresh): order, pattern, row, active channels, volume,
   loop counter. Loop semantics: `-l 0` = no loop, `-l N` = loop N times (N+1 plays),
   `-l -1` = infinite (default).
+- **Web host (`src/host/web/`)** — static demo page; C99 core compiled to
+  bare wasm32 via `clang --target=wasm32-unknown-unknown -nostdlib` (requires
+  `lld-23`). AudioWorklet render loop, no SharedArrayBuffer. Play/pause/stop,
+  order navigation, volume, module dropdown (5 bundled tracks: S3M/MOD/669),
+  drag-and-drop for own files. Build + deploy: `./build-web.sh`. GitHub Pages
+  deploy deferred; sources committed, locally tested and working.
 - **Validation harness** — `tests/render-dosbox.sh --native` renders DOS
   reference WAVs; CTests compare sha256 against hardcoded reference hashes.
 
@@ -186,9 +192,9 @@ blow-by-blow logs here.
 - Encapsulate the global-array state into a struct (only after the suite is
   green — it now is).
 - XM / IT formats (planned in the original, never implemented).
-- **Web host** — WebAssembly build of the C99 core; browser page with basic
-  transport controls. Candidate: Emscripten + a small JS/HTML shell, or a
-  Rust/wasm-bindgen thin wrapper around the C core.
+- **Web host** — GitHub Pages deploy pending. Sources complete in
+  `src/host/web/`; build via `./build-web.sh`. Requires `lld-23`.
+  See `docs/superpowers/specs/2026-06-23-web-host-design.md`.
 - **Bug audit** — systematically work through `BUGS.md`, classify each quirk
   as (a) faithful reproduction required for bit-exactness, (b) fixable in the
   C99 core without breaking bit-exactness, or (c) fixable only in the DOS

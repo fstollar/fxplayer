@@ -1,5 +1,45 @@
 # F/X Player — Change Log
 
+## host/web — browser demo page (bare Wasm32 + AudioWorklet)
+
+---
+
+### 2026-06-23 — Web host initial implementation
+
+Self-contained static demo page. The C99 core is compiled to bare Wasm32 with
+`clang --target=wasm32-unknown-unknown -nostdlib` (requires `lld-23`); no
+Emscripten, no Rust, no npm. An `AudioWorkletProcessor` hosts the Wasm instance
+on the audio thread and calls `fx_render_frames` every 128 frames, converting
+S16 interleaved output to float32 stereo for Web Audio. GitHub Pages deploy
+deferred; sources are in `src/host/web/` and locally tested.
+
+#### Files added
+
+| File | Role |
+|---|---|
+| `src/host/web/fxcore_wasm.c` | C shim: `memset`/`memcpy`/`memcmp` polyfills, 4 MB static arenas, `wasm_*` wrapper exports |
+| `src/host/web/include/string.h` | Minimal `string.h` stub for the `-nostdlib` build |
+| `src/host/web/fx-worklet.js` | `AudioWorkletProcessor`: Wasm init, render loop, play/pause/stop/volume/order commands |
+| `src/host/web/fx-main.js` | Main thread: `AudioContext` setup, file loading, UI state |
+| `src/host/web/index.html` | Demo page: play/pause toggle, stop, order nav, volume, module dropdown, drag-and-drop |
+| `src/host/web/modules/` | 5 bundled tracks: `64mania.s3m`, `skyrider.s3m`, `hul.mod`, `purple.669`, `unreal ][.s3m` |
+| `build-web.sh` | Compile + deploy script; `--no-deploy` flag for compile-only |
+
+#### Non-obvious implementation notes
+
+- `AudioWorkletNode.port` requires `addEventListener` + explicit `.start()` —
+  assigning `onmessage` alone does not deliver messages in all browsers.
+- `TextDecoder` is absent from `AudioWorkletGlobalScope`; song titles decoded
+  with `String.fromCharCode` instead.
+- `AudioContext.resume()` must be called after async init work even when the
+  context was created inside a user-gesture handler.
+- Stop resets playback position by re-calling `wasm_load(lastModuleSize)` —
+  the module bytes remain in `g_module_buf` so no re-transfer is needed.
+- The module selector is enabled before Start so the user can choose a track
+  first; the change handler is wired only after `init()` succeeds.
+
+---
+
 ## host/cli — C++ command-line player (miniaudio)
 
 ---
