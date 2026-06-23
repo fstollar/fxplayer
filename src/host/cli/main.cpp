@@ -31,6 +31,7 @@ struct AudioCtx {
     std::atomic<uint32_t> st_row{0};
     std::atomic<uint32_t> st_channels{0};
     std::atomic<uint32_t> st_channels_active{0};
+    std::atomic<uint32_t> st_loops{0};
 };
 
 static void data_callback(ma_device *dev, void *out, const void * /*in*/, ma_uint32 frame_count)
@@ -78,6 +79,7 @@ static void data_callback(ma_device *dev, void *out, const void * /*in*/, ma_uin
     uint32_t cur_loops = fx_song_loops();
     if (cur_loops != ctx->prev_loops) {
         ctx->prev_loops = cur_loops;
+        ctx->st_loops.store(cur_loops, std::memory_order_relaxed);
         if (ctx->loop == 0) {
             /* No looping: stop on the first loop event. */
             ctx->done = true;
@@ -253,16 +255,21 @@ int main(int argc, char **argv)
         }
 
         {
-            uint32_t ord  = ctx.st_order.load(std::memory_order_relaxed);
-            uint32_t ordn = ctx.st_order_count.load(std::memory_order_relaxed);
-            uint32_t pat  = ctx.st_pattern.load(std::memory_order_relaxed);
-            uint32_t row  = ctx.st_row.load(std::memory_order_relaxed);
-            uint32_t ch   = ctx.st_channels.load(std::memory_order_relaxed);
-            uint32_t cha  = ctx.st_channels_active.load(std::memory_order_relaxed);
-            uint8_t  vol  = ctx.cur_vol.load(std::memory_order_relaxed);
+            uint32_t ord    = ctx.st_order.load(std::memory_order_relaxed);
+            uint32_t ordn   = ctx.st_order_count.load(std::memory_order_relaxed);
+            uint32_t pat    = ctx.st_pattern.load(std::memory_order_relaxed);
+            uint32_t row    = ctx.st_row.load(std::memory_order_relaxed);
+            uint32_t ch     = ctx.st_channels.load(std::memory_order_relaxed);
+            uint32_t cha    = ctx.st_channels_active.load(std::memory_order_relaxed);
+            uint8_t  vol    = ctx.cur_vol.load(std::memory_order_relaxed);
+            uint32_t loops  = ctx.st_loops.load(std::memory_order_relaxed);
             bool     paused = ctx.paused.load(std::memory_order_relaxed);
-            std::printf("\r\033[K  Ord %2u/%-2u  Pat %3u  Row %2u/64  Ch %u/%-2u  Vol %2u%s",
+            char loop_info[16] = {0};
+            if (loops > 0)
+                std::snprintf(loop_info, sizeof(loop_info), "  (looped: x%u)", loops);
+            std::printf("\r\033[K  Ord %2u/%-2u  Pat %3u  Row %2u/64  Ch %u/%-2u  Vol %2u%s%s",
                 ord, ordn, pat, row, cha, ch, (uint32_t)vol,
+                loop_info,
                 paused ? "  [PAUSED]" : "");
             std::fflush(stdout);
         }
