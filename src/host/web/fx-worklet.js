@@ -6,9 +6,10 @@ class FxWorkletProcessor extends AudioWorkletProcessor
     constructor(options)
     {
         super(options);
-        this._wasm       = null;
-        this._playing    = false;
-        this._blockCount = 0;
+        this._wasm           = null;
+        this._playing        = false;
+        this._blockCount     = 0;
+        this._lastModuleSize = 0;
         // Report state every ~19 blocks ≈ 50 ms at 44100 Hz / 128 frames per block.
         this._STATE_INTERVAL = 19;
         this.port.onmessage = (event) => this._handleMessage(event.data);
@@ -20,11 +21,19 @@ class FxWorkletProcessor extends AudioWorkletProcessor
         {
             case 'init':   this._init(msg.wasmBytes);   break;
             case 'load':   this._load(msg.moduleBytes); break;
-            case 'play':   this._playing = true;        break;
-            case 'pause':  this._playing = false;       break;
+            case 'toggle':
+                this._playing = !this._playing;
+                // Immediately report new state so the button flips without delay.
+                if (this._wasm) this._reportState();
+                this.port.postMessage({ type: this._playing ? 'playing' : 'paused' });
+                break;
             case 'stop':
                 this._playing = false;
-                if (this._wasm) this._wasm.fx_restart();
+                // Re-call wasm_load() — module bytes still live in g_module_buf.
+                if (this._wasm && this._lastModuleSize > 0)
+                    this._wasm.wasm_load(this._lastModuleSize);
+                if (this._wasm) this._reportState();
+                this.port.postMessage({ type: 'stopped' });
                 break;
             case 'volume':
                 if (this._wasm) this._wasm.fx_set_volume(msg.value);
@@ -81,8 +90,9 @@ class FxWorkletProcessor extends AudioWorkletProcessor
             }
 
             const title = this._readCString(wasm.fx_song_title());
-            this._playing    = true;
-            this._blockCount = 0;
+            this._lastModuleSize = moduleBytes.byteLength;
+            this._playing        = true;
+            this._blockCount     = 0;
             this.port.postMessage({ type: 'loaded', title });
         }
         catch (err)
@@ -111,6 +121,7 @@ class FxWorkletProcessor extends AudioWorkletProcessor
         const state = new Uint32Array(wasm.memory.buffer, statePtr, 7);
         this.port.postMessage({
             type:            'state',
+            playing:         this._playing,
             order:           state[0],
             order_count:     state[1],
             pattern:         state[2],

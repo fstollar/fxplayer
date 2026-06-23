@@ -44,10 +44,9 @@ class FxPlayer
         // even when the context was created inside a user-gesture handler.
         await this._ctx.resume();
 
-        // Auto-load the bundled module.
-        const modResp  = await fetch('modules/64mania.s3m');
-        const modBytes = await modResp.arrayBuffer();
-        this.loadModule(modBytes);
+        // Auto-load whichever module is selected in the dropdown.
+        const selectedUrl = document.getElementById('module-select').value;
+        await this.loadFromUrl(selectedUrl);
     }
 
     _handleMessage(msg)
@@ -63,8 +62,21 @@ class FxPlayer
                 }
                 break;
             case 'loaded':
-                document.getElementById('fx-title').textContent  = msg.title || '(untitled)';
-                document.getElementById('fx-status').textContent = 'Playing';
+                document.getElementById('fx-title').textContent       = msg.title || '(untitled)';
+                document.getElementById('fx-status').textContent      = 'Playing';
+                document.getElementById('btn-playpause').textContent  = 'Pause';
+                break;
+            case 'playing':
+                document.getElementById('fx-status').textContent      = 'Playing';
+                document.getElementById('btn-playpause').textContent  = 'Pause';
+                break;
+            case 'paused':
+                document.getElementById('fx-status').textContent      = 'Paused';
+                document.getElementById('btn-playpause').textContent  = 'Play';
+                break;
+            case 'stopped':
+                document.getElementById('fx-status').textContent      = 'Stopped';
+                document.getElementById('btn-playpause').textContent  = 'Play';
                 break;
             case 'state':
                 document.getElementById('fx-order').textContent    =
@@ -77,7 +89,8 @@ class FxPlayer
                 document.getElementById('fx-loops').textContent    = msg.loops;
                 break;
             case 'ended':
-                document.getElementById('fx-status').textContent = 'Ended';
+                document.getElementById('fx-status').textContent     = 'Ended';
+                document.getElementById('btn-playpause').textContent = 'Play';
                 break;
             case 'error':
                 if (this._readyReject)
@@ -94,6 +107,14 @@ class FxPlayer
         }
     }
 
+    async loadFromUrl(url)
+    {
+        document.getElementById('fx-status').textContent = 'Loading…';
+        const resp  = await fetch(url);
+        const bytes = await resp.arrayBuffer();
+        this.loadModule(bytes);
+    }
+
     // Load a module from an ArrayBuffer (file picker or drag-drop).
     loadModule(arrayBuffer)
     {
@@ -102,14 +123,13 @@ class FxPlayer
         document.getElementById('fx-status').textContent = 'Loading…';
     }
 
-    // Resume AudioContext on Play in case it got suspended (e.g. tab backgrounded).
-    play()
+    // Toggle play/pause. Also resumes AudioContext in case it was suspended.
+    togglePlay()
     {
         if (this._ctx) this._ctx.resume();
-        this._node.port.postMessage({ type: 'play' });
+        this._node.port.postMessage({ type: 'toggle' });
     }
 
-    pause()          { this._node.port.postMessage({ type: 'pause' }); }
     stop()           { this._node.port.postMessage({ type: 'stop' }); }
     setVolume(vol)   { this._node.port.postMessage({ type: 'volume', value: vol }); }
     orderJump(delta) { this._node.port.postMessage({ type: 'order', delta }); }

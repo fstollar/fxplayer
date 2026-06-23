@@ -55,11 +55,10 @@
 
   <div class="controls">
     <button id="btn-start">Start</button>
-    <button id="btn-play"  disabled>Play</button>
-    <button id="btn-pause" disabled>Pause</button>
-    <button id="btn-stop"  disabled>Stop</button>
-    <button id="btn-prev"  disabled>◀ Order</button>
-    <button id="btn-next"  disabled>Order ▶</button>
+    <button id="btn-playpause" disabled>Play</button>
+    <button id="btn-stop"      disabled>Stop</button>
+    <button id="btn-prev"      disabled>◀ Order</button>
+    <button id="btn-next"      disabled>Order ▶</button>
   </div>
 
   <div class="controls">
@@ -74,6 +73,18 @@
     <span>Loops</span>   <span id="fx-loops">—</span>
   </div>
 
+  <div class="controls">
+    <label>Module
+      <select id="module-select">
+        <option value="modules/64mania.s3m">64mania (S3M)</option>
+        <option value="modules/skyrider.s3m">Skyrider (S3M)</option>
+        <option value="modules/hul.mod">Hul (MOD)</option>
+        <option value="modules/purple.669">Purple (669)</option>
+        <option value="modules/unreal ][.s3m">Unreal ][ (S3M)</option>
+      </select>
+    </label>
+  </div>
+
   <div id="drop-zone">
     Drop a .s3m / .mod / .669 here, or
     <label class="file-label">browse<input type="file" id="file-input" accept=".s3m,.mod,.669"></label>
@@ -82,7 +93,7 @@
   <script src="fx-main.js"></script>
   <script>
     const player = new FxPlayer();
-    const controls = ['btn-play','btn-pause','btn-stop','btn-prev','btn-next','volume'];
+    const controls = ['btn-playpause','btn-stop','btn-prev','btn-next','volume'];
 
     document.getElementById('btn-start').addEventListener('click', async () => {
       document.getElementById('btn-start').disabled = true;
@@ -90,18 +101,20 @@
       try {
         await player.init();
         controls.forEach(id => document.getElementById(id).disabled = false);
+        document.getElementById('module-select').addEventListener('change', (e) => {
+          player.loadFromUrl(e.target.value);
+        });
       } catch (err) {
         document.getElementById('fx-status').textContent = 'Init failed: ' + err.message;
         document.getElementById('btn-start').disabled = false;
       }
     });
 
-    document.getElementById('btn-play') .addEventListener('click', () => player.play());
-    document.getElementById('btn-pause').addEventListener('click', () => player.pause());
-    document.getElementById('btn-stop') .addEventListener('click', () => player.stop());
-    document.getElementById('btn-prev') .addEventListener('click', () => player.orderJump(-1));
-    document.getElementById('btn-next') .addEventListener('click', () => player.orderJump(1));
-    document.getElementById('volume')   .addEventListener('input',
+    document.getElementById('btn-playpause').addEventListener('click', () => player.togglePlay());
+    document.getElementById('btn-stop')     .addEventListener('click', () => player.stop());
+    document.getElementById('btn-prev')     .addEventListener('click', () => player.orderJump(-1));
+    document.getElementById('btn-next')     .addEventListener('click', () => player.orderJump(1));
+    document.getElementById('volume')       .addEventListener('input',
       (e) => player.setVolume(+e.target.value));
 
     const dropZone = document.getElementById('drop-zone');

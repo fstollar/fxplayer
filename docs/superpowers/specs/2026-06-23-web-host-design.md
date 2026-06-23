@@ -42,7 +42,7 @@ gh-pages branch (deployed):
 ├── fx-main.js
 ├── index.html
 └── modules/
-    └── test.s3m      bundled default module
+    └── 64mania.s3m   bundled default module
 ```
 
 ## C Wasm Shim (`fxcore_wasm.c`)
@@ -89,7 +89,7 @@ via `TextDecoder` on `wasm.memory.buffer`.
 ## Main Thread (`fx-main.js`)
 
 - Creates `AudioContext` + `AudioWorkletNode`
-- On page load: `fetch('modules/test.s3m')` and auto-loads into worklet
+- On page load: `fetch('modules/64mania.s3m')` and auto-loads into worklet
 - Drag-and-drop zone + file picker button for user modules
 - Sends commands to worklet via `node.port.postMessage()`
 - Receives state snapshots; updates UI (order, pattern, row, channels, loops,
@@ -122,13 +122,13 @@ git worktree add /tmp/gh-pages gh-pages
 cp /tmp/fxcore.wasm /tmp/gh-pages/
 cp src/host/web/{fx-worklet.js,fx-main.js,index.html} /tmp/gh-pages/
 mkdir -p /tmp/gh-pages/modules
-cp src/host/web/modules/test.s3m /tmp/gh-pages/modules/
+cp src/host/web/modules/64mania.s3m /tmp/gh-pages/modules/
 cd /tmp/gh-pages && git add -A && git commit -m "deploy web demo" && git push
 git worktree remove /tmp/gh-pages
 ```
 
-The bundled module (`src/host/web/modules/test.s3m`) is a copy of `_work/TEST.S3M`
-committed into the web source tree so it travels with the code.
+The bundled module (`src/host/web/modules/64mania.s3m`) is a copy of
+`tests/_test_mods/64mania.s3m` committed into the web source tree so it travels with the code.
 
 ## Out of Scope (first version)
 
