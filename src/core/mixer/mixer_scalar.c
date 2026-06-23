@@ -409,12 +409,12 @@ static void do_mixing_32(uint32_t mix_length)
                     counter2 = counter - counter1;
 
                     if (counter1 != 0) {
-                        uint32_t c = (counter1 > mix_length_rest) ? mix_length_rest : counter1;
-                        mix32_ichannel(channel_index, c, mix_pos);
-                        mix_pos         += c;
-                        mix_length_rest -= c;
-                        frac = (uint32_t)((int32_t)frac + delta_frac * (int32_t)c);
-                        pos  = (uint32_t)((int32_t)pos + delta_pos * (int32_t)c) + (frac >> 16);
+                        uint32_t samples_to_mix = (counter1 > mix_length_rest) ? mix_length_rest : counter1;
+                        mix32_ichannel(channel_index, samples_to_mix, mix_pos);
+                        mix_pos         += samples_to_mix;
+                        mix_length_rest -= samples_to_mix;
+                        frac = (uint32_t)((int32_t)frac + delta_frac * (int32_t)samples_to_mix);
+                        pos  = (uint32_t)((int32_t)pos + delta_pos * (int32_t)samples_to_mix) + (frac >> 16);
                         frac &= 65535u;
                         g_ChannelSamplePosition[channel_index] = pos;
                         g_ChannelSampleFraction[channel_index] = frac;
@@ -423,9 +423,9 @@ static void do_mixing_32(uint32_t mix_length)
                     if (mix_length_rest == 0) break;
 
                     if (counter2 != 0) {
-                        uint32_t c = (counter2 > mix_length_rest) ? mix_length_rest : counter2;
-                        uint32_t k;
-                        for (k = 0; k < c; k++) {
+                        uint32_t samples_to_mix = (counter2 > mix_length_rest) ? mix_length_rest : counter2;
+                        uint32_t sample_index;
+                        for (sample_index = 0; sample_index < samples_to_mix; sample_index++) {
                             end_pos = pos + 1u;
                             if (end_pos >= length) end_pos = length - 1u;
                             mix32_icarry(channel_index, pos, end_pos, frac, mix_pos);
@@ -434,7 +434,7 @@ static void do_mixing_32(uint32_t mix_length)
                             frac &= 65535u;
                             mix_pos++;
                         }
-                        mix_length_rest -= c;
+                        mix_length_rest -= samples_to_mix;
                     }
                     break;
                 }
@@ -462,12 +462,12 @@ static void do_mixing_32(uint32_t mix_length)
                         counter2 = counter - counter1;
 
                         if (counter1 != 0) {
-                            uint32_t c = (counter1 > mix_length_rest) ? mix_length_rest : counter1;
-                            mix_length_rest -= c;
-                            mix32_ichannel(channel_index, c, mix_pos);
-                            mix_pos += c;
-                            frac = (uint32_t)((int32_t)frac + delta_frac * (int32_t)c);
-                            pos  = (uint32_t)((int32_t)pos + delta_pos * (int32_t)c) + (frac >> 16);
+                            uint32_t samples_to_mix = (counter1 > mix_length_rest) ? mix_length_rest : counter1;
+                            mix_length_rest -= samples_to_mix;
+                            mix32_ichannel(channel_index, samples_to_mix, mix_pos);
+                            mix_pos += samples_to_mix;
+                            frac = (uint32_t)((int32_t)frac + delta_frac * (int32_t)samples_to_mix);
+                            pos  = (uint32_t)((int32_t)pos + delta_pos * (int32_t)samples_to_mix) + (frac >> 16);
                             frac &= 65535u;
                             if (pos >= loop_end) pos = pos - loop_end + loop_begin;
                             g_ChannelSamplePosition[channel_index] = pos;
@@ -477,9 +477,9 @@ static void do_mixing_32(uint32_t mix_length)
                         if (mix_length_rest == 0) break;
 
                         if (counter2 != 0) {
-                            uint32_t c = (counter2 > mix_length_rest) ? mix_length_rest : counter2;
-                            uint32_t k;
-                            for (k = 0; k < c; k++) {
+                            uint32_t samples_to_mix = (counter2 > mix_length_rest) ? mix_length_rest : counter2;
+                            uint32_t sample_index;
+                            for (sample_index = 0; sample_index < samples_to_mix; sample_index++) {
                                 end_pos = pos + 1u;
                                 if (end_pos >= loop_end)
                                     end_pos = end_pos - loop_end + loop_begin;
@@ -489,7 +489,7 @@ static void do_mixing_32(uint32_t mix_length)
                                 frac &= 65535u;
                                 mix_pos++;
                             }
-                            mix_length_rest -= c;
+                            mix_length_rest -= samples_to_mix;
                             if (pos >= loop_end) pos = pos - loop_end + loop_begin;
                         }
                         g_ChannelSamplePosition[channel_index] = pos;
