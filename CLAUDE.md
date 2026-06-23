@@ -10,6 +10,59 @@ The goal is **three build targets from one engine core:**
 2. **Original DOS build** — still compilable with OpenWatcom + TASM + Pmode/W, using the original SoundBlaster / WSS / DMA / IRQ code unchanged.
 3. **Bare-metal embedded** — 32-bit ARM Cortex-M MCUs (e.g. STM32) with I2S DMA out. Whole module loaded into SRAM/XIP/DRAM (no streaming).
 
+## Development Standards
+
+### Brace style — Allman
+
+Always put the opening `{` on its own line: functions, if/else, for, while, struct, class, lambdas — every multi-line block. One-liners (`{ return x; }`, empty `{}`) stay on a single line.
+
+### Naming — no short identifiers
+
+Never use 1–3 letter names (`i`, `it`, `k`, `enc`, `lo`, `hi`, `np`, `r`, `s`, …). Every variable, loop counter, lambda parameter, and struct member must be long enough to be self-explanatory without surrounding context. Rename short names whenever editing existing code that contains them.
+
+### Enum naming convention
+
+- Enum class names: `E` prefix + PascalCase → `ENodeType`, `EPredVariant`
+- Enum values: `e` prefix + ALL_CAPS → `eSOURCE`, `eCLAMP`, `eRICE_SHORT`
+- Never rename an enum that doesn't follow this convention without explicit user instruction.
+
+### Core rules
+
+- Prefer minimal diffs. Do not rename, reorder, or reformat unrelated code.
+- Leave unrelated user changes and untracked artifacts alone.
+
+### Avoid
+
+- Do not make broad formatting passes.
+- Do not silently change CMake defaults or feature defaults unless required and approved by the user.
+- Do not assume generated outputs, local files, or untracked artifacts are disposable.
+- Do not disable tests to get a green run without documenting why.
+
+### Working mindset
+
+- Reproduce the issue before fixing it when practical.
+- Understand root cause before writing code. If there is real ambiguity, ask instead of guessing.
+- Validate simplifications carefully.
+- Centralize duplicated parsing, caching, or helper logic once duplication starts spreading.
+
+### Wisdom
+
+- If code looks unusually complex, assume it handles a real edge case until proven otherwise.
+- Simplifications and optimizations are common sources of later reverts; validate them broadly.
+- Prefer reproducible regressions over fix-only changes.
+- When duplication starts to spread, extract the shared helper before it calcifies.
+
+### Code Comments — Comment to Follow the Code
+
+The codebase is changing fast right now; comments that help a reader follow the flow are wanted. Favor clarity over terseness.
+
+**Comment liberally where it aids understanding.** Always write a *why* comment when the reasoning is non-obvious — a hidden constraint, a subtle invariant, a workaround, an ordering that matters for byte-identity. Beyond that, a short *what/overview* comment on a non-trivial block, function, or file is welcome when it helps a reader navigate (e.g. a one-line banner on each phase of a multi-phase routine, or a file-top summary of the unit's role and its place in the layer tree). Don't comment self-evident one-liners.
+
+**Prefer a short line or two; expand when the topic genuinely needs it.** A non-obvious algorithm, a cross-layer contract, or a tricky concurrency interaction can justify a small paragraph. Avoid multi-paragraph "history of how we got here" blocks — the diff, commit message, and linked issue carry the history.
+
+**Don't reference a transient task/PR number inline.** Patterns like `"Pre-#1030 follow-up…"` belong in the commit body; inline they rot as the code moves. Describing the *current* design and why is fine and encouraged.
+
+
 ## Original source
 
 Location: `_original/`
