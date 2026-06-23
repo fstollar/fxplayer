@@ -464,17 +464,17 @@ void MOD_unpack_row(uint32_t pat_nr, uint32_t row_nr)
         /* 4-byte MOD cell: [s_hi|p_hi] [p_lo] [s_lo|e] [e_inf] */
         uint32_t periode = (((uint32_t)p[0] & 0x0Fu) << 8) | p[1];
         uint32_t note = 0xFFu;
-        uint32_t v, val;
+        uint32_t period_slot, val;
 
         if (periode != 0) {
             int32_t best_dist = 0x7FFFFFFFl;
             int32_t dist;
             note = 0;
-            for (v = 0; v < 84u; v++) {
-                if (MOD_Periodes[0][v] == 0) continue;
-                dist = (int32_t)periode - (int32_t)MOD_Periodes[0][v];
+            for (period_slot = 0; period_slot < 84u; period_slot++) {
+                if (MOD_Periodes[0][period_slot] == 0) continue;
+                dist = (int32_t)periode - (int32_t)MOD_Periodes[0][period_slot];
                 if (dist < 0) dist = -dist;
-                if (dist < best_dist) { best_dist = dist; note = v; }
+                if (dist < best_dist) { best_dist = dist; note = period_slot; }
             }
         }
         MOD_RowBuffer[channel_index*4+0] = (uint8_t)note;

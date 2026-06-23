@@ -240,15 +240,15 @@ int main(int argc, char **argv)
             ctx.order_cmd.store(-1, std::memory_order_relaxed);
             break;
         case FxKey::VOL_UP: {
-            int v = static_cast<int>(ctx.cur_vol.load(std::memory_order_relaxed)) + 4;
-            if (v > 64) v = 64;
-            ctx.vol_cmd.store(v, std::memory_order_relaxed);
+            int new_volume = static_cast<int>(ctx.cur_vol.load(std::memory_order_relaxed)) + 4;
+            if (new_volume > 64) new_volume = 64;
+            ctx.vol_cmd.store(new_volume, std::memory_order_relaxed);
             break;
         }
         case FxKey::VOL_DOWN: {
-            int v = static_cast<int>(ctx.cur_vol.load(std::memory_order_relaxed)) - 4;
-            if (v < 0) v = 0;
-            ctx.vol_cmd.store(v, std::memory_order_relaxed);
+            int new_volume = static_cast<int>(ctx.cur_vol.load(std::memory_order_relaxed)) - 4;
+            if (new_volume < 0) new_volume = 0;
+            ctx.vol_cmd.store(new_volume, std::memory_order_relaxed);
             break;
         }
         default: break;
