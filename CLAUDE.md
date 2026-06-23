@@ -4,11 +4,12 @@
 
 Porting **F/X Player** — a 1998 DOS MOD/S3M tracker module player by Apollo of STIGMA — to a modern, portable codebase while keeping the original DOS build alive.
 
-The goal is **three build targets from one engine core:**
+The goal is **four build targets from one engine core:**
 
 1. **Modern CLI player** (Linux / macOS / Windows) — C++ host wrapping a C99 core, audio out via miniaudio.
 2. **Original DOS build** — still compilable with OpenWatcom + TASM + Pmode/W, using the original SoundBlaster / WSS / DMA / IRQ code unchanged.
 3. **Bare-metal embedded** — 32-bit ARM Cortex-M MCUs (e.g. STM32) with I2S DMA out. Whole module loaded into SRAM/XIP/DRAM (no streaming).
+4. **Web / GitHub Pages** — C99 core compiled to bare Wasm32 via clang; AudioWorklet host; static demo page served from `gh-pages` branch.
 
 ## Development Standards
 
