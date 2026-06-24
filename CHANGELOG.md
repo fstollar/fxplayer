@@ -1,5 +1,58 @@
 # F/X Player — Change Log
 
+## host/web — Worker + MessageChannel architecture (proper fix)
+
+---
+
+### 2026-06-24 — WASM moved to Web Worker; AudioWorklet is a dumb audio sink
+
+The ring-buffer-in-worklet approach only masked the problem: even large buffers
+eventually drain when Android thermally throttles the CPU, because the WASM
+render was still on the audio thread with its 2.67 ms deadline.
+
+The correct fix (described in the Chrome "Audio Worklet Design Pattern" article)
+is to move all computation off the audio thread entirely.
+
+#### Architecture
+
+```
+  Main thread        Worker thread         Audio thread
+  ───────────        ─────────────         ────────────
+  FxPlayer  ──cmd──▶ fx-worker.js         fx-worklet.js
+            ◀─event─  │  owns WASM         │  queue only
+                       │  renders 100ms chunks  │
+                       └──Float32 chunks──▶ │  process()
+                          (MessageChannel,       reads 128
+                           zero-copy transfer)   frames/call
+```
+
+- **`fx-worker.js`** (new) — DedicatedWorkerGlobalScope; owns WASM; renders
+  4800-frame (100 ms) chunks via `setInterval`; pre-fills 500 ms on load; sends
+  chunks zero-copy via `MessageChannel` port directly to the AudioWorklet.
+- **`fx-worklet.js`** (rewritten) — thin audio sink; no WASM; `process()` drains
+  a chunk queue; zero allocations in the hot path.
+- **`fx-main.js`** (rewritten) — creates Worker + MessageChannel; routes all
+  commands to Worker; Worker sends state updates and events back to main.
+
+#### Why this works where buffering didn't
+
+The Worker thread has no deadline — it can take as long as it needs to render.
+`process()` is now just a queue drain (array copy), well inside 2.67 ms even
+on a heavily throttled Android CPU.
+
+#### Files changed
+
+| File | Change |
+|---|---|
+| `src/host/web/fx-worker.js` | New — Web Worker owning WASM + render loop |
+| `src/host/web/fx-worklet.js` | Rewritten — queue consumer only |
+| `src/host/web/fx-main.js` | Rewritten — orchestrates Worker + AudioWorklet |
+| `build-web.sh` | Deploy `fx-worker.js` |
+| `.github/workflows/deploy-web.yml` | Stage `fx-worker.js` |
+| `ROADMAP.md` | Documents option 1 (SAB) for future reference |
+
+---
+
 ## host/web — Android Chrome audio buffer size increase
 
 ---

@@ -26,7 +26,8 @@ jobs:
       - name: Stage web files
         run: |
           mkdir -p _deploy/modules
-          cp build-web/fxcore.wasm      _deploy/
+          cp build-web/fxcore.wasm       _deploy/
+          cp src/host/web/fx-worker.js  _deploy/
           cp src/host/web/fx-worklet.js _deploy/
           cp src/host/web/fx-main.js    _deploy/
           cp src/host/web/index.html    _deploy/

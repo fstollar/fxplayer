@@ -32,7 +32,8 @@ trap "git worktree remove --force '$GH_PAGES_DIR' 2>/dev/null; rm -rf '$GH_PAGES
 
 git worktree add "$GH_PAGES_DIR" gh-pages
 
-cp "$WASM_OUT"                              "$GH_PAGES_DIR/"
+cp "$WASM_OUT"                             "$GH_PAGES_DIR/"
+cp "$WEB_SRC/fx-worker.js"                 "$GH_PAGES_DIR/"
 cp "$WEB_SRC/fx-worklet.js"                "$GH_PAGES_DIR/"
 cp "$WEB_SRC/fx-main.js"                   "$GH_PAGES_DIR/"
 cp "$WEB_SRC/index.html"                   "$GH_PAGES_DIR/"
@@ -46,6 +47,8 @@ cp "$WEB_SRC/modules/unreal ][.s3m"        "$GH_PAGES_DIR/modules/"
 cd "$GH_PAGES_DIR"
 git add -A
 git commit -m "deploy: web demo $(date +%Y-%m-%d)"
-git push origin gh-pages
+# Force-push: gh-pages is always a complete deploy snapshot, never hand-edited.
+# CI may have pushed between our last local deploy and now.
+git push --force origin gh-pages
 
 echo "Deployed to gh-pages."

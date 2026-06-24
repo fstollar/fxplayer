@@ -34,6 +34,28 @@ To redeploy after changes: run `build-web.sh` — it rebuilds and force-pushes `
 See `BUILD.md` for build/serve/deploy commands.
 See `docs/superpowers/specs/2026-06-23-web-host-design.md` for design notes.
 
+## Web host — AudioWorklet option 1: Worker + SharedArrayBuffer (if needed)
+
+The current web host uses **option 2**: a Web Worker pre-renders audio and
+transfers `Float32Array` chunks via `postMessage` to the AudioWorklet.
+`process()` reads from a queue — zero WASM on the audio thread.
+
+If this still proves insufficient on very low-end devices, **option 1** is the
+canonical solution described in the Chrome "Audio Worklet Design Pattern" article:
+
+- Worker renders WASM → writes into a **SharedArrayBuffer** ring buffer
+- AudioWorklet reads from the SAB directly — no message overhead, truly lock-free
+- Synchronisation via `Atomics.waitAsync` (Worker) + `Atomics.notify` (Worklet)
+- **Prerequisite:** Cross-Origin Isolation (COOP + COEP response headers)
+  — required for `SharedArrayBuffer` in browsers.
+- **GitHub Pages workaround:** add `coi-serviceworker.min.js` (a ~1 KB Service
+  Worker that injects the headers client-side). Many WASM projects on Pages use
+  this exact pattern.
+- Reference: https://developer.chrome.com/blog/audio-worklet-design-pattern/
+- Reference: https://github.com/nicowillis/coi-serviceworker
+
+---
+
 ## Bug audit
 
 Systematically work through `BUGS.md` and classify each quirk as:
