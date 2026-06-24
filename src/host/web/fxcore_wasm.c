@@ -48,7 +48,9 @@ int memcmp(const void *lhs, const void *rhs, size_t count)
  */
 #define MODULE_BUF_SIZE  (4 * 1024 * 1024)   /* 4 MB: raw module bytes    */
 #define WORKSPACE_SIZE   (4 * 1024 * 1024)   /* 4 MB: engine workspace    */
-#define RENDER_FRAMES    2048                 /* max frames per render call */
+#define RENDER_FRAMES    8192                 /* max frames per render call — 170 ms at 48 kHz;
+                                                large enough to absorb Android CPU throttle spikes
+                                                without the audio thread missing its deadline */
 
 static uint8_t g_module_buf[MODULE_BUF_SIZE];
 static uint8_t g_workspace[WORKSPACE_SIZE];

@@ -1,5 +1,23 @@
 # F/X Player — Change Log
 
+## host/web — Android Chrome audio buffer size increase
+
+---
+
+### 2026-06-24 — RENDER_FRAMES 2048 → 8192 (170 ms lookahead)
+
+42 ms lookahead was insufficient to absorb Android's thermal CPU throttling:
+after a few seconds of sustained load the CPU slows 5–10×, the WASM render
+exceeds the quantum budget, and the audio stutters then bursts.
+
+Increased `RENDER_FRAMES` from 2048 to 8192 in `fxcore_wasm.c`. The
+AudioWorklet already reads the buffer size dynamically via
+`wasm_render_buf_frames()`, so it picks up 170 ms of lookahead automatically
+with no JS changes. The static S16 buffer grows by 24 KB in WASM linear
+memory; the `.wasm` binary is unaffected (BSS).
+
+---
+
 ## host/web — Android Chrome audio performance fixes
 
 ---
