@@ -1,4 +1,9 @@
 // fx-main.js — Main thread controller for the F/X web demo.
+//
+// Orchestrates three components:
+//   fx-worker.js    — Web Worker; owns WASM; pre-renders audio chunks
+//   fx-worklet.js   — AudioWorklet; drains the chunk queue; no WASM
+//   MessageChannel  — direct Worker→Worklet audio pipe; bypasses main thread
 
 class FxPlayer
 {
@@ -6,6 +11,7 @@ class FxPlayer
     {
         this._ctx          = null;
         this._node         = null;
+        this._worker       = null;
         this._readyResolve = null;
         this._readyReject  = null;
     }
@@ -24,13 +30,20 @@ class FxPlayer
             outputChannelCount: [2],
         });
         this._node.connect(this._ctx.destination);
-
-        // Use addEventListener + explicit .start() — required for message delivery
-        // on some browsers (onmessage alone is insufficient for AudioWorkletNode.port).
-        this._node.port.addEventListener('message', (event) => this._handleMessage(event.data));
+        this._node.port.addEventListener('message', (event) => this._handleWorkletMessage(event.data));
         this._node.port.start();
 
-        // Fetch Wasm bytes and send to worklet for compilation.
+        // Spawn the Worker that will own WASM and pre-render audio.
+        this._worker = new Worker('fx-worker.js');
+        this._worker.onmessage = (event) => this._handleWorkerMessage(event.data);
+
+        // Wire a direct MessageChannel between Worker and AudioWorklet so audio
+        // chunks bypass the main thread entirely.
+        const mc = new MessageChannel();
+        this._node.port.postMessage({ type: 'audioPort', port: mc.port2 }, [mc.port2]);
+        this._worker.postMessage({ type: 'audioPort', port: mc.port1 }, [mc.port1]);
+
+        // Fetch Wasm and send to Worker for compilation.
         const wasmResp  = await fetch('fxcore.wasm');
         const wasmBytes = await wasmResp.arrayBuffer();
 
@@ -38,12 +51,10 @@ class FxPlayer
         {
             this._readyResolve = resolve;
             this._readyReject  = reject;
-            // Transfer the ArrayBuffer — the worklet now owns it.
-            this._node.port.postMessage({ type: 'init', wasmBytes }, [wasmBytes]);
+            this._worker.postMessage({ type: 'init', wasmBytes }, [wasmBytes]);
         });
 
-        // Resume AudioContext — browsers may suspend it after async init work
-        // even when the context was created inside a user-gesture handler.
+        // Resume AudioContext — browsers may suspend it after async init work.
         await this._ctx.resume();
 
         // Auto-load whichever module is selected in the dropdown.
@@ -51,7 +62,8 @@ class FxPlayer
         await this.loadFromUrl(selectedUrl);
     }
 
-    _handleMessage(msg)
+    // Messages from the Worker (state, events, errors).
+    _handleWorkerMessage(msg)
     {
         switch (msg.type)
         {
@@ -109,6 +121,10 @@ class FxPlayer
         }
     }
 
+    // The AudioWorklet has no messages to send in the new architecture;
+    // this handler is kept for any future control-path additions.
+    _handleWorkletMessage(msg) {}
+
     async loadFromUrl(url)
     {
         document.getElementById('fx-status').textContent = 'Loading…';
@@ -123,22 +139,24 @@ class FxPlayer
         this.loadModule(bytes);
     }
 
-    // Load a module from an ArrayBuffer (file picker or drag-drop).
+    // Load a module from an ArrayBuffer (file picker or drag-and-drop).
     loadModule(arrayBuffer)
     {
-        // Transfer the buffer — the worklet now owns it.
-        this._node.port.postMessage({ type: 'load', moduleBytes: arrayBuffer }, [arrayBuffer]);
         document.getElementById('fx-status').textContent = 'Loading…';
+        // Transfer the buffer to the Worker — it owns WASM and does the load.
+        this._worker.postMessage(
+            { type: 'load', moduleBytes: arrayBuffer, sampleRate: this._ctx.sampleRate },
+            [arrayBuffer]);
     }
 
-    // Toggle play/pause. Also resumes AudioContext in case it was suspended.
+    // Toggle play/pause; also resumes AudioContext in case it was suspended.
     togglePlay()
     {
         if (this._ctx) this._ctx.resume();
-        this._node.port.postMessage({ type: 'toggle' });
+        this._worker.postMessage({ type: 'toggle' });
     }
 
-    stop()           { this._node.port.postMessage({ type: 'stop' }); }
-    setVolume(vol)   { this._node.port.postMessage({ type: 'volume', value: vol }); }
-    orderJump(delta) { this._node.port.postMessage({ type: 'order', delta }); }
+    stop()           { this._worker.postMessage({ type: 'stop' }); }
+    setVolume(vol)   { this._worker.postMessage({ type: 'volume', value: vol }); }
+    orderJump(delta) { this._worker.postMessage({ type: 'order', delta }); }
 }
