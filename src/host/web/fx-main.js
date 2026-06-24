@@ -93,6 +93,8 @@ class FxPlayer
                 document.getElementById('btn-playpause').textContent  = 'Play';
                 break;
             case 'state':
+                // State synced to playback arrives via _handleWorkletMessage instead.
+                // Worker state messages still fire on pause/stop/ended for a final update.
                 document.getElementById('fx-order').textContent    =
                     `${msg.order + 1} / ${msg.order_count}`;
                 document.getElementById('fx-pattern').textContent  = msg.pattern;
@@ -121,9 +123,19 @@ class FxPlayer
         }
     }
 
-    // The AudioWorklet has no messages to send in the new architecture;
-    // this handler is kept for any future control-path additions.
-    _handleWorkletMessage(msg) {}
+    // State updates arrive here from the AudioWorklet, synced to playback position.
+    _handleWorkletMessage(msg)
+    {
+        if (msg.type !== 'state') return;
+        document.getElementById('fx-order').textContent    =
+            `${msg.order + 1} / ${msg.order_count}`;
+        document.getElementById('fx-pattern').textContent  = msg.pattern;
+        document.getElementById('fx-row').textContent      =
+            `${msg.row + 1} / ${msg.row_count}`;
+        document.getElementById('fx-channels').textContent =
+            `${msg.channels_active} / ${msg.channels}`;
+        document.getElementById('fx-loops').textContent    = msg.loops;
+    }
 
     async loadFromUrl(url)
     {
