@@ -42,7 +42,8 @@ cp "$WEB_SRC/modules/64mania.s3m"          "$GH_PAGES_DIR/modules/"
 cp "$WEB_SRC/modules/skyrider.s3m"         "$GH_PAGES_DIR/modules/"
 cp "$WEB_SRC/modules/hul.mod"              "$GH_PAGES_DIR/modules/"
 cp "$WEB_SRC/modules/purple.669"           "$GH_PAGES_DIR/modules/"
-cp "$WEB_SRC/modules/unreal ][.s3m"        "$GH_PAGES_DIR/modules/"
+cp "$WEB_SRC/modules/unreal ][.s3m"           "$GH_PAGES_DIR/modules/"
+cp "$WEB_SRC/modules/panic (2nd version).s3m" "$GH_PAGES_DIR/modules/"
 
 cd "$GH_PAGES_DIR"
 git add -A
