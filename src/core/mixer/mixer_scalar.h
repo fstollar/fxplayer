@@ -13,7 +13,7 @@ extern uint32_t g_MasterVolume;        /* format-specific volume scale; NOT a 0-
 extern uint32_t g_flag_stereo;         /* 0=mono, 1=stereo */
 extern uint32_t g_flag_interpolate;
 extern uint32_t g_flag_soft_clip;
-extern uint32_t g_ChannelSeperation;   /* stereo separation width: 0=centre, 128=full L/R split */
+extern uint32_t g_ChannelSeperation;   /* stereo separation width: 0=centre, 256=full L/R split */
 extern uint32_t g_GlobalVolume;        /* in-song global volume (S3M Vxx effect), 0-64 */
 
 /* Mixer address and state */
