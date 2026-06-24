@@ -75,15 +75,11 @@ Location: `_original/`
 - **State:** v0.66 alpha, "Mekka 2k-1" — feature-complete for MOD/S3M/669, XM/IT planned but never started
 **CRITICAL** Never modify, edit or otherwise change the original source code in this directory! When changes are needed and no independent work copy exists, ask the user how to proceed!
 
-### Original architecture (highlights)
+### Original architecture
 
-- **State is global parallel arrays** sized `[256]` (`ChannelVolume[256]`, `ChannelSamplePosition[256]`, etc.). Designed for up to 255 channels in preparation for XM/IT.
-- **Format separation is clean:** `DAT_*` files load+parse, `EFC_*` files interpret per-row effects, `MIXER.CPP` orchestrates, `MIXR_*.ASM` are the inner kernels.
-- **Sample-accurate timing** (no PIT/timer use). Tempo is converted to "samples per tick" at the chosen mix rate → fully deterministic and reproducible.
-- **Mix buffer is 32-bit signed integers, 16.8 fixed-point per channel, with 8 bits of headroom** for accumulating up to 256 channels without saturation.
-- **16 ASM mixer kernel variants** declared in `MIXER.H`: `{8,16}-bit input × {mono,stereo} output × {16,32}-bit mix buffer × {nearest,linear-interp}`. Three of the four `.ASM` files are populated (`MIXR_16N`, `MIXR_32N`, `MIXR_32I`); the 16-bit interpolated set is declared but unimplemented.
-- **The ASM uses self-modifying code** (the `argdd` macro pattern) to patch volume, fraction increments, and buffer addresses directly into the instruction stream — saves a memory load per inner-loop iteration on Pentium U/V pipelines.
-- **PMode/W flat 32-bit memory model** — no segment tricks, pointers are flat. This maps cleanly to modern flat memory and Cortex-M.
+See `docs/open-watcom-v2.md` § "Original F/X Player architecture" for the full
+breakdown of global-array state, ASM mixer variants, self-modifying code, and
+the PMode/W flat memory model.
 
 ## Architectural decisions for the port
 
@@ -106,34 +102,7 @@ Build instructions: see `BUILD.md`.
 
 ## Repo layout
 
-```
-fxplayer/
-├── CLAUDE.md                  # this file
-├── _original/                 # 1998 source, untouched
-├── _work/                     # work copy of _original/ with incorporated bug fixes etc
-├── src/
-│   ├── core/                  # C99, no deps, no I/O, no alloc
-│   │   ├── include/fx/        # public C API headers
-│   │   ├── engine/            # state, channel mgmt, mix dispatch
-│   │   ├── format/            # mod.c, s3m.c, m669.c, wav.c
-│   │   ├── effect/            # efc_mod.c, efc_s3m.c, efc_669.c
-│   │   └── mixer/
-│   │       ├── mixer_scalar.c     # portable reference
-│   │       ├── mixer_x86_sse2.c
-│   │       ├── mixer_x86_avx2.c
-│   │       ├── mixer_armcm_dsp.c
-│   │       └── mixer_x86_p5.asm   # original (DOS only)
-│   └── host/
-│       ├── cli/               # C++ CLI player (miniaudio)
-│       ├── dos/               # DOS host (original DEV_SB/DEV_WSS/DMA/IRQ)
-│       └── mcu_example/       # bare-metal STM32 I2S DMA example
-├── tests/
-│   ├── reference_renders/     # bit-exact WAV ground truths
-│   └── ...
-├── cmake/                     # CMake helper scripts (get_cpm.cmake — CPM 0.42.3)
-├── CMakeLists.txt             # hosted CLI build
-└── makefile.dos               # DOS/Watcom build
-```
+See `README.md` for the annotated file tree.
 
 ## Validation strategy
 
@@ -182,26 +151,9 @@ See `BUILD.md` for toolchain requirements and step-by-step build/run/test comman
   cxxopts 3.2.0. Both download to `build/_deps/` at configure time. See `BUILD.md`
   for the cache env var and version details.
 
-### Next milestones (not yet started)
+### Next milestones
 
-- SIMD mixer variants (`mixer_x86_sse2.c` / `_avx2.c`) + ARM DSP, each
-  validated bit-exact against `mixer_scalar.c`.
-- Encapsulate the global-array state into a struct (only after the suite is
-  green — it now is).
-- XM / IT formats (planned in the original, never implemented).
-- **Web host** — GitHub Pages not yet live (requires repo to be public).
-  Both `main` and `gh-pages` pushed to `https://github.com/fstollar/fxplayer`
-  (private). To enable Pages: make repo public, then Settings → Pages →
-  `gh-pages` branch / root. See `BUILD.md` for build/serve/deploy commands.
-  See `docs/superpowers/specs/2026-06-23-web-host-design.md` for design notes.
-- **Bug audit** — systematically work through `BUGS.md`, classify each quirk
-  as (a) faithful reproduction required for bit-exactness, (b) fixable in the
-  C99 core without breaking bit-exactness, or (c) fixable only in the DOS
-  original; for (b)/(c) decide whether/how to fix and document the decision.
-- **Remove floating-point from `src/core/`** — `mixer_scalar.c` uses `double`
-  for the master-volume table init (`build_vol_table`, lines ~604-631). Replace
-  with fixed-point arithmetic. Until done, `-ffast-math` is kept on `fxcore`
-  (noted in `src/core/CMakeLists.txt`).
+See `ROADMAP.md` for planned work.
 
 ## Reference docs
 
