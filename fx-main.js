@@ -110,7 +110,13 @@ class FxPlayer
     async loadFromUrl(url)
     {
         document.getElementById('fx-status').textContent = 'Loading…';
-        const resp  = await fetch(url);
+        const resp = await fetch(url);
+        if (!resp.ok)
+        {
+            document.getElementById('fx-status').textContent =
+                `Error: ${url} — HTTP ${resp.status}`;
+            return;
+        }
         const bytes = await resp.arrayBuffer();
         this.loadModule(bytes);
     }
