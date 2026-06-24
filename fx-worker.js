@@ -7,7 +7,6 @@
 
 const CHUNK_FRAMES   = 4800;   // 100 ms at 48 kHz per chunk
 const PREFILL_CHUNKS = 5;      // 500 ms sent immediately on load before the interval starts
-const STATE_INTERVAL = 2;      // report playback state every 2 chunks ≈ 200 ms
 
 let wasm           = null;
 let s16View        = null;     // pre-allocated view into WASM render buffer
@@ -17,7 +16,6 @@ let playing        = false;
 let volume         = 64;
 let sampleRate     = 48000;
 let lastModuleSize = 0;
-let chunkCount     = 0;
 let intervalHandle = null;
 
 /* ── render one chunk and transfer it to the AudioWorklet ── */
@@ -37,13 +35,27 @@ function renderChunk()
             f32[frame * 2]     = s16View[frame * 2]     * scale;
             f32[frame * 2 + 1] = s16View[frame * 2 + 1] * scale;
         }
+
+        // Capture engine state *after* this render — this is what the user will
+        // hear when this chunk plays.  The Worklet reports it to main at that moment,
+        // keeping the display in sync with the audio rather than 500 ms ahead.
+        wasm.wasm_get_state();
+        const state = {
+            order:           stateView[0],
+            order_count:     stateView[1],
+            pattern:         stateView[2],
+            row:             stateView[3],
+            row_count:       stateView[4],
+            channels:        stateView[5],
+            channels_active: stateView[6],
+            loops:           wasm.fx_song_loops(),
+            volume:          wasm.fx_get_volume(),
+        };
+
         // Transfer buffer ownership — zero-copy delivery to the audio thread.
-        audioPort.postMessage({ type: 'chunk', buffer: f32.buffer, frames: rendered },
+        audioPort.postMessage({ type: 'chunk', buffer: f32.buffer, frames: rendered, state },
                               [f32.buffer]);
     }
-
-    chunkCount++;
-    if (chunkCount % STATE_INTERVAL === 0) reportState();
 
     if (rendered < CHUNK_FRAMES)
     {

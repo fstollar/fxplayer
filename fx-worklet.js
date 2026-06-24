@@ -53,6 +53,7 @@ class FxWorkletProcessor extends AudioWorkletProcessor
         this._queue.push({
             buf:    new Float32Array(msg.buffer),
             frames: msg.frames,
+            state:  msg.state,   // engine state captured at render time
             read:   0,
         });
         this._queueFrames += msg.frames;
@@ -69,6 +70,12 @@ class FxWorkletProcessor extends AudioWorkletProcessor
         while (written < QUANTUM && this._queue.length > 0)
         {
             const front  = this._queue[0];
+
+            // On the first frame of a new chunk, tell the main thread what state
+            // the engine was in when this audio was rendered — display stays in sync.
+            if (front.read === 0 && front.state)
+                this.port.postMessage({ type: 'state', ...front.state });
+
             const avail  = front.frames - front.read;
             const toRead = Math.min(QUANTUM - written, avail);
             const base   = front.read;
