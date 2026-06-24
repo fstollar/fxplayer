@@ -1,7 +1,8 @@
 # F/X Player — Cross-platform port
 
-Porting **F/X Player** — a 1998 DOS MOD/S3M tracker module player by Apollo of STIGMA —
-to a modern, portable codebase while keeping the original DOS build alive.
+**F/X Player** — a 1998 DOS MOD/S3M tracker module player written
+as a very fast and accurate playback engine for DOS demos in the Pentium era —
+refactored to a modern, portable codebase while keeping the original DOS build alive.
 
 **Four build targets from one C99 engine core:**
 

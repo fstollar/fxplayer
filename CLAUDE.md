@@ -2,7 +2,9 @@
 
 ## Project
 
-Porting **F/X Player** — a 1998 DOS MOD/S3M tracker module player by Apollo of STIGMA — to a modern, portable codebase while keeping the original DOS build alive.
+Porting **F/X Player** — a 1998 DOS MOD/S3M tracker module player written
+as a very fast and accurate playback engine for DOS demos in the Pentium era —
+to a modern, portable codebase while keeping the original DOS build alive.
 
 The goal is **four build targets from one engine core:**
 
@@ -73,7 +75,7 @@ Location: `_original/`
 - **Formats supported:** MOD (≤8 ch), S3M, 669, WAV (input playback)
 - **Soundcards:** SoundBlaster 1.x / 2.x / Pro / 16, Windows Sound System
 - **State:** v0.66 alpha, "Mekka 2k-1" — feature-complete for MOD/S3M/669, XM/IT planned but never started
-**CRITICAL** Never modify, edit or otherwise change the original source code in this directory! When changes are needed and no independent work copy exists, ask the user how to proceed!
+- **CRITICAL** Never modify, edit or otherwise change the original source code in this directory! When changes are needed and no independent work copy exists, ask the user how to proceed!
 
 ### Original architecture
 
