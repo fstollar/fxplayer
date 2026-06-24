@@ -1,0 +1,62 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+# Allman brace style: { always on its own line
+BreakBeforeBraces: Allman
+
+# Indentation
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ContinuationIndentWidth: 2
+
+# Line length
+ColumnLimit: 140
+
+# Alignment
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
+AlignTrailingComments: true
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInParentheses: true
+SpacesInSquareBrackets: false
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+
+# Includes
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+
+# Templates / lambdas
+AlwaysBreakTemplateDeclarations: Yes
+LambdaBodyIndentation: Signature
+
+# Short constructs — keep one-liners intact
+AllowShortFunctionsOnASingleLine: true
+AllowShortLambdasOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
+
+# Pointer/reference alignment
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# Constructor initializers
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 2
+
+# Empty lines
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: true
+
+# Misc
+Cpp11BracedListStyle: true
+FixNamespaceComments: true
+ReflowComments: false
