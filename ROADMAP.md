@@ -27,11 +27,9 @@ the existing three formats are fully hardened.
 
 ## Web host — GitHub Pages
 
-Both `main` and `gh-pages` are pushed to `https://github.com/fstollar/fxplayer`
-(currently private). To go live:
+Live at **https://fstollar.github.io/fxplayer** (repo is public; `gh-pages` branch).
 
-1. Make repo public.
-2. Settings → Pages → Source: `gh-pages` branch / root.
+To redeploy after changes: run `build-web.sh` — it rebuilds and force-pushes `gh-pages`.
 
 See `BUILD.md` for build/serve/deploy commands.
 See `docs/superpowers/specs/2026-06-23-web-host-design.md` for design notes.

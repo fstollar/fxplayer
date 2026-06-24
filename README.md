@@ -4,6 +4,8 @@
 as a very fast and accurate playback engine for DOS demos in the Pentium era —
 refactored to a modern, portable codebase while keeping the original DOS build alive.
 
+**[Try the web demo →](https://fstollar.github.io/fxplayer)**
+
 **Four build targets from one C99 engine core:**
 
 1. **Modern CLI player** (Linux / macOS / Windows) — C++ host, audio out via miniaudio.
