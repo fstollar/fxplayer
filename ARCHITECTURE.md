@@ -52,7 +52,7 @@ the design the port must reproduce bit-exactly.
 
 State is **global parallel arrays** sized `[256]`:
 `ChannelVolume[256]`, `ChannelSamplePosition[256]`, `ChannelFrequency[256]`, etc.
-Designed to support up to 255 channels in preparation for XM/IT (never implemented).
+Designed to support up to 256 channels in preparation for XM/IT (never implemented).
 
 The port's initial translation keeps this global-array layout for mechanical
 correctness and bit-exact validation. Encapsulation into a context struct is
@@ -92,15 +92,14 @@ master-volume downscale.
 
 ### ASM mixer kernel variants
 
-16 variants are declared in `MIXER.H`, covering the full matrix:
+All 16 variants declared in `MIXER.H` are implemented across 3 files.
+Columns are input sample format; each cell is the interpolation mode(s) present:
 
-| Input | Output | Mix buffer | Interpolation | File | Status |
-|---|---|---|---|---|---|
-| 8-bit | mono | 16-bit | nearest | `MIXR_16N.ASM` | ✓ implemented |
-| 8-bit | mono | 32-bit | nearest | `MIXR_32N.ASM` | ✓ implemented |
-| 8-bit | mono | 32-bit | linear | `MIXR_32I.ASM` | ✓ implemented |
-| 8-bit | stereo | * | * | — | declared, unimplemented |
-| 16-bit | * | * | * | — | declared, unimplemented |
+| File            | Mix buf | 8-bit mono     | 8-bit stereo   | 16-bit mono    | 16-bit stereo  |
+|-----------------|---------|----------------|----------------|----------------|----------------|
+| `MIXR_16N.ASM`  | 16-bit  | nearest+linear | nearest+linear | nearest+linear | nearest+linear |
+| `MIXR_32N.ASM`  | 32-bit  | nearest        | nearest        | nearest        | nearest        |
+| `MIXR_32I.ASM`  | 32-bit  | linear         | linear         | linear         | linear         |
 
 The port's `mixer_scalar.c` implements the full matrix in portable C99 and
 is the **bit-exact ground truth** all other variants must match.
