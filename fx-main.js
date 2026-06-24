@@ -13,7 +13,9 @@ class FxPlayer
     // Must be called from a user gesture (browser AudioContext policy).
     async init()
     {
-        this._ctx = new AudioContext();
+        // 'playback' gives Chrome a larger internal buffer — critical on Android
+        // where the tighter 'interactive' default causes GC-induced underruns.
+        this._ctx = new AudioContext({ latencyHint: 'playback' });
 
         await this._ctx.audioWorklet.addModule('fx-worklet.js');
 
