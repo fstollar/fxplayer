@@ -21,30 +21,30 @@ extern uint32_t g_MixerAddress;        /* current write offset into the 32-bit m
 extern uint32_t g_ChannelUsed, g_ChannelLast;
 
 /* Per-channel arrays [FX_MAXCHANNELS] */
-extern uint32_t g_ChannelActiv[FX_MAXCHANNELS];
-extern uint32_t g_ChannelFlag[FX_MAXCHANNELS];
-extern uint32_t g_ChannelSampleNr[FX_MAXCHANNELS];
-extern uint32_t g_ChannelVolume[FX_MAXCHANNELS];
-extern uint32_t g_ChannelPanning[FX_MAXCHANNELS];
-extern uint32_t g_ChannelSampleBits[FX_MAXCHANNELS];
-extern uint32_t g_ChannelSampleMode[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelActiv[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelFlag[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelSampleNr[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelVolume[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelPanning[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelSampleBits[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelSampleMode[FX_MAXCHANNELS];
 extern uintptr_t g_ChannelSampleAddress[FX_MAXCHANNELS]; /* raw byte pointer */
-extern uint32_t g_ChannelSampleLength[FX_MAXCHANNELS];
-extern uint32_t g_ChannelLoopMode[FX_MAXCHANNELS];
-extern uint32_t g_ChannelLoopBegin[FX_MAXCHANNELS];
-extern uint32_t g_ChannelLoopEnd[FX_MAXCHANNELS];
-extern uint32_t g_ChannelSamplePosition[FX_MAXCHANNELS];
-extern uint32_t g_ChannelSampleFraction[FX_MAXCHANNELS];
-extern uint32_t g_ChannelSampleFrequence[FX_MAXCHANNELS];
-extern int32_t  g_ChannelLastValueLeft[FX_MAXCHANNELS];
-extern int32_t  g_ChannelLastValueRight[FX_MAXCHANNELS];
-extern uint32_t g_ChannelVolumeLeft[FX_MAXCHANNELS];
-extern uint32_t g_ChannelVolumeRight[FX_MAXCHANNELS];
-extern int32_t  g_DeltaSamplePosition[FX_MAXCHANNELS];
-extern int32_t  g_DeltaSampleFraction[FX_MAXCHANNELS];
-extern uint32_t g_NextSamplePosition[FX_MAXCHANNELS];
-extern uint32_t g_NextSampleFraction[FX_MAXCHANNELS];
-extern uint32_t g_NextChannelActiv[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelSampleLength[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelLoopMode[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelLoopBegin[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelLoopEnd[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelSamplePosition[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelSampleFraction[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelSampleFrequence[FX_MAXCHANNELS];
+extern int32_t   g_ChannelLastValueLeft[FX_MAXCHANNELS];
+extern int32_t   g_ChannelLastValueRight[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelVolumeLeft[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelVolumeRight[FX_MAXCHANNELS];
+extern int32_t   g_DeltaSamplePosition[FX_MAXCHANNELS];
+extern int32_t   g_DeltaSampleFraction[FX_MAXCHANNELS];
+extern uint32_t  g_NextSamplePosition[FX_MAXCHANNELS];
+extern uint32_t  g_NextSampleFraction[FX_MAXCHANNELS];
+extern uint32_t  g_NextChannelActiv[FX_MAXCHANNELS];
 
 /*
  * Workspace-allocated master volume table.
