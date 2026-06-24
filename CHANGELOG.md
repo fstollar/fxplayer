@@ -4,12 +4,18 @@
 
 ---
 
+### 2026-06-24 — Repo made public; GitHub Pages live
+
+Repo set to public. Web demo is live at **https://fstollar.github.io/fxplayer**
+(`gh-pages` branch, root). README updated with the demo link. Future deploys
+via `./build-web.sh`.
+
+---
+
 ### 2026-06-24 — GitHub repo created; gh-pages branch pushed
 
 Private repo `https://github.com/fstollar/fxplayer` created. Both `main` and
-`gh-pages` branches pushed (HTTPS remote). GitHub Pages not yet enabled —
-requires the repo to be made public first. When ready: Settings → Pages →
-`gh-pages` branch / root. Future deploys via `./build-web.sh`.
+`gh-pages` branches pushed (HTTPS remote).
 
 ---
 

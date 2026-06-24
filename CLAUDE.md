@@ -129,8 +129,8 @@ blow-by-blow logs here.
   no loop, `-l N` = loop N times (N+1 plays), `-l -1` = infinite (default).
 - **Web host (`src/host/web/`)** — C99 core compiled to bare wasm32; AudioWorklet
   render loop, no SharedArrayBuffer. Play/pause/stop, order navigation, volume,
-  5 bundled tracks (S3M/MOD/669), drag-and-drop. Locally tested and working;
-  GitHub Pages deploy deferred (repo is currently private).
+  5 bundled tracks (S3M/MOD/669), drag-and-drop. Live at
+  **https://fstollar.github.io/fxplayer** (repo public, `gh-pages` branch).
 - **Validation harness** — sha256-exact CTests; DOS reference WAVs via
   `tests/render-dosbox.sh --native`.
 
