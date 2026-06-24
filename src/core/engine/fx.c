@@ -17,6 +17,15 @@ static const char fx_version_str[] =
 static fx_format g_loaded_fmt = FX_FORMAT_UNKNOWN;
 static uint8_t   g_ui_volume  = 64;
 
+void fx_init(const fx_config *cfg)
+{
+    if (!cfg) return;
+    g_MixSpeed         = cfg->sample_rate;
+    g_flag_stereo      = (cfg->channels == 2) ? 1u : 0u;
+    g_flag_interpolate = cfg->interpolate;
+    g_flag_soft_clip   = cfg->soft_clip;
+}
+
 void fx_set_volume(uint8_t vol)
 {
     if (vol > 64) vol = 64;

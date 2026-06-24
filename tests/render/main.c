@@ -78,6 +78,7 @@ int main(int argc, char **argv)
     workspace = (uint8_t *)malloc(ws_bytes);
     if (!workspace) { fputs("OOM workspace\n", stderr); return 1; }
 
+    fx_init(&cfg);
     err = fx_load(module_data, (size_t)file_size, workspace, ws_bytes);
     if (err != FX_OK) {
         fprintf(stderr, "fx_load error %d\n", (int)err); return 1;

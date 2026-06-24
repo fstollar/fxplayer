@@ -67,8 +67,17 @@ fx_format fx_detect_format(const void *data, size_t size);
 fx_err fx_workspace_size(const void *data, size_t size, size_t *out_bytes);
 
 /*
+ * Apply audio configuration before loading a module.
+ * Must be called once before fx_load; sets mix rate, stereo, interpolation,
+ * and soft-clip flags so format loaders compute the correct tick length.
+ * Safe to call again before reloading with different settings.
+ */
+void fx_init(const fx_config *cfg);
+
+/*
  * Load a module from a memory buffer into caller-supplied workspace.
  * workspace is carved internally for pattern+sample data.
+ * Requires fx_init() to have been called first.
  */
 fx_err fx_load(const void *data, size_t size,
                void *workspace, size_t ws_size);

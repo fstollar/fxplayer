@@ -81,6 +81,8 @@ int32_t wasm_load(uint32_t data_size)
         return (int32_t)err;
     if (ws_bytes > WORKSPACE_SIZE)
         return (int32_t)FX_ERR_WORKSPACE;
+    /* Apply audio config so format loaders see the correct mix rate. */
+    fx_init(&g_config);
     return (int32_t)fx_load(g_module_buf, data_size, g_workspace, ws_bytes);
 }
 

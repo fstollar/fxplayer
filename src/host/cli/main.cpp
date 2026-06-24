@@ -152,6 +152,14 @@ int main(int argc, char **argv)
         free(file_buf); return 1;
     }
 
+    AudioCtx ctx;
+    ctx.cfg.sample_rate   = fxargs.sample_rate;
+    ctx.cfg.channels      = fxargs.channels;
+    ctx.cfg.output_format = FX_OUTPUT_S16;
+    ctx.cfg.interpolate   = fxargs.no_interp   ? 0 : 1;
+    ctx.cfg.soft_clip     = fxargs.no_softclip ? 0 : 1;
+
+    fx_init(&ctx.cfg);
     fx_err err = fx_load(file_buf, file_size, workspace, ws_bytes);
     free(file_buf);
     if (err != FX_OK) {
@@ -160,13 +168,6 @@ int main(int argc, char **argv)
     }
 
     fx_set_volume((uint8_t)fxargs.volume);
-
-    AudioCtx ctx;
-    ctx.cfg.sample_rate   = fxargs.sample_rate;
-    ctx.cfg.channels      = fxargs.channels;
-    ctx.cfg.output_format = FX_OUTPUT_S16;
-    ctx.cfg.interpolate   = fxargs.no_interp   ? 0 : 1;
-    ctx.cfg.soft_clip     = fxargs.no_softclip ? 0 : 1;
     ctx.loop              = fxargs.loop;
     ctx.prev_loops        = 0;
     ctx.cur_vol.store((uint8_t)fxargs.volume, std::memory_order_relaxed);

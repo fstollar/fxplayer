@@ -1,5 +1,39 @@
 # F/X Player — Change Log
 
+## core/ + host/web + host/cli — fx_init() API; Android sample-rate fix
+
+---
+
+### 2026-06-24 — fx_init(); correct TickLength on non-48 kHz devices
+
+#### Root cause
+
+`fx_load()` called format loaders that computed `TickLength` using `g_MixSpeed`,
+but `g_MixSpeed` was only written inside `fx_render_frames()` — after the load.
+On first load `g_MixSpeed` held its C global initializer (48000), so any device
+whose `AudioContext.sampleRate` differed (e.g. Android at 44100 Hz) loaded with
+the wrong tick length, playing at the wrong tempo.  The same latent bug existed
+in the CLI for non-default `-r` rates.
+
+#### Fix
+
+New public API call `fx_init(const fx_config *cfg)` — mirrors the original
+DOS initialisation pattern.  Must be called once before `fx_load`; applies
+`sample_rate`, stereo, interpolation, and soft-clip flags to the mixer globals
+immediately so format loaders see the correct mix rate.
+
+| File | What changed |
+|---|---|
+| `src/core/include/fx/fx.h` | `void fx_init(const fx_config *cfg)` declared; `fx_load` doc updated |
+| `src/core/engine/fx.c` | `fx_init` implemented; sets `g_MixSpeed` + flags from cfg |
+| `src/host/web/fxcore_wasm.c` | `wasm_load` calls `fx_init(&g_config)` before `fx_load` |
+| `src/host/cli/main.cpp` | `ctx.cfg` built before `fx_init` + `fx_load` (fixes latent CLI bug) |
+| `tests/render/main.c` | `fx_init(&cfg)` added before `fx_load` |
+
+6/6 CTests still pass bit-exact.
+
+---
+
 ## host/web — browser demo page (bare Wasm32 + AudioWorklet)
 
 ---
