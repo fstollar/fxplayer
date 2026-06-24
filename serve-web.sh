@@ -24,11 +24,11 @@ STAGE_DIR="$(mktemp -d)"
 
 trap "rm -rf '$STAGE_DIR'" EXIT
 
-# Compile (output goes to repo root as fxcore.wasm).
+# Compile (output goes to build-web/fxcore.wasm).
 "$SCRIPT_DIR/build-web.sh" --no-deploy
 
 # Stage all assets together so relative fetches resolve.
-cp "$SCRIPT_DIR/fxcore.wasm"    "$STAGE_DIR/"
+cp "$SCRIPT_DIR/build-web/fxcore.wasm"    "$STAGE_DIR/"
 cp "$WEB_SRC/fx-worklet.js"     "$STAGE_DIR/"
 cp "$WEB_SRC/fx-main.js"        "$STAGE_DIR/"
 cp "$WEB_SRC/index.html"        "$STAGE_DIR/"

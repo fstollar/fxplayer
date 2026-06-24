@@ -3,6 +3,9 @@ release/
 
 # CMake build output
 build/
+
+# Web build output
+build-web/
 cmake-build-*/
 CMakeCache.txt
 CMakeFiles/

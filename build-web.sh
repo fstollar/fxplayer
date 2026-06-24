@@ -5,7 +5,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WEB_SRC="$SCRIPT_DIR/src/host/web"
-WASM_OUT="$SCRIPT_DIR/fxcore.wasm"
+BUILD_WEB_DIR="$SCRIPT_DIR/build-web"
+WASM_OUT="$BUILD_WEB_DIR/fxcore.wasm"
+
+mkdir -p "$BUILD_WEB_DIR"
 
 # ── compile ───────────────────────────────────────────────────────────
 SOURCES=$(find "$SCRIPT_DIR/src/core" -name '*.c' | sort)

@@ -140,7 +140,7 @@ fxplayer <module.s3m|.mod|.669> [options]
 ```sh
 ./build-web.sh --no-deploy
 ```
-Output: `fxcore.wasm` in the repo root.
+Output: `build-web/fxcore.wasm`.
 
 **Dev server — localhost:**
 ```sh
