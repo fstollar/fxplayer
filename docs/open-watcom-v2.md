@@ -190,35 +190,6 @@ variable reference. VS Code integration is documented in `OW tools usage with VS
 
 ---
 
-## Original F/X Player architecture (relevant to the port)
-
-These notes describe the 1998 DOS source in `_original/` — the ground truth the
-port must reproduce bit-exactly.
-
-- **State is global parallel arrays** sized `[256]` (`ChannelVolume[256]`,
-  `ChannelSamplePosition[256]`, etc.). Designed for up to 255 channels in
-  preparation for XM/IT.
-- **Format separation is clean:** `DAT_*` files load+parse, `EFC_*` files
-  interpret per-row effects, `MIXER.CPP` orchestrates, `MIXR_*.ASM` are the
-  inner kernels.
-- **Sample-accurate timing** (no PIT/timer use). Tempo is converted to
-  "samples per tick" at the chosen mix rate → fully deterministic and reproducible.
-- **Mix buffer is 32-bit signed integers, 16.8 fixed-point per channel, with
-  8 bits of headroom** for accumulating up to 256 channels without saturation.
-- **16 ASM mixer kernel variants** declared in `MIXER.H`:
-  `{8,16}-bit input × {mono,stereo} output × {16,32}-bit mix buffer × {nearest,linear-interp}`.
-  Three of the four `.ASM` files are populated (`MIXR_16N`, `MIXR_32N`, `MIXR_32I`);
-  the 16-bit interpolated set is declared but unimplemented.
-- **The ASM uses self-modifying code** (the `argdd` macro pattern) to patch
-  volume, fraction increments, and buffer addresses directly into the instruction
-  stream — saves a memory load per inner-loop iteration on Pentium U/V pipelines.
-  Self-modifying code stays in the DOS build only; modern OSes enforce W^X and
-  on OoO cores SMC is slower than a memory load.
-- **PMode/W flat 32-bit memory model** — no segment tricks, pointers are flat.
-  Maps cleanly to modern flat memory and Cortex-M.
-
----
-
 ## Links
 
 - Repo: <https://github.com/open-watcom/open-watcom-v2>

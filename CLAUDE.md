@@ -77,9 +77,8 @@ Location: `_original/`
 
 ### Original architecture
 
-See `docs/open-watcom-v2.md` § "Original F/X Player architecture" for the full
-breakdown of global-array state, ASM mixer variants, self-modifying code, and
-the PMode/W flat memory model.
+See `ARCHITECTURE.md` for the full breakdown: global-array state, module pipeline,
+ASM mixer variants, self-modifying code, PMode/W memory model, and port decisions.
 
 ## Architectural decisions for the port
 

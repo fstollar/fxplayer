@@ -20,6 +20,7 @@ See **[BUILD.md](BUILD.md)** for toolchain requirements and step-by-step build i
 fxplayer/
 ├── README.md                  # this file
 ├── BUILD.md                   # build instructions for all targets
+├── ARCHITECTURE.md            # engine design: original + port decisions
 ├── ROADMAP.md                 # planned work / next milestones
 ├── CHANGELOG.md               # per-change history
 ├── BUGS.md                    # known bugs and quirks
