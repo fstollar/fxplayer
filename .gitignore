@@ -45,6 +45,10 @@ _work/*.ERR
 _work/*.map
 _work/*.MAP
 
+# _original/ build artefacts (pre-built OBJs shipped in archive; ignore regenerated ones)
+_original/**/*.OBJ
+_original/**/*.MAP
+
 # Claude Code project state
 .claude/
 
