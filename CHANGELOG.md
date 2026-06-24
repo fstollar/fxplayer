@@ -1,5 +1,32 @@
 # F/X Player — Change Log
 
+## host/web — Android Chrome audio performance fixes
+
+---
+
+### 2026-06-24 — AudioWorklet lookahead buffer; latencyHint; GC allocation fixes
+
+Three separate issues caused the "plays in chunks, then 10× too fast" symptom
+on Android Chrome.
+
+#### Root causes
+
+| # | Cause | Effect |
+|---|---|---|
+| 1 | `new Int16Array(...)` created on every `process()` call (~375×/sec) | GC pressure causes the audio thread to miss its 2.67 ms deadline → buffer starvation then catch-up burst |
+| 2 | `new AudioContext()` without `latencyHint` defaults to `'interactive'` | Tightest possible deadline; Android's audio HAL needs more headroom |
+| 3 | `wasm_render(128)` called every quantum | WASM call overhead paid 375×/sec instead of 23×/sec |
+
+#### Fixes
+
+| File | Change |
+|---|---|
+| `fx-worklet.js` | All typed-array views (`Int16Array` into WASM render buf, `Uint32Array` over playback state) pre-allocated once in `_init()` — zero per-callback allocations in the hot path |
+| `fx-worklet.js` | 2048-frame Float32 lookahead buffer: WASM renders 2048 frames at once, `process()` copies 128 frames per call — WASM call rate reduced 16× |
+| `fx-main.js` | `new AudioContext({ latencyHint: 'playback' })` — larger internal buffer, tolerant of GC jitter on low-end Android |
+
+---
+
 ## core/ + host/web + host/cli — fx_init() API; Android sample-rate fix
 
 ---
