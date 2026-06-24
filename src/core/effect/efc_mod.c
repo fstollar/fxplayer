@@ -59,7 +59,7 @@ static const int16_t *MOD_Tremolo[MOD_MAXCHANNELS];
 /* Glissando */
 static uint8_t  MOD_GlissSpeed[MOD_MAXCHANNELS];
 static uint8_t  MOD_GlissNote[MOD_MAXCHANNELS];
-       uint32_t MOD_GlissPeriode[MOD_MAXCHANNELS];
+       uint32_t MOD_GlissPeriod[MOD_MAXCHANNELS];
 static uint8_t  MOD_GlissFlag[MOD_MAXCHANNELS];
 
 /* Vibrato */
@@ -102,7 +102,7 @@ static uint16_t MOD_decVolume(int16_t vol, int16_t value)
 
 /* ---- period slide helpers ---- */
 
-static uint32_t MOD_addPeriode(int32_t p, uint32_t value)
+static uint32_t MOD_addPeriod(int32_t p, uint32_t value)
 {
     p += (int32_t)value;
     if (MOD_flag_amigalimits) {
@@ -114,7 +114,7 @@ static uint32_t MOD_addPeriode(int32_t p, uint32_t value)
     return (uint32_t)p;
 }
 
-static uint32_t MOD_decPeriode(int32_t p, uint32_t value)
+static uint32_t MOD_decPeriod(int32_t p, uint32_t value)
 {
     p -= (int32_t)value;
     if (MOD_flag_amigalimits) {
@@ -131,7 +131,7 @@ static uint32_t MOD_decPeriode(int32_t p, uint32_t value)
 static void MOD_MVibrato(uint32_t channel_index)
 {
     if (MOD_VibratoSpeed[channel_index] == 0) return;
-    MOD_PeriodeAdjust[channel_index] =
+    MOD_PeriodAdjust[channel_index] =
         (int32_t)MOD_Vibrato[channel_index][MOD_VibratoPosition[channel_index]] *
         (int32_t)MOD_VibratoDepth[channel_index] / 64;
     MOD_VibratoPosition[channel_index] =
@@ -246,8 +246,8 @@ void MOD_beforeEffect(void)
             uint8_t note = MOD_RowBuffer[channel_index*4+0];
             if (note != 0xFFu && note < 84u) {
                 MOD_GlissNote[channel_index] = note;
-                MOD_GlissPeriode[channel_index] =
-                    MOD_Periodes[MOD_SampleFinetune[channel_index]][note] << 4u;
+                MOD_GlissPeriod[channel_index] =
+                    MOD_Periods[MOD_SampleFinetune[channel_index]][note] << 4u;
                 MOD_GlissFlag[channel_index] = 1;
                 MOD_RowBuffer[channel_index*4+0] = 0xFFu;  /* suppress note trigger */
             }
@@ -294,16 +294,16 @@ void MOD_RowEffect(void)
 
         case 0u:   /* arpeggio — on row tick use base note period (same formula as tick) */
             if (info) {
-                MOD_PeriodeAdjust[channel_index] =
-                    (int32_t)(MOD_Periodes[MOD_SampleFinetune[channel_index]][MOD_Note[channel_index]] << 4u) -
-                    (int32_t)MOD_Periode[channel_index];
+                MOD_PeriodAdjust[channel_index] =
+                    (int32_t)(MOD_Periods[MOD_SampleFinetune[channel_index]][MOD_Note[channel_index]] << 4u) -
+                    (int32_t)MOD_Period[channel_index];
             }
             MOD_VibratoPosition[channel_index] = 0;
             break;
 
         case 1u:  /* portamento up */
         case 2u:  /* portamento down */
-            MOD_PeriodeAdjust[channel_index] = 0;
+            MOD_PeriodAdjust[channel_index] = 0;
             break;
 
         case 3u:  /* portamento to note */
@@ -311,9 +311,9 @@ void MOD_RowEffect(void)
             if (MOD_GlissFlag[channel_index] == 1) {
                 MOD_GlissFlag[channel_index] = 2;
             }
-            if (MOD_GlissPeriode[channel_index] != MOD_Periode[channel_index]) {
+            if (MOD_GlissPeriod[channel_index] != MOD_Period[channel_index]) {
                 MOD_VibratoPosition[channel_index] = 0;
-                MOD_PeriodeAdjust[channel_index]   = 0;
+                MOD_PeriodAdjust[channel_index]   = 0;
                 MOD_GlissFlag[channel_index]       = 2;
             }
             break;
@@ -328,13 +328,13 @@ void MOD_RowEffect(void)
             MOD_Volume[channel_index] = (uint8_t)MOD_addVolume((int16_t)MOD_Volume[channel_index], (int16_t)x);
             MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
             if (MOD_GlissFlag[channel_index] == 1) {
-                MOD_GlissPeriode[channel_index] =
-                    MOD_Periodes[MOD_SampleFinetune[channel_index]][MOD_GlissNote[channel_index]] << 4u;
+                MOD_GlissPeriod[channel_index] =
+                    MOD_Periods[MOD_SampleFinetune[channel_index]][MOD_GlissNote[channel_index]] << 4u;
                 MOD_GlissFlag[channel_index] = 2;
             }
-            if (MOD_GlissPeriode[channel_index] != MOD_Periode[channel_index]) {
+            if (MOD_GlissPeriod[channel_index] != MOD_Period[channel_index]) {
                 MOD_VibratoPosition[channel_index] = 0;
-                MOD_PeriodeAdjust[channel_index]   = 0;
+                MOD_PeriodAdjust[channel_index]   = 0;
                 MOD_GlissFlag[channel_index]       = 2;
             }
             break;
@@ -376,10 +376,10 @@ void MOD_RowEffect(void)
             switch (x) {
             case 0u:  /* amiga filter (ignore) */ break;
             case 1u:  /* fine porta up — slide amount is full Info byte */
-                MOD_Periode[channel_index] = MOD_decPeriode((int32_t)MOD_Periode[channel_index], info);
+                MOD_Period[channel_index] = MOD_decPeriod((int32_t)MOD_Period[channel_index], info);
                 break;
             case 2u:  /* fine porta down — slide amount is full Info byte */
-                MOD_Periode[channel_index] = MOD_addPeriode((int32_t)MOD_Periode[channel_index], info);
+                MOD_Period[channel_index] = MOD_addPeriod((int32_t)MOD_Period[channel_index], info);
                 break;
             case 3u:  /* set gliss control */
                 break;
@@ -436,24 +436,24 @@ void MOD_TickEffect(void)
         switch (effect) {
         case 0xFFu: break;
 
-        case 0u:  /* arpeggio — PeriodeAdjust = period(arp_note) - Periode */
+        case 0u:  /* arpeggio — PeriodAdjust = period(arp_note) - Period */
             if (info) {
                 uint32_t note = MOD_Note[channel_index];
                 uint32_t phase = MOD_tick % 3u;
                 if (phase == 1u) note += x;
                 if (phase == 2u) note += y;
-                MOD_PeriodeAdjust[channel_index] =
-                    (int32_t)(Calc_AMIGAperiode(note, MOD_SampleFinetune[channel_index])) -
-                    (int32_t)MOD_Periode[channel_index];
+                MOD_PeriodAdjust[channel_index] =
+                    (int32_t)(Calc_AMIGAperiod(note, MOD_SampleFinetune[channel_index])) -
+                    (int32_t)MOD_Period[channel_index];
             }
             break;
 
         case 1u:  /* portamento up */
-            MOD_Periode[channel_index] = MOD_decPeriode((int32_t)MOD_Periode[channel_index], info << 4);
+            MOD_Period[channel_index] = MOD_decPeriod((int32_t)MOD_Period[channel_index], info << 4);
             break;
 
         case 2u:  /* portamento down */
-            MOD_Periode[channel_index] = MOD_addPeriode((int32_t)MOD_Periode[channel_index], info << 4);
+            MOD_Period[channel_index] = MOD_addPeriod((int32_t)MOD_Period[channel_index], info << 4);
             break;
 
         case 3u:  /* portamento to note */
@@ -464,13 +464,13 @@ void MOD_TickEffect(void)
                 MOD_TremoloVolume[channel_index] = MOD_Volume[channel_index];
             }
             if (MOD_GlissFlag[channel_index] == 2) {
-                if (MOD_GlissPeriode[channel_index] == MOD_Periode[channel_index]) { MOD_GlissFlag[channel_index] = 0; break; }
-                if (MOD_GlissPeriode[channel_index] > MOD_Periode[channel_index]) {
-                    MOD_Periode[channel_index] = MOD_addPeriode((int32_t)MOD_Periode[channel_index], (uint32_t)MOD_GlissSpeed[channel_index] << 4);
-                    if (MOD_Periode[channel_index] > MOD_GlissPeriode[channel_index]) MOD_Periode[channel_index] = MOD_GlissPeriode[channel_index];
+                if (MOD_GlissPeriod[channel_index] == MOD_Period[channel_index]) { MOD_GlissFlag[channel_index] = 0; break; }
+                if (MOD_GlissPeriod[channel_index] > MOD_Period[channel_index]) {
+                    MOD_Period[channel_index] = MOD_addPeriod((int32_t)MOD_Period[channel_index], (uint32_t)MOD_GlissSpeed[channel_index] << 4);
+                    if (MOD_Period[channel_index] > MOD_GlissPeriod[channel_index]) MOD_Period[channel_index] = MOD_GlissPeriod[channel_index];
                 } else {
-                    MOD_Periode[channel_index] = MOD_decPeriode((int32_t)MOD_Periode[channel_index], (uint32_t)MOD_GlissSpeed[channel_index] << 4);
-                    if (MOD_Periode[channel_index] < MOD_GlissPeriode[channel_index]) MOD_Periode[channel_index] = MOD_GlissPeriode[channel_index];
+                    MOD_Period[channel_index] = MOD_decPeriod((int32_t)MOD_Period[channel_index], (uint32_t)MOD_GlissSpeed[channel_index] << 4);
+                    if (MOD_Period[channel_index] < MOD_GlissPeriod[channel_index]) MOD_Period[channel_index] = MOD_GlissPeriod[channel_index];
                 }
             }
             break;
@@ -535,7 +535,7 @@ void MOD_initEffects(void)
         MOD_Tremolo[channel_index]          = MOD_Sinus;
         MOD_GlissSpeed[channel_index]       = 0;
         MOD_GlissNote[channel_index]        = 0;
-        MOD_GlissPeriode[channel_index]     = 0;
+        MOD_GlissPeriod[channel_index]     = 0;
         MOD_GlissFlag[channel_index]        = 0;
         MOD_VibratoSpeed[channel_index]     = 0;
         MOD_VibratoDepth[channel_index]     = 0;
@@ -565,13 +565,13 @@ void MOD_GetNewEffect(void)
         switch (effect) {
         case 0xFFu:
         case 0u:
-            MOD_PeriodeAdjust[channel_index] = 0;
+            MOD_PeriodAdjust[channel_index] = 0;
             if (effect == 0u) MOD_VibratoPosition[channel_index] = 0;
             break;
         case 1u:
         case 2u:
-            MOD_Periode[channel_index] = (uint32_t)((int32_t)MOD_Periode[channel_index] + MOD_PeriodeAdjust[channel_index]);
-            MOD_PeriodeAdjust[channel_index] = 0;
+            MOD_Period[channel_index] = (uint32_t)((int32_t)MOD_Period[channel_index] + MOD_PeriodAdjust[channel_index]);
+            MOD_PeriodAdjust[channel_index] = 0;
             MOD_VibratoPosition[channel_index] = 0;
             break;
         case 3u:
@@ -581,7 +581,7 @@ void MOD_GetNewEffect(void)
             MOD_VibratoPosition[channel_index] = 0;
             break;
         case 10u:
-            MOD_PeriodeAdjust[channel_index] = 0;
+            MOD_PeriodAdjust[channel_index] = 0;
             break;
         }
     }
@@ -622,7 +622,7 @@ void MOD_read_row(void)
                 MOD_Note[channel_index] = (uint8_t)value;
                 MOD_GetNewNote(channel_index);
                 MOD_VibratoPosition[channel_index] = 0;
-                MOD_PeriodeAdjust[channel_index]   = 0;
+                MOD_PeriodAdjust[channel_index]   = 0;
             }
         }
     }

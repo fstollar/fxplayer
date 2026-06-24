@@ -13,7 +13,7 @@ extern uint32_t g_MasterVolume;        /* format-specific volume scale; NOT a 0-
 extern uint32_t g_flag_stereo;         /* 0=mono, 1=stereo */
 extern uint32_t g_flag_interpolate;
 extern uint32_t g_flag_soft_clip;
-extern uint32_t g_ChannelSeperation;   /* stereo separation width: 0=centre, 256=full L/R split */
+extern uint32_t g_ChannelSeparation;   /* stereo separation width: 0=centre, 256=full L/R split */
 extern uint32_t g_GlobalVolume;        /* in-song global volume (S3M Vxx effect), 0-64 */
 
 /* Mixer address and state */
@@ -21,7 +21,7 @@ extern uint32_t g_MixerAddress;        /* current write offset into the 32-bit m
 extern uint32_t g_ChannelUsed, g_ChannelLast;
 
 /* Per-channel arrays [FX_MAXCHANNELS] */
-extern uint32_t  g_ChannelActiv[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelActive[FX_MAXCHANNELS];
 extern uint32_t  g_ChannelFlag[FX_MAXCHANNELS];
 extern uint32_t  g_ChannelSampleNr[FX_MAXCHANNELS];
 extern uint32_t  g_ChannelVolume[FX_MAXCHANNELS];
@@ -35,7 +35,7 @@ extern uint32_t  g_ChannelLoopBegin[FX_MAXCHANNELS];
 extern uint32_t  g_ChannelLoopEnd[FX_MAXCHANNELS];
 extern uint32_t  g_ChannelSamplePosition[FX_MAXCHANNELS];
 extern uint32_t  g_ChannelSampleFraction[FX_MAXCHANNELS];
-extern uint32_t  g_ChannelSampleFrequence[FX_MAXCHANNELS];
+extern uint32_t  g_ChannelSampleFrequency[FX_MAXCHANNELS];
 extern int32_t   g_ChannelLastValueLeft[FX_MAXCHANNELS];
 extern int32_t   g_ChannelLastValueRight[FX_MAXCHANNELS];
 extern uint32_t  g_ChannelVolumeLeft[FX_MAXCHANNELS];
@@ -44,7 +44,7 @@ extern int32_t   g_DeltaSamplePosition[FX_MAXCHANNELS];
 extern int32_t   g_DeltaSampleFraction[FX_MAXCHANNELS];
 extern uint32_t  g_NextSamplePosition[FX_MAXCHANNELS];
 extern uint32_t  g_NextSampleFraction[FX_MAXCHANNELS];
-extern uint32_t  g_NextChannelActiv[FX_MAXCHANNELS];
+extern uint32_t  g_NextChannelActive[FX_MAXCHANNELS];
 
 /*
  * Workspace-allocated master volume table.

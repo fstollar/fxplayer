@@ -25,7 +25,7 @@ static const int16_t *M669_Vibrato[M669_CHANNELS];
 /* Glissando */
 static uint8_t  M669_GlissSpeed[M669_CHANNELS];
 static uint8_t  M669_GlissNote[M669_CHANNELS];
-       uint32_t M669_GlissPeriode[M669_CHANNELS];
+       uint32_t M669_GlissPeriod[M669_CHANNELS];
        uint8_t  M669_GlissFlag[M669_CHANNELS];
 
 /* Vibrato */
@@ -37,14 +37,14 @@ static int8_t   M669_RetrigCount[M669_CHANNELS];
 
 /* ---- period helpers ---- */
 
-static uint32_t M669_addPeriode(int32_t p, uint32_t value)
+static uint32_t M669_addPeriod(int32_t p, uint32_t value)
 {
     p += (int32_t)value;
     if (p < 10) p = 10;
     return (uint32_t)p;
 }
 
-static uint32_t M669_decPeriode(int32_t p, uint32_t value)
+static uint32_t M669_decPeriod(int32_t p, uint32_t value)
 {
     p -= (int32_t)value;
     if (p < 10) p = 10;
@@ -55,7 +55,7 @@ static uint32_t M669_decPeriode(int32_t p, uint32_t value)
 
 static void M669_MVibrato(uint32_t channel_index)
 {
-    M669_PeriodeAdjust[channel_index] =
+    M669_PeriodAdjust[channel_index] =
         (int32_t)M669_Vibrato[channel_index][M669_VibratoPosition[channel_index]] *
         (int32_t)M669_VibratoDepth[channel_index] / 64;
     M669_VibratoPosition[channel_index] =
@@ -106,7 +106,7 @@ void M669_beforeEffect(void)
         case 2u: {  /* glissando — capture target note */
             uint8_t note = M669_RowBuffer[channel_index*5+0];
             if (note != 0xFFu && note != 0xFEu) {
-                M669_PeriodeAdjust[channel_index] = 0;
+                M669_PeriodAdjust[channel_index] = 0;
                 M669_GlissNote[channel_index]     = note;
                 if (note < 64u) {
                     M669_RowBuffer[channel_index*5+0] = 0xFEu;  /* suppress trigger */
@@ -140,13 +140,13 @@ void M669_RowEffect(void)
         case 2u:  /* glissando */
             if (info) M669_GlissSpeed[channel_index] = (uint8_t)info;
             if (M669_GlissFlag[channel_index] == 1) {
-                M669_GlissPeriode[channel_index] =
-                    M669_Periodes[M669_SampleFinetune[channel_index]][M669_GlissNote[channel_index]] << 4u;
+                M669_GlissPeriod[channel_index] =
+                    M669_Periods[M669_SampleFinetune[channel_index]][M669_GlissNote[channel_index]] << 4u;
                 M669_GlissFlag[channel_index] = 2;
             }
-            if (M669_GlissPeriode[channel_index] != M669_Periode[channel_index]) {
+            if (M669_GlissPeriod[channel_index] != M669_Period[channel_index]) {
                 M669_VibratoPosition[channel_index] = 0;
-                M669_PeriodeAdjust[channel_index]   = 0;
+                M669_PeriodAdjust[channel_index]   = 0;
                 M669_GlissFlag[channel_index]       = 2;
             }
             break;
@@ -187,28 +187,28 @@ void M669_TickEffect(void)
         case 0xFFu: break;
 
         case 0u:  /* tone slide up */
-            M669_Periode[channel_index] = M669_decPeriode((int32_t)M669_Periode[channel_index], info * 16u);
+            M669_Period[channel_index] = M669_decPeriod((int32_t)M669_Period[channel_index], info * 16u);
             break;
 
         case 1u:  /* tone slide down */
-            M669_Periode[channel_index] = M669_addPeriode((int32_t)M669_Periode[channel_index], info * 16u);
+            M669_Period[channel_index] = M669_addPeriod((int32_t)M669_Period[channel_index], info * 16u);
             break;
 
         case 2u:  /* glissando */
-            if (M669_GlissPeriode[channel_index] == M669_Periode[channel_index] || M669_GlissFlag[channel_index] != 2) {
+            if (M669_GlissPeriod[channel_index] == M669_Period[channel_index] || M669_GlissFlag[channel_index] != 2) {
                 M669_GlissFlag[channel_index] = 0;
                 break;
             }
-            if (M669_GlissPeriode[channel_index] > M669_Periode[channel_index]) {
-                M669_Periode[channel_index] = M669_addPeriode((int32_t)M669_Periode[channel_index],
+            if (M669_GlissPeriod[channel_index] > M669_Period[channel_index]) {
+                M669_Period[channel_index] = M669_addPeriod((int32_t)M669_Period[channel_index],
                                                    (uint32_t)M669_GlissSpeed[channel_index] * 16u);
-                if (M669_Periode[channel_index] > M669_GlissPeriode[channel_index])
-                    M669_Periode[channel_index] = M669_GlissPeriode[channel_index];
+                if (M669_Period[channel_index] > M669_GlissPeriod[channel_index])
+                    M669_Period[channel_index] = M669_GlissPeriod[channel_index];
             } else {
-                M669_Periode[channel_index] = M669_decPeriode((int32_t)M669_Periode[channel_index],
+                M669_Period[channel_index] = M669_decPeriod((int32_t)M669_Period[channel_index],
                                                    (uint32_t)M669_GlissSpeed[channel_index] * 16u);
-                if (M669_Periode[channel_index] < M669_GlissPeriode[channel_index])
-                    M669_Periode[channel_index] = M669_GlissPeriode[channel_index];
+                if (M669_Period[channel_index] < M669_GlissPeriod[channel_index])
+                    M669_Period[channel_index] = M669_GlissPeriod[channel_index];
             }
             break;
 
@@ -232,7 +232,7 @@ void M669_initEffects(void)
         M669_Vibrato[channel_index]          = M669_Sinus;
         M669_GlissSpeed[channel_index]       = 0;
         M669_GlissNote[channel_index]        = 0;
-        M669_GlissPeriode[channel_index]     = 0;
+        M669_GlissPeriod[channel_index]     = 0;
         M669_GlissFlag[channel_index]        = 0;
         M669_VibratoDepth[channel_index]     = 0;
         M669_VibratoPosition[channel_index]  = 0;
@@ -251,12 +251,12 @@ void M669_GetNewEffect(void)
 
         switch (effect) {
         case 0xFFu:
-            M669_PeriodeAdjust[channel_index] = 0;
+            M669_PeriodAdjust[channel_index] = 0;
             break;
         case 0u:
         case 1u:
-            M669_Periode[channel_index] = (uint32_t)((int32_t)M669_Periode[channel_index] + M669_PeriodeAdjust[channel_index]);
-            M669_PeriodeAdjust[channel_index] = 0;
+            M669_Period[channel_index] = (uint32_t)((int32_t)M669_Period[channel_index] + M669_PeriodAdjust[channel_index]);
+            M669_PeriodAdjust[channel_index] = 0;
             M669_VibratoPosition[channel_index] = 0;
             break;
         case 2u:
@@ -300,7 +300,7 @@ void M669_read_row(void)
             M669_Note[channel_index] = (uint8_t)value;
             M669_GetNewNote(channel_index);
             M669_VibratoPosition[channel_index] = 0;
-            M669_PeriodeAdjust[channel_index]   = 0;
+            M669_PeriodAdjust[channel_index]   = 0;
         }
 
         /* volume is set whenever a note event (non-empty row) is present */

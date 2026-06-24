@@ -9,7 +9,7 @@
 
 /* ---- globals ---- */
 
-uint32_t S3M_NotePeriodes[12] =
+uint32_t S3M_NotePeriods[12] =
     { 1712, 1616, 1524, 1440, 1356, 1280, 1208, 1140, 1076, 1016, 960, 907 };
 
 static uint32_t S3M_PanningTable[16] =
@@ -28,7 +28,7 @@ uint8_t   S3M_flag_stereo = 0, S3M_flag_amigalimits = 0;
 uint8_t   S3M_flag_st3volslides = 0, S3M_flag_note = 0;
 uint8_t   S3M_tempo = 128, S3M_speed = 6, S3M_GlobalVolume = 64;
 
-uint8_t   S3M_ChannelActiv[S3M_MAXCHANNELS];
+uint8_t   S3M_ChannelActive[S3M_MAXCHANNELS];
 uint8_t   S3M_SampleNr[S3M_MAXCHANNELS];
 uintptr_t S3M_SampleAddress[S3M_MAXCHANNELS];
 uint32_t  S3M_SampleLength[S3M_MAXCHANNELS];
@@ -48,9 +48,9 @@ uint8_t   S3M_EffectInfo[S3M_MAXCHANNELS];
 uint8_t   S3M_LastEffect[S3M_MAXCHANNELS];
 uint8_t   S3M_LastEffectInfo[S3M_MAXCHANNELS];
 
-uint32_t  S3M_Periode[S3M_MAXCHANNELS];
-int32_t   S3M_PeriodeAdjust[S3M_MAXCHANNELS];
-uint32_t  S3M_Frequence[S3M_MAXCHANNELS];
+uint32_t  S3M_Period[S3M_MAXCHANNELS];
+int32_t   S3M_PeriodAdjust[S3M_MAXCHANNELS];
+uint32_t  S3M_Frequency[S3M_MAXCHANNELS];
 
 /* ---- internal workspace pointers ---- */
 static uint8_t       *s_buf      = NULL;
@@ -394,22 +394,22 @@ void S3M_unpack_row(uint32_t pat_nr, uint32_t row_nr)
 
 /* ---- period / frequency calculations ---- */
 
-uint32_t Calc_st3periode(uint32_t note, uint32_t octave, uint32_t c4spd)
+uint32_t Calc_st3period(uint32_t note, uint32_t octave, uint32_t c4spd)
 {
-    uint32_t noteperiode;
+    uint32_t noteperiod;
     uint32_t dum;
     if (note > 11 || c4spd == 0) return 0x1000u;  /* safe fallback */
-    noteperiode = S3M_NotePeriodes[note] << 4;
-    dum = (uint32_t)(8363u * 16u * (noteperiode >> octave));
+    noteperiod = S3M_NotePeriods[note] << 4;
+    dum = (uint32_t)(8363u * 16u * (noteperiod >> octave));
     return dum / c4spd;
 }
 
-static uint32_t calc_st3frequence(uint32_t channel)
+static uint32_t calc_st3frequency(uint32_t channel)
 {
-    uint32_t dum = S3M_Periode[channel];
+    uint32_t dum = S3M_Period[channel];
     if (dum < 1024)      dum = 1024;
     if (dum > 0x00080000u) dum = 0x00080000u;
-    return (14317456ul << 6) / (dum + (uint32_t)S3M_PeriodeAdjust[channel]);
+    return (14317456ul << 6) / (dum + (uint32_t)S3M_PeriodAdjust[channel]);
 }
 
 /* ---- note / sample setup ---- */
@@ -448,18 +448,18 @@ void S3M_GetNewNote(uint32_t channel)
 {
     if (S3M_SampleNr[channel] != 0) {
         if (S3M_Note[channel] > 11) {
-            S3M_Periode[channel] = 0;
-            S3M_ChannelActiv[channel] = 0;
+            S3M_Period[channel] = 0;
+            S3M_ChannelActive[channel] = 0;
         } else {
-            S3M_Periode[channel] = S3M_GlissPeriode[channel] =
-                Calc_st3periode(S3M_Note[channel], S3M_Octave[channel],
+            S3M_Period[channel] = S3M_GlissPeriod[channel] =
+                Calc_st3period(S3M_Note[channel], S3M_Octave[channel],
                                 S3M_SampleC4SPD[channel]);
             S3M_SamplePosition[channel] = 0;
             S3M_SampleFraction[channel] = 0;
-            S3M_ChannelActiv[channel]   = 1;
+            S3M_ChannelActive[channel]   = 1;
         }
     } else {
-        S3M_ChannelActiv[channel] = 0;
+        S3M_ChannelActive[channel] = 0;
     }
 }
 
@@ -475,14 +475,14 @@ void S3M_GetNewEffect(void)
         info   = S3M_EffectInfo[channel];
 
         switch (effect) {
-            case 255: S3M_PeriodeAdjust[channel] = 0; break;
+            case 255: S3M_PeriodAdjust[channel] = 0; break;
             case  1: case  2: case  3:
                 S3M_VibratoPosition[channel] = 0; break;
             case  4:
-                S3M_PeriodeAdjust[channel] = 0; break;
+                S3M_PeriodAdjust[channel] = 0; break;
             case  5: case  6:
-                S3M_Periode[channel] += (uint32_t)S3M_PeriodeAdjust[channel];
-                S3M_PeriodeAdjust[channel] = 0;
+                S3M_Period[channel] += (uint32_t)S3M_PeriodAdjust[channel];
+                S3M_PeriodAdjust[channel] = 0;
                 S3M_VibratoPosition[channel] = 0; break;
             case  7: S3M_VibratoPosition[channel] = 0; break;
             case  8: break;
@@ -555,13 +555,13 @@ void S3M_read_row(void)
             value = S3M_RowBuffer[channel * 5 + 0];
             if (value != 255) {
                 if (value == 254) {
-                    S3M_ChannelActiv[channel] = 0;
+                    S3M_ChannelActive[channel] = 0;
                 } else {
                     S3M_Note[channel]   = (uint8_t)(value & 15u);
                     S3M_Octave[channel] = (uint8_t)(value >> 4);
                     S3M_GetNewNote(channel);
                     S3M_VibratoPosition[channel] = 0;
-                    S3M_PeriodeAdjust[channel]   = 0;
+                    S3M_PeriodAdjust[channel]   = 0;
                 }
             }
         }
@@ -636,7 +636,7 @@ void S3M_initvariables(void)
     S3M_tempo = 128; S3M_speed = 6; S3M_GlobalVolume = 64;
 
     for (channel = 0; channel < S3M_MAXCHANNELS; channel++) {
-        S3M_ChannelActiv[channel]   = 0;
+        S3M_ChannelActive[channel]   = 0;
         S3M_SampleNr[channel]       = 0;
         S3M_SampleAddress[channel]  = 0;
         S3M_SampleLength[channel]   = 0;
@@ -654,9 +654,9 @@ void S3M_initvariables(void)
         S3M_EffectInfo[channel]     = 0;
         S3M_LastEffect[channel]     = 0xff;
         S3M_LastEffectInfo[channel] = 0;
-        S3M_Periode[channel]        = 0;
-        S3M_PeriodeAdjust[channel]  = 0;
-        S3M_Frequence[channel]      = 0;
+        S3M_Period[channel]        = 0;
+        S3M_PeriodAdjust[channel]  = 0;
+        S3M_Frequency[channel]      = 0;
     }
 }
 
@@ -667,15 +667,15 @@ static void s3m_to_mixer(void)
     uint32_t channel;
     g_ChannelLast = S3M_channels;
     for (channel = 0; channel < S3M_channels; channel++) {
-        if (S3M_Periode[channel] < 60) S3M_ChannelActiv[channel] = 0;
-        g_ChannelActiv[channel]  = S3M_ChannelActiv[channel];
+        if (S3M_Period[channel] < 60) S3M_ChannelActive[channel] = 0;
+        g_ChannelActive[channel]  = S3M_ChannelActive[channel];
         g_ChannelVolume[channel] = (uint32_t)S3M_Volume[channel] << 2;
         g_ChannelPanning[channel]= S3M_PanningTable[S3M_Panning[channel]];
-        if (S3M_ChannelActiv[channel]) {
+        if (S3M_ChannelActive[channel]) {
             g_ChannelSamplePosition[channel]  = S3M_SamplePosition[channel];
             g_ChannelSampleFraction[channel]  = S3M_SampleFraction[channel];
-            S3M_Frequence[channel]            = calc_st3frequence(channel);
-            g_ChannelSampleFrequence[channel] = (S3M_Frequence[channel] + 2u) >> 2;
+            S3M_Frequency[channel]            = calc_st3frequency(channel);
+            g_ChannelSampleFrequency[channel] = (S3M_Frequency[channel] + 2u) >> 2;
             if (S3M_SampleNr[channel] != 0 &&
                 g_ChannelSampleNr[channel] != S3M_SampleNr[channel]) {
                 g_ChannelSampleNr[channel]      = S3M_SampleNr[channel];
@@ -698,10 +698,10 @@ static void mixer_to_s3m(void)
 {
     uint32_t channel;
     for (channel = 0; channel < S3M_channels; channel++) {
-        if (S3M_ChannelActiv[channel]) {
+        if (S3M_ChannelActive[channel]) {
             S3M_SamplePosition[channel] = g_ChannelSamplePosition[channel];
             S3M_SampleFraction[channel] = g_ChannelSampleFraction[channel];
-            S3M_ChannelActiv[channel]   = (uint8_t)g_ChannelActiv[channel];
+            S3M_ChannelActive[channel]   = (uint8_t)g_ChannelActive[channel];
         }
     }
 }

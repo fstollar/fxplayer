@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "format/mod.h"
 
-extern uint32_t MOD_GlissPeriode[MOD_MAXCHANNELS];
+extern uint32_t MOD_GlissPeriod[MOD_MAXCHANNELS];
 extern uint16_t MOD_VibratoPosition[MOD_MAXCHANNELS];
 extern uint16_t MOD_TremoloVolume[MOD_MAXCHANNELS];
 

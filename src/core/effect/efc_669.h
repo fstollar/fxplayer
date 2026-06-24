@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "format/m669.h"
 
-extern uint32_t M669_GlissPeriode[M669_CHANNELS];
+extern uint32_t M669_GlissPeriod[M669_CHANNELS];
 extern uint8_t  M669_GlissFlag[M669_CHANNELS];
 extern uint16_t M669_VibratoPosition[M669_CHANNELS];
 

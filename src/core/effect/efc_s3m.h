@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "format/s3m.h"
 
-extern uint32_t S3M_GlissPeriode[S3M_MAXCHANNELS];
+extern uint32_t S3M_GlissPeriod[S3M_MAXCHANNELS];
 extern uint16_t S3M_VibratoPosition[S3M_MAXCHANNELS];
 extern uint16_t S3M_TremorVolume[S3M_MAXCHANNELS];
 

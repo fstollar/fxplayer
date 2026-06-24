@@ -6,7 +6,7 @@
 
 /* ---- exported effect state ---- */
 
-uint32_t S3M_GlissPeriode[S3M_MAXCHANNELS];
+uint32_t S3M_GlissPeriod[S3M_MAXCHANNELS];
 uint16_t S3M_VibratoPosition[S3M_MAXCHANNELS];
 uint16_t S3M_TremorVolume[S3M_MAXCHANNELS];
 
@@ -99,28 +99,28 @@ static uint8_t S3M_decVolume(int16_t vol, int16_t val)
     return (uint8_t)vol;
 }
 
-static uint32_t S3M_addPeriode(int32_t periode, uint32_t val)
+static uint32_t S3M_addPeriod(int32_t period, uint32_t val)
 {
-    periode += (int32_t)val;
+    period += (int32_t)val;
     if (S3M_flag_amigalimits) {
-        if (periode < 7232)  periode = 7232;
-        if (periode > 54784) periode = 54784;
+        if (period < 7232)  period = 7232;
+        if (period > 54784) period = 54784;
     } else {
-        if (periode < 59) periode = 59;
+        if (period < 59) period = 59;
     }
-    return (uint32_t)periode;
+    return (uint32_t)period;
 }
 
-static uint32_t S3M_decPeriode(int32_t periode, uint32_t val)
+static uint32_t S3M_decPeriod(int32_t period, uint32_t val)
 {
-    periode -= (int32_t)val;
+    period -= (int32_t)val;
     if (S3M_flag_amigalimits) {
-        if (periode < 7232)  periode = 7232;
-        if (periode > 54784) periode = 54784;
+        if (period < 7232)  period = 7232;
+        if (period > 54784) period = 54784;
     } else {
-        if (periode < 59) periode = 59;
+        if (period < 59) period = 59;
     }
-    return (uint32_t)periode;
+    return (uint32_t)period;
 }
 
 /* ---- vibrato / tremor / retrig helpers ---- */
@@ -128,7 +128,7 @@ static uint32_t S3M_decPeriode(int32_t periode, uint32_t val)
 static void S3M_Vibrato(uint32_t channel)
 {
     if (VibratoSpeed[channel] == 0) return;
-    S3M_PeriodeAdjust[channel] =
+    S3M_PeriodAdjust[channel] =
         Vibrato[channel][S3M_VibratoPosition[channel]] * VibratoDepth[channel] / 8;
     S3M_VibratoPosition[channel] =
         (uint16_t)((S3M_VibratoPosition[channel] + VibratoSpeed[channel]) & 63u);
@@ -137,7 +137,7 @@ static void S3M_Vibrato(uint32_t channel)
 static void S3M_FineVibrato(uint32_t channel)
 {
     if (VibratoSpeed[channel] == 0) return;
-    S3M_PeriodeAdjust[channel] =
+    S3M_PeriodAdjust[channel] =
         Vibrato[channel][S3M_VibratoPosition[channel]] * VibratoDepth[channel] / 64;
     S3M_VibratoPosition[channel] =
         (uint16_t)((S3M_VibratoPosition[channel] + VibratoSpeed[channel]) & 63u);
@@ -214,7 +214,7 @@ void S3M_initEffects(void)
         GlissSpeed[channel]        = 0;
         GlissNote[channel]         = 0;
         GlissOctave[channel]       = 0;
-        S3M_GlissPeriode[channel]  = 0;
+        S3M_GlissPeriod[channel]  = 0;
         GlissFlag[channel]         = 0;
         VibratoSpeed[channel]      = 0;
         VibratoDepth[channel]      = 0;
@@ -356,7 +356,7 @@ void S3M_beforeEffect(void)
             case 7:  /* Gxx: tone portamento — capture target note */
                 value = S3M_RowBuffer[channel * 5 + 0];
                 if (value != 255 && value != 254) {
-                    S3M_PeriodeAdjust[channel] = 0;
+                    S3M_PeriodAdjust[channel] = 0;
                     GlissNote[channel]   = value & 15u;
                     GlissOctave[channel] = value >> 4;
                     if (GlissNote[channel] < 13 && GlissOctave[channel] < 8) {
@@ -371,7 +371,7 @@ void S3M_beforeEffect(void)
             case 12:  /* Lxy */
                 value = S3M_RowBuffer[channel * 5 + 0];
                 if (value != 255 && value != 254) {
-                    S3M_PeriodeAdjust[channel] = 0;
+                    S3M_PeriodAdjust[channel] = 0;
                     S3M_RowBuffer[channel * 5 + 0] = 255;
                 }
                 break;
@@ -438,30 +438,30 @@ void S3M_RowEffect(void)
 
             case 5:  /* Exx: slide down */
                 if (x == 0x0f)
-                    S3M_Periode[channel] = S3M_addPeriode(S3M_Periode[channel], y * 64u);
+                    S3M_Period[channel] = S3M_addPeriod(S3M_Period[channel], y * 64u);
                 else if (x == 0x0e)
-                    S3M_Periode[channel] = S3M_addPeriode(S3M_Periode[channel], y * 16u);
+                    S3M_Period[channel] = S3M_addPeriod(S3M_Period[channel], y * 16u);
                 break;
 
             case 6:  /* Fxx: slide up */
                 if (x == 0x0f)
-                    S3M_Periode[channel] = S3M_decPeriode(S3M_Periode[channel], y * 64u);
+                    S3M_Period[channel] = S3M_decPeriod(S3M_Period[channel], y * 64u);
                 else if (x == 0x0e)
-                    S3M_Periode[channel] = S3M_decPeriode(S3M_Periode[channel], y * 16u);
+                    S3M_Period[channel] = S3M_decPeriod(S3M_Period[channel], y * 16u);
                 break;
 
             case 7:  /* Gxx: tone portamento */
                 if (info != 0) GlissSpeed[channel] = info;
                 if (GlissFlag[channel] == 1) {
                     uint32_t dum = (uint32_t)(8363u * 16u *
-                        ((uint32_t)(S3M_NotePeriodes[GlissNote[channel]] << 4)
+                        ((uint32_t)(S3M_NotePeriods[GlissNote[channel]] << 4)
                          >> GlissOctave[channel]));
-                    S3M_GlissPeriode[channel] = dum / S3M_SampleC4SPD[channel];
+                    S3M_GlissPeriod[channel] = dum / S3M_SampleC4SPD[channel];
                     GlissFlag[channel] = 2;
                 }
-                if (S3M_GlissPeriode[channel] != S3M_Periode[channel]) {
+                if (S3M_GlissPeriod[channel] != S3M_Period[channel]) {
                     S3M_VibratoPosition[channel] = 0;
-                    S3M_PeriodeAdjust[channel]   = 0;
+                    S3M_PeriodAdjust[channel]   = 0;
                     GlissFlag[channel] = 2;
                 }
                 break;
@@ -478,10 +478,10 @@ void S3M_RowEffect(void)
 
             case 10:  /* Jxy: arpeggio (row tick = base note) */
                 if (S3M_Note[channel] <= 11 && S3M_SampleC4SPD[channel] != 0)
-                    S3M_PeriodeAdjust[channel] =
-                        (int32_t)Calc_st3periode(S3M_Note[channel], S3M_Octave[channel],
+                    S3M_PeriodAdjust[channel] =
+                        (int32_t)Calc_st3period(S3M_Note[channel], S3M_Octave[channel],
                                                  S3M_SampleC4SPD[channel])
-                        - (int32_t)S3M_Periode[channel];
+                        - (int32_t)S3M_Period[channel];
                 break;
 
             case 11: case 12: break;
@@ -552,32 +552,32 @@ void S3M_TickEffect(void)
 
             case 5:  /* Exx: slide down */
                 if (x != 0x0f && x != 0x0e)
-                    S3M_Periode[channel] = S3M_addPeriode(S3M_Periode[channel],
+                    S3M_Period[channel] = S3M_addPeriod(S3M_Period[channel],
                                                          (uint32_t)info * 64u);
                 break;
 
             case 6:  /* Fxx: slide up */
                 if (x != 0x0f && x != 0x0e)
-                    S3M_Periode[channel] = S3M_decPeriode(S3M_Periode[channel],
+                    S3M_Period[channel] = S3M_decPeriod(S3M_Period[channel],
                                                          (uint32_t)info * 64u);
                 break;
 
             case 7:  /* Gxx: tone portamento */
-                if (S3M_GlissPeriode[channel] == S3M_Periode[channel]
+                if (S3M_GlissPeriod[channel] == S3M_Period[channel]
                         || GlissFlag[channel] != 2) {
                     GlissFlag[channel] = 0;
                     break;
                 }
-                if (S3M_GlissPeriode[channel] > S3M_Periode[channel]) {
-                    S3M_Periode[channel] = S3M_addPeriode(S3M_Periode[channel],
+                if (S3M_GlissPeriod[channel] > S3M_Period[channel]) {
+                    S3M_Period[channel] = S3M_addPeriod(S3M_Period[channel],
                                                          GlissSpeed[channel] * 64u);
-                    if (S3M_Periode[channel] > S3M_GlissPeriode[channel])
-                        S3M_Periode[channel] = S3M_GlissPeriode[channel];
+                    if (S3M_Period[channel] > S3M_GlissPeriod[channel])
+                        S3M_Period[channel] = S3M_GlissPeriod[channel];
                 } else {
-                    S3M_Periode[channel] = S3M_decPeriode(S3M_Periode[channel],
+                    S3M_Period[channel] = S3M_decPeriod(S3M_Period[channel],
                                                          GlissSpeed[channel] * 64u);
-                    if (S3M_Periode[channel] < S3M_GlissPeriode[channel])
-                        S3M_Periode[channel] = S3M_GlissPeriode[channel];
+                    if (S3M_Period[channel] < S3M_GlissPeriod[channel])
+                        S3M_Period[channel] = S3M_GlissPeriod[channel];
                 }
                 break;
 
@@ -596,9 +596,9 @@ void S3M_TickEffect(void)
                 if ((S3M_tick % 3u) == 2u) note += y;
                 while (note > 11) { note -= 12; oct++; }
                 if (note > 11 || oct > 8) break;  /* guard out-of-range */
-                S3M_PeriodeAdjust[channel] =
-                    (int32_t)Calc_st3periode(note, oct, S3M_SampleC4SPD[channel])
-                    - (int32_t)S3M_Periode[channel];
+                S3M_PeriodAdjust[channel] =
+                    (int32_t)Calc_st3period(note, oct, S3M_SampleC4SPD[channel])
+                    - (int32_t)S3M_Period[channel];
                 break;
             }
 
@@ -617,21 +617,21 @@ void S3M_TickEffect(void)
                     S3M_Volume[channel] = S3M_decVolume(S3M_Volume[channel], y);
                 else if (y == 0)
                     S3M_Volume[channel] = S3M_addVolume(S3M_Volume[channel], x);
-                if (S3M_GlissPeriode[channel] == S3M_Periode[channel]
+                if (S3M_GlissPeriod[channel] == S3M_Period[channel]
                         || GlissFlag[channel] != 2) {
                     GlissFlag[channel] = 0;
                     break;
                 }
-                if (S3M_GlissPeriode[channel] > S3M_Periode[channel]) {
-                    S3M_Periode[channel] = S3M_addPeriode(S3M_Periode[channel],
+                if (S3M_GlissPeriod[channel] > S3M_Period[channel]) {
+                    S3M_Period[channel] = S3M_addPeriod(S3M_Period[channel],
                                                          GlissSpeed[channel] * 64u);
-                    if (S3M_Periode[channel] > S3M_GlissPeriode[channel])
-                        S3M_Periode[channel] = S3M_GlissPeriode[channel];
+                    if (S3M_Period[channel] > S3M_GlissPeriod[channel])
+                        S3M_Period[channel] = S3M_GlissPeriod[channel];
                 } else {
-                    S3M_Periode[channel] = S3M_decPeriode(S3M_Periode[channel],
+                    S3M_Period[channel] = S3M_decPeriod(S3M_Period[channel],
                                                          GlissSpeed[channel] * 64u);
-                    if (S3M_Periode[channel] < S3M_GlissPeriode[channel])
-                        S3M_Periode[channel] = S3M_GlissPeriode[channel];
+                    if (S3M_Period[channel] < S3M_GlissPeriod[channel])
+                        S3M_Period[channel] = S3M_GlissPeriod[channel];
                 }
                 break;
 
@@ -646,7 +646,7 @@ void S3M_TickEffect(void)
             case 19:  /* Sxy: note cut / note delay */
                 switch (x) {
                     case 0x0c:  /* note cut */
-                        if (S3M_tick == y) S3M_ChannelActiv[channel] = 0;
+                        if (S3M_tick == y) S3M_ChannelActive[channel] = 0;
                         break;
                     case 0x0d:  /* note delay */
                         if (S3M_tick == y) {

@@ -7,7 +7,7 @@
 #define S3M_MAXCHANNELS 32
 
 /* Note period table C..B */
-extern uint32_t S3M_NotePeriodes[12];
+extern uint32_t S3M_NotePeriods[12];
 
 /* Song state */
 extern uint32_t S3M_OrderNum, S3M_InstrumentNum, S3M_PatternNum;
@@ -26,7 +26,7 @@ extern uint8_t  S3M_flag_note;
 
 extern uint8_t  S3M_tempo, S3M_speed, S3M_GlobalVolume;
 
-extern uint8_t  S3M_ChannelActiv[S3M_MAXCHANNELS];
+extern uint8_t  S3M_ChannelActive[S3M_MAXCHANNELS];
 extern uint8_t  S3M_SampleNr[S3M_MAXCHANNELS];
 /* S3M_SampleAddress holds a raw byte pointer stored as uintptr_t */
 extern uintptr_t S3M_SampleAddress[S3M_MAXCHANNELS];
@@ -47,9 +47,9 @@ extern uint8_t  S3M_EffectInfo[S3M_MAXCHANNELS];
 extern uint8_t  S3M_LastEffect[S3M_MAXCHANNELS];
 extern uint8_t  S3M_LastEffectInfo[S3M_MAXCHANNELS];
 
-extern uint32_t S3M_Periode[S3M_MAXCHANNELS];
-extern int32_t  S3M_PeriodeAdjust[S3M_MAXCHANNELS];
-extern uint32_t S3M_Frequence[S3M_MAXCHANNELS];
+extern uint32_t S3M_Period[S3M_MAXCHANNELS];
+extern int32_t  S3M_PeriodAdjust[S3M_MAXCHANNELS];
+extern uint32_t S3M_Frequency[S3M_MAXCHANNELS];
 
 /* API */
 
@@ -104,6 +104,6 @@ void S3M_initvariables(void);
 void S3M_unpack_row(uint32_t pat_nr, uint32_t row_nr);
 
 /* Convert ST3 note+octave+c4spd (C4 sample rate in Hz) to the mixer period value. */
-uint32_t Calc_st3periode(uint32_t note, uint32_t octave, uint32_t c4spd);
+uint32_t Calc_st3period(uint32_t note, uint32_t octave, uint32_t c4spd);
 
 #endif

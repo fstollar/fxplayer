@@ -13,7 +13,7 @@
  * Layout: [0..11]=oct0, [12..23]=oct1(seed), [24..35]=oct2(seed),
  *         [36..47]=oct3(seed), [48..59]=oct4, [60..71]=oct5.
  */
-uint32_t M669_Periodes[16][72] = {
+uint32_t M669_Periods[16][72] = {
 /* Tuning 0 */
   { 0,0,0,0,0,0,0,0,0,0,0,0,
     856,808,762,720,678,640,604,570,538,508,480,453,
@@ -147,7 +147,7 @@ uint32_t M669_buffer_rest = 0, M669_tick_rest = 0;
 uint8_t  M669_tempo = 78;
 uint8_t  M669_speed = 6;
 
-uint8_t  M669_ChannelActiv[M669_CHANNELS];
+uint8_t  M669_ChannelActive[M669_CHANNELS];
 uint8_t  M669_SampleNr[M669_CHANNELS];
 uintptr_t M669_SampleAddress[M669_CHANNELS];
 uint32_t M669_SampleLength[M669_CHANNELS];
@@ -166,9 +166,9 @@ uint8_t  M669_EffectInfo[M669_CHANNELS];
 uint8_t  M669_LastEffect[M669_CHANNELS];
 uint8_t  M669_LastEffectInfo[M669_CHANNELS];
 
-uint32_t M669_Periode[M669_CHANNELS];
-int32_t  M669_PeriodeAdjust[M669_CHANNELS];
-uint32_t M669_Frequence[M669_CHANNELS];
+uint32_t M669_Period[M669_CHANNELS];
+int32_t  M669_PeriodAdjust[M669_CHANNELS];
+uint32_t M669_Frequency[M669_CHANNELS];
 
 uint8_t *M669_Orderlist = NULL;
 uint8_t *M669_Speedlist = NULL;
@@ -244,9 +244,9 @@ int m669_load(const uint8_t *data, size_t size,
     /* extend period table: octave 0 and 4-5 from seeded octaves 1-3 */
     for (t = 0; t < 16u; t++) {
         for (i = 0; i < 12u; i++) {
-            M669_Periodes[t][i]    = M669_Periodes[t][i + 12] * 2u;
-            M669_Periodes[t][i+48] = (M669_Periodes[t][i + 36] + 1u) / 2u;
-            M669_Periodes[t][i+60] = (M669_Periodes[t][i + 36] + 2u) / 4u;
+            M669_Periods[t][i]    = M669_Periods[t][i + 12] * 2u;
+            M669_Periods[t][i+48] = (M669_Periods[t][i + 36] + 1u) / 2u;
+            M669_Periods[t][i+60] = (M669_Periods[t][i + 36] + 2u) / 4u;
         }
     }
 
@@ -359,7 +359,7 @@ void M669_initvariables(void)
     M669_speed = 6;
 
     for (channel_index = 0; channel_index < M669_CHANNELS; channel_index++) {
-        M669_ChannelActiv[channel_index]    = 0;
+        M669_ChannelActive[channel_index]    = 0;
         M669_SampleNr[channel_index]        = 0;
         M669_SampleAddress[channel_index]   = 0;
         M669_SampleLength[channel_index]    = 0;
@@ -376,9 +376,9 @@ void M669_initvariables(void)
         M669_EffectInfo[channel_index]      = 0;
         M669_LastEffect[channel_index]      = 0xFFu;
         M669_LastEffectInfo[channel_index]  = 0;
-        M669_Periode[channel_index]         = 0;
-        M669_PeriodeAdjust[channel_index]   = 0;
-        M669_Frequence[channel_index]       = 0;
+        M669_Period[channel_index]         = 0;
+        M669_PeriodAdjust[channel_index]   = 0;
+        M669_Frequency[channel_index]       = 0;
     }
 }
 
@@ -463,14 +463,14 @@ void M669_unpack_row(uint32_t pat_nr, uint32_t row_nr)
 
 /* ---- period / frequency helpers ---- */
 
-uint32_t Calc_669periode(uint32_t note, uint32_t finetune)
+uint32_t Calc_669period(uint32_t note, uint32_t finetune)
 {
-    return M669_Periodes[finetune][note] << 4u;
+    return M669_Periods[finetune][note] << 4u;
 }
 
-static uint32_t Calc_669frequence(uint32_t channel)
+static uint32_t Calc_669frequency(uint32_t channel)
 {
-    uint32_t p = M669_Periode[channel] + (uint32_t)M669_PeriodeAdjust[channel];
+    uint32_t p = M669_Period[channel] + (uint32_t)M669_PeriodAdjust[channel];
     if (p == 0) return 0;
     return (14318181UL << 4u) / p;
 }
@@ -536,18 +536,18 @@ void M669_GetNewNote(uint32_t channel)
 {
     if (M669_SampleNr[channel] != 0) {
         if (M669_Note[channel] >= 64u) {
-            M669_Periode[channel]      = 0;
-            M669_ChannelActiv[channel] = 0;
+            M669_Period[channel]      = 0;
+            M669_ChannelActive[channel] = 0;
         } else {
-            M669_Periode[channel]      = M669_GlissPeriode[channel] =
-                Calc_669periode(M669_Note[channel], M669_SampleFinetune[channel]);
+            M669_Period[channel]      = M669_GlissPeriod[channel] =
+                Calc_669period(M669_Note[channel], M669_SampleFinetune[channel]);
             M669_GlissFlag[channel]    = 0;
             M669_SamplePosition[channel]  = 0;
             M669_SampleFraction[channel]  = 0;
-            M669_ChannelActiv[channel]    = 1;
+            M669_ChannelActive[channel]    = 1;
         }
     } else {
-        M669_ChannelActiv[channel] = 0;
+        M669_ChannelActive[channel] = 0;
     }
 }
 
@@ -560,16 +560,16 @@ static void M669_to_Mixer(void)
     g_ChannelLast = M669_CHANNELS;
 
     for (channel_index = 0; channel_index < M669_CHANNELS; channel_index++) {
-        if (M669_Periode[channel_index] < 10u) M669_ChannelActiv[channel_index] = 0;
-        g_ChannelActiv[channel_index]   = M669_ChannelActiv[channel_index];
+        if (M669_Period[channel_index] < 10u) M669_ChannelActive[channel_index] = 0;
+        g_ChannelActive[channel_index]   = M669_ChannelActive[channel_index];
         g_ChannelVolume[channel_index]  = (uint32_t)M669_Volume[channel_index] << 4;
         g_ChannelPanning[channel_index] = (uint32_t)M669_Panning[channel_index];
 
-        if (M669_ChannelActiv[channel_index]) {
+        if (M669_ChannelActive[channel_index]) {
             g_ChannelSamplePosition[channel_index]  = M669_SamplePosition[channel_index];
             g_ChannelSampleFraction[channel_index]  = M669_SampleFraction[channel_index];
-            M669_Frequence[channel_index]           = Calc_669frequence(channel_index);
-            g_ChannelSampleFrequence[channel_index] = (M669_Frequence[channel_index] + 2u) >> 2;
+            M669_Frequency[channel_index]           = Calc_669frequency(channel_index);
+            g_ChannelSampleFrequency[channel_index] = (M669_Frequency[channel_index] + 2u) >> 2;
 
             if (M669_SampleNr[channel_index] && g_ChannelSampleNr[channel_index] != M669_SampleNr[channel_index]) {
                 g_ChannelSampleNr[channel_index]      = M669_SampleNr[channel_index];
@@ -589,10 +589,10 @@ static void Mixer_to_M669(void)
 {
     uint32_t channel_index;
     for (channel_index = 0; channel_index < M669_CHANNELS; channel_index++) {
-        if (M669_ChannelActiv[channel_index]) {
+        if (M669_ChannelActive[channel_index]) {
             M669_SamplePosition[channel_index]  = g_ChannelSamplePosition[channel_index];
             M669_SampleFraction[channel_index]  = g_ChannelSampleFraction[channel_index];
-            M669_ChannelActiv[channel_index]    = (uint8_t)g_ChannelActiv[channel_index];
+            M669_ChannelActive[channel_index]    = (uint8_t)g_ChannelActive[channel_index];
         }
     }
 }

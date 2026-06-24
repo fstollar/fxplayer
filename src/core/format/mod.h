@@ -9,7 +9,7 @@
 #define MOD_MAXPATTERNS 128
 
 /* Period table [16 finetunes][84 notes] — filled at load time */
-extern uint32_t MOD_Periodes[16][84];
+extern uint32_t MOD_Periods[16][84];
 
 /* Song meta */
 extern uint32_t MOD_channels;
@@ -31,7 +31,7 @@ extern uint8_t  MOD_flag_note;
 extern uint8_t  MOD_tempo, MOD_speed;
 
 /* Per-channel arrays */
-extern uint8_t  MOD_ChannelActiv[MOD_MAXCHANNELS];
+extern uint8_t  MOD_ChannelActive[MOD_MAXCHANNELS];
 extern uint8_t  MOD_SampleNr[MOD_MAXCHANNELS];
 extern uintptr_t MOD_SampleAddress[MOD_MAXCHANNELS];
 extern uint32_t MOD_SampleLength[MOD_MAXCHANNELS];
@@ -50,9 +50,9 @@ extern uint8_t  MOD_EffectInfo[MOD_MAXCHANNELS];
 extern uint8_t  MOD_LastEffect[MOD_MAXCHANNELS];
 extern uint8_t  MOD_LastEffectInfo[MOD_MAXCHANNELS];
 
-extern uint32_t MOD_Periode[MOD_MAXCHANNELS];
-extern int32_t  MOD_PeriodeAdjust[MOD_MAXCHANNELS];
-extern uint32_t MOD_Frequence[MOD_MAXCHANNELS];
+extern uint32_t MOD_Period[MOD_MAXCHANNELS];
+extern int32_t  MOD_PeriodAdjust[MOD_MAXCHANNELS];
+extern uint32_t MOD_Frequency[MOD_MAXCHANNELS];
 
 /* API */
 
@@ -107,6 +107,6 @@ void MOD_read_row(void);
 void MOD_goRowOrder(void);
 
 /* Convert Amiga MOD note index + finetune to the Amiga hardware period (Paula clock divisor). */
-uint32_t Calc_AMIGAperiode(uint32_t note, uint32_t finetune);
+uint32_t Calc_AMIGAperiod(uint32_t note, uint32_t finetune);
 
 #endif /* FX_FORMAT_MOD_H */

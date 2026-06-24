@@ -256,7 +256,7 @@ void fx_get_playback_state(fx_playback_state *out)
         out->row         = S3M_row;
         out->channels    = S3M_channels;
         for (i = 0; i < S3M_channels; i++)
-            if (S3M_ChannelActiv[i]) out->channels_active++;
+            if (S3M_ChannelActive[i]) out->channels_active++;
         break;
     case FX_FORMAT_MOD:
         out->order       = MOD_Order;
@@ -265,7 +265,7 @@ void fx_get_playback_state(fx_playback_state *out)
         out->row         = MOD_row;
         out->channels    = MOD_channels;
         for (i = 0; i < MOD_channels; i++)
-            if (MOD_ChannelActiv[i]) out->channels_active++;
+            if (MOD_ChannelActive[i]) out->channels_active++;
         break;
     case FX_FORMAT_669:
         out->order       = M669_Order;
@@ -274,7 +274,7 @@ void fx_get_playback_state(fx_playback_state *out)
         out->row         = M669_row;
         out->channels    = M669_CHANNELS;
         for (i = 0; i < M669_CHANNELS; i++)
-            if (M669_ChannelActiv[i]) out->channels_active++;
+            if (M669_ChannelActive[i]) out->channels_active++;
         break;
     default:
         break;
