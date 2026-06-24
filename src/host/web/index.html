@@ -126,12 +126,12 @@
       e.preventDefault();
       dropZone.classList.remove('drag-over');
       const file = e.dataTransfer.files[0];
-      if (file) player.loadModule(await file.arrayBuffer());
+      if (file) player.loadModule(await file.arrayBuffer(), file.name);
     });
 
     document.getElementById('file-input').addEventListener('change', async (e) => {
       const file = e.target.files[0];
-      if (file) player.loadModule(await file.arrayBuffer());
+      if (file) player.loadModule(await file.arrayBuffer(), file.name);
     });
   </script>
 </body>

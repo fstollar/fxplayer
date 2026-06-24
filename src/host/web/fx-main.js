@@ -9,11 +9,12 @@ class FxPlayer
 {
     constructor()
     {
-        this._ctx          = null;
-        this._node         = null;
-        this._worker       = null;
-        this._readyResolve = null;
-        this._readyReject  = null;
+        this._ctx             = null;
+        this._node            = null;
+        this._worker          = null;
+        this._readyResolve    = null;
+        this._readyReject     = null;
+        this._pendingFilename = '';   // fallback when the module has no embedded title
     }
 
     // Must be called from a user gesture (browser AudioContext policy).
@@ -76,7 +77,13 @@ class FxPlayer
                 }
                 break;
             case 'loaded':
-                document.getElementById('fx-title').textContent       = msg.title || '(untitled)';
+            {
+                // Use the embedded module title; fall back to the filename (minus
+                // path and extension) when the module has no title.
+                const display = msg.title ||
+                    this._pendingFilename.replace(/^.*[\\/]/, '').replace(/\.[^.]+$/, '');
+                document.getElementById('fx-title').textContent = `Song: ${display}`;
+            }
                 document.getElementById('fx-status').textContent      = 'Playing';
                 document.getElementById('btn-playpause').textContent  = 'Pause';
                 break;
@@ -148,12 +155,16 @@ class FxPlayer
             return;
         }
         const bytes = await resp.arrayBuffer();
-        this.loadModule(bytes);
+        // Extract the bare filename from the URL path for use as title fallback.
+        const filename = url.split('/').pop() || url;
+        this.loadModule(bytes, filename);
     }
 
     // Load a module from an ArrayBuffer (file picker or drag-and-drop).
-    loadModule(arrayBuffer)
+    // filename is used as the display title when the module has no embedded title.
+    loadModule(arrayBuffer, filename = '')
     {
+        this._pendingFilename = filename;
         document.getElementById('fx-status').textContent = 'Loading…';
         // Transfer the buffer to the Worker — it owns WASM and does the load.
         this._worker.postMessage(
