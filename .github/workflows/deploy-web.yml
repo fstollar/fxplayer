@@ -1,0 +1,41 @@
+name: Deploy web demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/core/**'
+      - 'src/host/web/**'
+      - 'build-web.sh'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # required to push to gh-pages
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang + lld
+        run: sudo apt-get install -y clang lld
+
+      - name: Build WASM
+        run: ./build-web.sh --no-deploy
+
+      - name: Stage web files
+        run: |
+          mkdir -p _deploy/modules
+          cp build-web/fxcore.wasm      _deploy/
+          cp src/host/web/fx-worklet.js _deploy/
+          cp src/host/web/fx-main.js    _deploy/
+          cp src/host/web/index.html    _deploy/
+          cp -r src/host/web/modules/. _deploy/modules/
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_deploy
+          publish_branch: gh-pages
+          commit_message: 'deploy: web demo ${{ github.sha }}'
