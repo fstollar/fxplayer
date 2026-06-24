@@ -102,6 +102,7 @@ These are settled — don't relitigate without reason.
 ## _work/ — Working DOS build (OpenWatcom + TASM, runs in DOSBox-X)
 
 All changes are in `_work/`. The `_original/` source is never touched.
+Build instructions: see `BUILD.md`.
 
 ## Repo layout
 
@@ -136,11 +137,10 @@ fxplayer/
 
 ## Validation strategy
 
-The mixer's output is fully deterministic, so:
-
-1. Render reference modules (`TEST.S3M`, `MAZ-TEST.S3M`, etc.) to WAV using the original DOS build.
-2. Every port variant must produce **bit-identical** output to the scalar C reference, which itself must match the original DOS WAV.
-3. Comparison is `sha256(wav)` — no tolerance, no fuzzy matching.
+The mixer's output is fully deterministic. Every port variant must produce
+**bit-identical** output to the scalar C reference, which itself must match the
+original DOS WAV. Comparison is `sha256(wav)` — no tolerance, no fuzzy matching.
+See `BUILD.md` for how to run the test suite and regenerate reference WAVs.
 
 ## Current status
 
@@ -153,22 +153,18 @@ blow-by-blow logs here.
 - **C99 core (`src/core/`)** — S3M, MOD (4/8-ch), and 669 all play **bit-exact**
   vs. the DOS reference. `fx_detect_format` dispatches all three. 6/6 CTests
   pass (`compare_s3m` / `compare_mod` / `compare_669`).
-- **CLI host (`src/host/cli/`)** — `fxplayer <module>` real-time playback via
-  miniaudio. Full arg parsing (`-r`/`-c`/`-l`/`-v`/`--no-interpolation`/`--no-softclip`).
-  Interactive keyboard controls: pause/resume (SPACE), quit (Q/Esc),
-  order jump (←/→), volume (↑/↓). POSIX termios raw-mode TTY input, no ncurses.
-  Startup banner shows song title, format, Hz, channels, interp/softclip/loop flags.
-  Live status line (50 ms refresh): order, pattern, row, active channels, volume,
-  loop counter. Loop semantics: `-l 0` = no loop, `-l N` = loop N times (N+1 plays),
-  `-l -1` = infinite (default).
-- **Web host (`src/host/web/`)** — static demo page; C99 core compiled to
-  bare wasm32 via `clang --target=wasm32-unknown-unknown -nostdlib` (requires
-  `lld-23`). AudioWorklet render loop, no SharedArrayBuffer. Play/pause/stop,
-  order navigation, volume, module dropdown (5 bundled tracks: S3M/MOD/669),
-  drag-and-drop for own files. Build + deploy: `./build-web.sh`. GitHub Pages
-  deploy deferred; sources committed, locally tested and working.
-- **Validation harness** — `tests/render-dosbox.sh --native` renders DOS
-  reference WAVs; CTests compare sha256 against hardcoded reference hashes.
+- **CLI host (`src/host/cli/`)** — real-time playback via miniaudio. Arg parsing,
+  interactive keyboard controls (pause/resume, order jump, volume), POSIX termios
+  raw-mode TTY input, live status line (50 ms refresh). Loop semantics: `-l 0` =
+  no loop, `-l N` = loop N times (N+1 plays), `-l -1` = infinite (default).
+- **Web host (`src/host/web/`)** — C99 core compiled to bare wasm32; AudioWorklet
+  render loop, no SharedArrayBuffer. Play/pause/stop, order navigation, volume,
+  5 bundled tracks (S3M/MOD/669), drag-and-drop. Locally tested and working;
+  GitHub Pages deploy deferred (repo is currently private).
+- **Validation harness** — sha256-exact CTests; DOS reference WAVs via
+  `tests/render-dosbox.sh --native`.
+
+See `BUILD.md` for toolchain requirements and step-by-step build/run/test commands.
 
 **Durable facts worth keeping in context** (rationale in CHANGELOG.md / BUGS.md):
 - Sample addresses use `uintptr_t`, not `uint32_t` (64-bit host pointer width).
@@ -182,9 +178,9 @@ blow-by-blow logs here.
   jumps immediately — all three `goRowOrder` functions must stay symmetric.
 - S3M order-jump bounds use strict `<` (not `<=`) against `S3M_OrderNum` —
   the `<=` in the original is an off-by-one OOB read (BUGS.md O-3).
-- **CPM** (`cmake/get_cpm.cmake`, v0.42.3) manages host-only deps: miniaudio 0.11.21
-  and cxxopts 3.2.0. Both download to `build/_deps/` at configure time. Set
-  `CPM_SOURCE_CACHE=~/.cache/cpm` (or env var) to share across projects.
+- **CPM** (`cmake/get_cpm.cmake`) manages host-only deps: miniaudio 0.11.21 and
+  cxxopts 3.2.0. Both download to `build/_deps/` at configure time. See `BUILD.md`
+  for the cache env var and version details.
 
 ### Next milestones (not yet started)
 
@@ -196,9 +192,8 @@ blow-by-blow logs here.
 - **Web host** — GitHub Pages not yet live (requires repo to be public).
   Both `main` and `gh-pages` pushed to `https://github.com/fstollar/fxplayer`
   (private). To enable Pages: make repo public, then Settings → Pages →
-  `gh-pages` branch / root. Build + deploy: `./build-web.sh`.
-  Dev server: `./serve-web.sh [--network]`. Requires `lld-23`.
-  See `docs/superpowers/specs/2026-06-23-web-host-design.md`.
+  `gh-pages` branch / root. See `BUILD.md` for build/serve/deploy commands.
+  See `docs/superpowers/specs/2026-06-23-web-host-design.md` for design notes.
 - **Bug audit** — systematically work through `BUGS.md`, classify each quirk
   as (a) faithful reproduction required for bit-exactness, (b) fixable in the
   C99 core without breaking bit-exactness, or (c) fixable only in the DOS

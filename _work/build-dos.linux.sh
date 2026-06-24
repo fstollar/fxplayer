@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Build FX Player original source with Open Watcom V2 on Linux.
-# Produces DOS 32-bit EXE (PMode/W) -- run with DOSBox.
+# build-dos.linux.sh — build F/X Player DOS EXE using Open Watcom V2 on a Linux host.
+# Produces a DOS 32-bit EXE (PMode/W extender) -- run with DOSBox-X.
+# Linux only: uses binl64/ (Linux 64-bit OW binaries); does not run on Windows.
 
 OW2=/home/fst/_claude/fxplayer/_watcom2/ow2
 export WATCOM=$OW2

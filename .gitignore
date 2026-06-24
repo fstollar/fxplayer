@@ -24,8 +24,9 @@ Thumbs.db
 # Stray build error files at repo root
 *.err
 
-# OW V2 compiler download
-_watcom2/
+# OW V2 compiler download (binaries gitignored; README tracked)
+_watcom2/*
+!_watcom2/README.txt
 
 # DOSBox-X intermediate WAV captures (not ground truth)
 tests/captures/

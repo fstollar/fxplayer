@@ -367,7 +367,7 @@ configured `MixSpeed` is the tested path; 8-bit and mono work too.
   switch uses `-n:` (Number of seconds).
 - Both switches documented in `helpline()`.
 
-**`build-linux.sh`**
+**`build-dos.linux.sh`**
 - `dev_wav.cpp` added to the compile list.
 
 #### New: `tests/render-dosbox.sh --native` mode
@@ -399,7 +399,7 @@ and `tests/render-dosbox.sh --native -t 120 _dosbox/C/64mania.s3m`.
 
 All `_work/` filenames (`.CPP`, `.H`, `.ASM`, `.OBJ`) lowercased for
 Linux toolchain compatibility.  `#include` directives updated to match.
-`build-linux.sh` updated.  No code changes.
+`build-dos.linux.sh` updated.  No code changes.
 
 ---
 
