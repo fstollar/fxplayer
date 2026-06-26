@@ -1,5 +1,47 @@
 # F/X Player — Change Log
 
+## docs/ — MOD format bug report and reference survey
+
+---
+
+### 2026-06-26 — BUGS-MOD.md, REFERENCE-IMPLEMENTATIONS.md, FILE-FORMAT.md fixes
+
+Systematic cross-check of `src/core/format/mod.c` + `src/core/effect/efc_mod.c`
+against the original `_original/DAT_MOD.CPP` / `_original/EFC_MOD.CPP` and
+pt2-clone (8bitbubsy's near bit-exact ProTracker 2.3D reimplementation).
+
+**Two CRITICAL port bugs found:**
+
+- **EEx pattern delay never expires (hang).** The original used a buffer
+  self-modification trick to count down the delay; the port re-unpacks each row
+  from pattern data, overwriting the buffer. `MOD_flag_note` is set to `y` and
+  never decremented → row freezes forever. Fix: guard the `MOD_GlobalEffect` EEx
+  case against overwriting an active count; add `else MOD_flag_note--` to
+  `MOD_goRowOrder`.
+
+- **F00 hangs playback.** `F00 → MOD_speed = 0 → MOD_tick == 0` is never true
+  again. ProTracker treats F00 as "stop song"; fxplayer has no stop mechanism so
+  the correct fix is to ignore F00 (no speed change). Same family as BUG-S3 for
+  S3M.
+
+**One LOW robustness bug:** `MOD_OrderNum` is not clamped to ≤ 128, allowing OOB
+reads of the 128-byte order table when a malformed module sets it > 128.
+
+**Six SOURCE CONFLICTS documented** — fxplayer faithfully reproduces original
+FX Player quirks that differ from ProTracker 2.3D: default 128 BPM (vs 125),
+volume slide on tick 0 (vs tick > 0 only), tremolo sharing vibrato state, E1x/E2x
+using full info byte instead of low nibble, 127-entry order scan (vs 128), E3x
+glissando ignored.
+
+**FILE-FORMAT.md:** fixed all header offsets — 15-sample table had 0x01C6/0x01C8
+(wrong) instead of 0x01D6/0x01D8 (correct: 20 + 15×30 = 470 = 0x1D6); 31-sample
+table had 0x0196/0x0198 instead of 0x03B6/0x03B8 (correct: 20 + 31×30 = 950). Code
+was always correct; documentation was not.
+
+**Commit:** `2889eb4`
+
+---
+
 ## host/web — Worker + MessageChannel architecture (proper fix)
 
 ---
