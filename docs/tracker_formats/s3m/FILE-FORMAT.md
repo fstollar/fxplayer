@@ -2,6 +2,8 @@
 
 Primary sources: [ModdingWiki](https://moddingwiki.shikadi.net/wiki/S3M_Format), [MultimediaWiki](https://wiki.multimedia.cx/index.php?title=Scream_Tracker_3_Module), [TECH.DOC](https://pollak.thebe.de/b/Modules/docs/TECH.txt).
 
+**Authoritative reference implementation:** [st3play by 8bitbubsy](https://github.com/8bitbubsy/st3play) — a direct C port of the Scream Tracker 3.21 ASM/C source code. When the above docs conflict with actual ST3 behavior, st3play is the tie-breaker.
+
 All integers are **little-endian**. Offsets are in bytes from the file start unless noted.
 
 ## Parapointers
@@ -91,6 +93,12 @@ Many trackers write `0x1320` (disguising as ST3.20) — see [OpenMPT wiki](https
 - `initialSpeed` = ticks (audio frames) per row.
 - Rows per second = `initialTempo / initialSpeed`.
 - Both can be changed during playback with effects `A` (speed) and `T` (tempo).
+
+**Validation rules (confirmed by st3play `dig.c`):**
+- `initialSpeed == 0` → ignored, use default (6).
+- `initialSpeed == 255` → ignored, use default (6). ST3 stored 255 as a sentinel meaning "keep the previous session's speed".
+- `initialTempo == 0` → ignored, use default (125). Computing tick length with tempo=0 would divide by zero.
+- `initialTempo < 33` → valid for loading (no clamp on load); the Txx effect guard (`< 33` → ignore) applies only at runtime.
 
 ## Instrument block
 

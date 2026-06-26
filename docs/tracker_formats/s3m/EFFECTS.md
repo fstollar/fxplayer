@@ -1,6 +1,8 @@
 # S3M Effect Commands
 
-Source of truth: [MultimediaWiki — Scream Tracker 3 Module](https://wiki.multimedia.cx/index.php?title=Scream_Tracker_3_Module). Effect names are letters A–V plus Sxx sub-effects. The numeric encoding in the file is `command = letter_index` (A=1, B=2, …, V=22); `0` means no effect.
+Primary source: [MultimediaWiki — Scream Tracker 3 Module](https://wiki.multimedia.cx/index.php?title=Scream_Tracker_3_Module). Effect names are letters A–V plus Sxx sub-effects. The numeric encoding in the file is `command = letter_index` (A=1, B=2, …, V=22); `0` means no effect.
+
+**Authoritative reference implementation:** [st3play by 8bitbubsy](https://github.com/8bitbubsy/st3play) — a direct C port of the ST3.21 ASM/C source. When documentation and behavior diverge, st3play is the ground truth.
 
 Effects marked **(%)** use **the latest nonzero effect parameter** in that channel if the current parameter is 0 (i.e. they have "effect memory"). Effects marked **(\*)** have their own independent memory.
 
@@ -93,10 +95,19 @@ The `x` nibble of `Qxy` applies a volume modifier on each retrigger:
 
 ## Notes on FX Player implementation
 
-In `src/core/mods3m.c` the Cxy jump command stores the row in decimal-as-hex (BCD). The order-jump bounds use strict `<` against `S3M_OrderNum` — the `<=` in the original DOS source is an off-by-one OOB read (see BUGS.md O-3). The deferred-jump pattern (`fx_order_jump` → `goRowOrder`) is used here the same as in MOD and 669.
+In `src/core/format/s3m.c` / `src/core/effect/efc_s3m.c` the Cxy jump command stores the row in decimal-as-hex (BCD). The order-jump bounds use strict `<` against `S3M_OrderNum` — the `<=` in the original DOS source is an off-by-one OOB read (see BUGS.md O-3). The deferred-jump pattern (`S3M_jump` → `S3M_goRowOrder`) is used here the same as in MOD and 669.
+
+**Known deviations from st3play confirmed behavior:**
+
+- **Vxx (set global volume)**: fxplayer processes this on tick 0 via `S3M_GlobalEffect`. st3play only fires it on tick > 0 (`sotherjmp`). Consequence: at `speed == 1`, fxplayer incorrectly applies the new global volume (st3play leaves it unchanged because there are no non-zero ticks).
+- **Dxy both-nibbles case**: fxplayer's `S3M_TickEffect` does nothing when both x and y are non-zero and neither is 0xF. st3play's `s_volslide` slides down by y in that case (treating it as equivalent to D0y).
+- **Qxy counter not reset on absent row**: fxplayer never resets `S3M_RetrigCount` when the effect is absent. st3play resets `atrigcnt = 0` whenever `cmd == 0` (no effect on channel).
+- **Volume clamp at 64 vs 63**: `S3M_addVolume`/`S3M_decVolume` clamp to 64; st3play uses `CLAMP(avol, 0, 63)`. Active volume in effects should peak at 63.
+- **Bxx with info=0xFF**: st3play treats `B00FF` as "end of song" (`breakpat = 255`); fxplayer sets `nextorder = 0xFF` which could OOB-index into the order table if it has fewer than 256 entries.
 
 ## References
 
+- [st3play (8bitbubsy)](https://github.com/8bitbubsy/st3play) — direct C port of ST3.21 ASM/C source — **primary reference**
 - [MultimediaWiki — effects with all quirks](https://wiki.multimedia.cx/index.php?title=Scream_Tracker_3_Module#Effects)
 - [ModdingWiki — effects overview](https://moddingwiki.shikadi.net/wiki/S3M_Format#Effects)
 - [TECH.DOC — original ST3 effect documentation](https://pollak.thebe.de/b/Modules/docs/TECH.txt)
