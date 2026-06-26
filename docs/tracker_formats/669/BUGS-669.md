@@ -1,25 +1,27 @@
 # 669 Port — Bug Report
 
 Findings from a systematic review of `src/core/format/m669.c` and
-`src/core/effect/efc_669.c` against:
+`src/core/effect/efc_669.c` against five independent reference implementations:
 
-- `docs/tracker_formats/669/FILE-FORMAT.md` and `EFFECTS.md` (format reference)
-- [libxmp `src/loaders/669_load.c`](https://github.com/libxmp/libxmp) — well-tested
-  multi-platform 669 loader; accepts both `if` and `JN` magic
-- [OpenMPT `soundlib/Load_669.cpp`](https://github.com/OpenMPT/openmpt) — the most
-  thoroughly documented compatible implementation; includes validation logic and
-  extended-variant support
+- [libxmp `src/loaders/669_load.c`](https://github.com/libxmp/libxmp)
+- [OpenMPT `soundlib/Load_669.cpp`](https://github.com/OpenMPT/openmpt)
+- [Open Cubic Player `playgmd/gmdl669.c`](https://github.com/mywave82/opencubicplayer)
+- [Schism Tracker `fmt/669.c`](https://github.com/schismtracker/schismtracker)
+- [MikMod `libmikmod/loaders/load_669.c`](https://github.com/sezero/mikmod)
 
-There is no community "st3play equivalent" (direct port of original Composer 669 or
-Unis 669 ASM source) for this format. libxmp and OpenMPT are the primary references.
-Where they disagree with each other or with the written spec, both positions are
-recorded under a **SOURCE CONFLICT** callout. See
-[REFERENCE-IMPLEMENTATIONS.md](REFERENCE-IMPLEMENTATIONS.md) for excerpts and key
-implementation notes.
+There is no community "st3play equivalent" (direct port of the original Composer 669
+or Unis 669 ASM source) for this format. The five players above are the primary
+references. See [REFERENCE-IMPLEMENTATIONS.md](REFERENCE-IMPLEMENTATIONS.md) for
+their key decisions in tabular form.
+
+Where players disagree with each other or with the written spec, both positions are
+recorded under a **SOURCE CONFLICT** callout. Conflicts with a 4-vs-1 or 5-vs-0
+consensus are flagged as effectively resolved; conflicts with a 3-vs-2 or 2-vs-2
+split remain open.
 
 Deviations between `_original/DAT_669.CPP` (the author's prior DOS code) and the
-current C99 port are noted in each entry where they are relevant, but they do not
-override the libxmp/OpenMPT references.
+current C99 port are noted where relevant; they do not override the five external
+references.
 
 ---
 
@@ -254,12 +256,15 @@ case 5u:
 
 The same protection is absent at load time and on every pattern transition.
 
-**OpenMPT cross-check:** `ValidateHeader` rejects any pattern whose speed entry is
-zero: `if(fileHeader.orders[i] < 128 && fileHeader.tempoList[i] == 0) return false`.
-OpenMPT also rejects `tempoList[i] > 15`, capping valid speed values at 1–15.
+**Cross-check:** OpenMPT rejects `tempoList[i] == 0` and `tempoList[i] > 15` in
+`ValidateHeader`. MikMod rejects `tempos[i] == 0` and `tempos[i] > 32` (wider upper
+bound). libxmp passes the value through a speed event whose handler silently ignores 0.
 
-**libxmp cross-check:** libxmp injects the speed list as a `FX_SPEED_CP` event at
-the start of each pattern's event list. The engine's speed handler rejects zero.
+**Note on initial default speed:** `M669_speed` is initialised to 6 before the speed
+list is applied. Three of the five reference players use 4 as the initial default
+(OpenMPT, Schism Tracker, MikMod); only libxmp also uses 6. Since the speed list
+always overwrites this on load, the default only matters when `Speedlist[0] == 0`
+(the bug case here). No independent fix is needed for the default value.
 
 **Fix:**
 ```c
@@ -271,8 +276,8 @@ if (pat_nr != M669_LastPattern && M669_Speedlist[pat_nr] != 0)
     M669_speed = M669_Speedlist[pat_nr];
 ```
 
-Optionally also validate the full speed list at load time (range 1–15 per OpenMPT)
-and reject files that violate it, consistent with the L2 fix.
+Optionally validate the full speed list at load time (reject 0; cap at 32 per MikMod
+or 15 per OpenMPT) consistent with the L2 fix.
 
 ---
 
@@ -388,6 +393,131 @@ case 6u:
 
 ---
 
+## BUG-669-E2 — MEDIUM: Effect carry not implemented; portamento and vibrato stop on any empty cell
+
+**File:** `src/core/format/m669.c`, `M669_unpack_row` (lines 447–454);
+`src/core/effect/efc_669.c`, `M669_GetNewEffect` (line 254).
+
+**Code (unpack_row — empty cell handling):**
+```c
+if (b2 != 0xFFu) {
+    effect  = (b2 & 0xF0u) >> 4;
+    effinfo = b2 & 0x0Fu;
+} else {
+    effect  = 0xFFu;   /* ← overwrites active effect on every empty cell */
+    effinfo = 0;
+}
+```
+
+**Code (GetNewEffect — no-effect path):**
+```c
+case 0xFFu:
+    M669_PeriodAdjust[channel_index] = 0;   /* ← kills vibrato on every no-effect row */
+    break;
+```
+
+**Root cause:** When a pattern cell has `b2 == 0xFF` (no effect byte), the port sets
+`Effect = 0xFF` (no-effect sentinel). On the next row, `M669_GetNewEffect` sees the
+sentinel and zeros `PeriodAdjust`, silently cancelling any active portamento pitch
+accumulation or vibrato offset.
+
+The expected behaviour — shared by four out of five reference implementations — is
+that a slide or vibrato effect begun on row N continues on row N+1 if the cell is
+empty. The effect only stops when:
+- a new note triggers and resets the effect state, or
+- an explicit zero-data effect cancels it (see BUG-669-E3).
+
+**Cross-check — effect carry implementation in reference players:**
+
+| Player | Carry mechanism |
+|--------|----------------|
+| OCP | `commands[chan]` array; resets on `b0 < 0xFE` (new note) |
+| OpenMPT | `effect[chan]` array; resets on `noteInstr < 0xFE` |
+| Schism Tracker | `effect[chan]` array; resets on `b[0] < 0xFE` |
+| MikMod | `lastfx`/`lastval` per channel; when `c == 0xFF`: `c = lastfx, effect = lastval` |
+| libxmp | Events written once per cell; no carry (dissenting) |
+| fxplayer | No carry — sets `Effect = 0xFF` on empty cells (dissenting) |
+
+Consensus: **4 carry, 2 don't.** The `_original/DAT_669.CPP` also does not carry
+(same logic at lines 532–534), so this is a shared limitation rather than a porting
+error, but it is a deviation from the majority of players.
+
+**Audible impact:** Any module using portamento up/down over multiple rows where some
+cells are empty will play at the wrong pitch in fxplayer — the slide stops each time
+the cell is empty and resumes from the original period on the next note-triggered cell.
+
+**Fix:**
+```c
+/* In M669_unpack_row: do not clobber effect on empty b2 */
+if (b2 != 0xFFu) {
+    effect  = (b2 & 0xF0u) >> 4;
+    effinfo = b2 & 0x0Fu;
+    /* carry flag — new effect present */
+} else {
+    /* carry: leave M669_Effect[ch] and M669_EffectInfo[ch] unchanged */
+    effect  = M669_Effect[channel_index];
+    effinfo = M669_EffectInfo[channel_index];
+}
+```
+
+A new note (`b0 < 0xFE`) should reset the carry:
+```c
+if (b0 < 0xFEu) {
+    effect  = 0xFFu;   /* clear carry on new note */
+    effinfo = 0;
+}
+```
+
+This structural change requires care: effects that explicitly should not carry across
+rows (effect 5 / set-speed) must also be cleared on carry — Schism Tracker and OCP
+do this with `effect[chan] = 0xFF` after handling effect 5.
+
+---
+
+## BUG-669-E3 — LOW: Effect cancel on zero data not implemented
+
+**File:** `src/core/effect/efc_669.c` — no implementation present.
+
+**Documented rule (EFFECTS.md):**
+> Setting any of the above effects (A–F) with a value of 00 cancels all active
+> effects in that row and notes that follow play at their natural pitch.
+
+**Current behaviour:** An effect with data nibble `0` runs normally with zero
+parameter. For portamento (`A00`/`B00`) this is a no-change slide (audibly a no-op),
+but the effect state is not cancelled — any accumulated period adjustment from a
+previous row's portamento persists.
+
+**Cross-check:**
+
+| Player | Cancel on zero |
+|--------|---------------|
+| OCP | `if (!data[j]) commands[j] = 0xFF` |
+| Schism Tracker | `if ((b[2] & 0x0f) == 0 && b[2] != 0x30) effect[chan] = 0xFF` (exempts effect 3 data-0) |
+| OpenMPT | Not explicitly implemented |
+| MikMod | Not implemented |
+| libxmp | Not implemented |
+| fxplayer | Not implemented |
+
+Two of five players implement the cancel rule; it is also stated in the written spec.
+The `_original/EFC_669.CPP:685-700` has a switch for this that does nothing — all
+cases are empty breaks, suggesting the original author intended it but never finished.
+
+The Schism Tracker note is interesting: it exempts `b[2] == 0x30` (effect 3, data 0)
+from cancellation. This suggests the cancel rule may not apply uniformly to all
+effects.
+
+**Severity:** LOW — the audible difference only appears in modules that deliberately
+use `Axx` or `Bxx` with value 0 as an explicit cancel command, which is uncommon.
+The cancel would need to be implemented as part of the BUG-669-E2 carry fix anyway
+(it defines when the carried effect stops).
+
+**Fix:** In the carry implementation (see BUG-669-E2), when `b2 != 0xFF` and
+`b2 & 0x0F == 0`, set `effect = 0xFFu` to cancel carry rather than latching a
+zero-value effect. Adopt the Schism Tracker exemption for effect 3 if testing reveals
+that to be correct.
+
+---
+
 ## BUG-669-D1 — DOC: EFFECTS.md describes effect 3 (Dxx) as "Frequency adjust" but both code and `_original/` implement it as a finetune table index
 
 **File:** `docs/tracker_formats/669/EFFECTS.md`, effect 3 entry.
@@ -416,25 +546,29 @@ offset. The EFFECTS.md description is wrong; the code is correct.
 
 ---
 
-> **SOURCE CONFLICT — BUG-669-D1 — finetune index vs. frequency portamento:**
+> **SOURCE CONFLICT — BUG-669-D1 — finetune index vs. frequency portamento (4 vs 2):**
 >
-> **libxmp** maps effect 3 to `FX_669_FINETUNE` — in agreement with the code and
-> `_original/`.
+> | Player | Effect 3 interpretation |
+> |--------|------------------------|
+> | libxmp | `FX_669_FINETUNE` — finetune table index |
+> | fxplayer | `M669_SampleFinetune = info` — finetune table index |
+> | OpenMPT | `CMD_PORTAMENTOUP \| 0xF0` — fine pitch portamento up; comment: "shift by (param×80) Hz per tick" |
+> | OCP | `cmdRowPitchSlideUp, data<<2` — per-row pitch shift; comment: "correct? down? both?" |
+> | Schism Tracker | `FX_PORTAMENTOUP \| 0xf0` — fine pitch portamento up; comment: "D - frequency adjust (??)"; effect does NOT carry |
+> | MikMod | `UNI_S3MEFFECTF \| (0xF0 \| effect)` — S3M extra-fine portamento up; comment: "DMP converts this effect to S3M FF1. Why not?" |
 >
-> **OpenMPT** translates effect 3 to a fine portamento up:
-> ```cpp
-> case 3: // D - frequency adjust
->     m->command = CMD_PORTAMENTOUP;
->     m->param |= 0xF0;   // fine portamento
-> ```
+> **Consensus: 4 say pitch portamento/shift; 2 say finetune index.**
 >
-> OpenMPT's comment says "frequency adjust — shift by (param * 80) Hz on every tick"
-> (from the effect table comment), implying a sliding pitch shift applied each tick.
+> The code and `_original/` are in the minority position. The doc correction made above
+> (changing the description to "Set finetune") is accurate for the current
+> implementation, but the implementation itself may be wrong. All three source comments
+> in the majority-position players show uncertainty ("correct? down? both?", "??",
+> "Why not?") — suggesting this effect was reverse-engineered rather than documented.
 >
-> The fxplayer code matches libxmp. Whether the original Composer 669 tracker used a
-> static finetune lookup or a per-tick pitch delta is unresolved from available sources.
-> Cross-checking with original 669 files that use this effect against Composer 669
-> under DOSBox-X would resolve this conflict.
+> **Resolution requires:** a test 669 file using effect 3 (Dxx) with a non-zero value,
+> rendered by the original Composer 669 tracker under DOSBox-X. If the output pitch
+> shifts continuously each tick, the portamento interpretation is correct; if it jumps
+> to a new fixed pitch immediately, the finetune-index interpretation is correct.
 
 ---
 
@@ -453,8 +587,11 @@ port to do so is a future milestone, not a present bug.
 `M669_goRowOrder` resets `M669_Order = 0` when pattern `0xFF` is encountered. The
 header byte at offset 0x70 (`M669_OrderNum`, described as "loop order number") is
 stored but never used for this restart. This matches the behaviour in
-`_original/DAT_669.CPP:582-584`. Implementing the spec's loop-restart field is
-independent of BUG-669-L5 and would be a new feature, not a bug fix.
+`_original/DAT_669.CPP:582-584`.
+
+Three of the five reference players (MikMod, Schism Tracker, OpenMPT) do respect
+the loop-restart byte. Implementing it correctly is independent of BUG-669-L5 (which
+is about the UI jump bound) and would be a new feature, not a bug fix.
 
 ---
 
@@ -474,49 +611,50 @@ correct defensive behaviour.
 
 ### Open-source players to cross-check
 
-| Player | Source | Notes |
-|--------|--------|-------|
-| libxmp | `src/loaders/669_load.c`, `src/player/effects.c` | Primary reference; 669 loader is well-exercised |
-| OpenMPT | `soundlib/Load_669.cpp` | Adds validation details (speed range, break range, restart pos) |
-| Schism Tracker | `fmt/669.c` | May provide a third data point on effect 3 and speed-list semantics |
-
-For any finding with a SOURCE CONFLICT, the goal is at least two independent players
-that agree. Check Schism Tracker especially for effect 3 (Dxx) finetune vs. pitch
-portamento.
+All five reference players have been surveyed and their positions are recorded in
+[REFERENCE-IMPLEMENTATIONS.md](REFERENCE-IMPLEMENTATIONS.md). For the one remaining
+open conflict (effect 3 semantics), the only remaining arbiter is the original
+Composer 669 tracker itself running under DOSBox-X.
 
 ### Test 669 files to build
 
 Each file should be a minimal hand-crafted 669 (one or two instruments, fewest rows
-possible) that isolates the behaviour under investigation. Render with fxplayer
-(`FX.EXE -w:test.wav`) in DOSBox-X and compare SHA-256 against libxmp, OpenMPT CLI,
-and fxplayer after fixes.
+possible) that isolates the behaviour under investigation. Where the test targets a
+loader crash/hang, load only and do not render. For behavioural tests, render to WAV
+in DOSBox-X (`FX.EXE -w:test.wav`) and compare output against fxplayer after fixes.
 
 | Test file | Targets | What to check |
 |-----------|---------|---------------|
 | `test-breaklist-64.669` | L3 | Break value = 64 in first pattern. Confirm loader rejects file after L3 fix. |
-| `test-breaklist-63.669` | L3 | Break value = 63 (max valid). Confirm 64 rows play, no OOB. |
-| `test-speed0.669` | L4 | Speed list entry 0 for first pattern. Confirm loader rejects or applies safe default after L4 fix. |
-| `test-speed15.669` | L4 | Speed list entry 15 (max valid per OpenMPT). Confirm very slow playback is accepted. |
-| `test-orderjump.669` | L5 | Song with 4 patterns, `M669_OrderNum = 0`. Trigger UI order-skip from CLI and web host. Confirm jump executes correctly after L5 fix. |
-| `test-orderjump-nonzero.669` | L5 | Same but `M669_OrderNum = 2`. Compare jump behaviour before/after fix. |
-| `test-sample-huge-len.669` | L1 | Sample with `length = 0xFFFFFFFF`. After L1 fix confirm loader returns error instead of corrupting workspace. |
-| `test-effect3-finetune.669` | D1 / conflict | Note playing at natural pitch then switching to tuning +7. Audible: same note should shift pitch. Compare pitch in Schism Tracker vs fxplayer. |
-| `test-effect6-panning.669` | E1 | Extended 669: effect G with values 0 through F. Compare panning direction in OpenMPT CLI vs fxplayer. |
+| `test-breaklist-63.669` | L3 | Break value = 63 (max valid). Confirm all 64 rows play, no OOB. |
+| `test-speed0.669` | L4 | Speed list entry 0 for first pattern. Confirm loader rejects or falls back to safe default. Load only — do not render (hangs without fix). |
+| `test-speed32.669` | L4 | Speed list entry 32 (MikMod's upper limit). Confirm accepted. |
+| `test-orderjump.669` | L5 | 4 patterns, `OrderNum = 0`. Trigger UI order-skip. Confirm jump works after L5 fix. |
+| `test-orderjump-nonzero.669` | L5 | Same but `OrderNum = 2`. Verify before/after fix. |
+| `test-sample-huge-len.669` | L1 | Sample with `length = 0xFFFFFFFF`. Confirm loader rejects instead of writing OOB. |
+| `test-effect-carry.669` | E2 | Portamento up (A04) on row 0; empty cells on rows 1–3; note on row 4. With carry: pitch slides continuously rows 1–3. Without carry: pitch returns to base on row 4. Render to WAV and compare waveform against MikMod/OCP output. |
+| `test-effect-cancel-zero.669` | E3 | Portamento up (A04) on row 0; `A00` on row 1. With cancel: pitch stops sliding at row 1. Without: slide continues at rate 0 (effectively same pitch). |
+| `test-effect3-dxx.669` | D1 | Note at natural pitch, then `D07` (finetune 7 or slide by 7). Run in Composer 669 under DOSBox-X. If pitch jumps immediately to a different fixed tuning, finetune-index is correct. If pitch drifts continuously each tick, portamento is correct. |
+| `test-effect6-panning.669` | E1 | Extended 669 (`JN`): effect G values 0–F. Compare panning direction in OpenMPT vs fxplayer. |
 
 ---
 
 ## Summary table
 
-| ID | Severity | Location | Issue | Reference |
+| ID | Severity | Location | Issue | Consensus |
 |----|----------|----------|-------|-----------|
-| L1 | CRITICAL | `m669.c` sample loader | `sample_length` not validated before XOR loop → OOB write; also unaligned `uint32_t` reads (ARM UB); `smp_offset` uint32 overflow defeats after-the-fact check | libxmp `MAX_SAMPLE_SIZE` guard; OpenMPT `>= 0x4000000` guard |
-| L2 | CRITICAL | `m669.c` size check | `size < 0x1f1` only covers fixed header; no guard for `nos*25 + nop*1536` sample descriptor and pattern data | OpenMPT `GetHeaderMinimumAdditionalSize` |
-| L3 | HIGH | `m669.c` pattern decode | `Breaklist[pat]` values 64–255 not validated → OOB read in 1536-byte pattern buffer at rows 64+ | libxmp `pbrk >= 64`; OpenMPT `breaks[i] >= 64` |
-| L4 | HIGH | `m669.c` load + `M669_unpack_row` | Speed list value 0 → infinite hang; no zero guard at load time or per-pattern reload | OpenMPT `tempoList[i] == 0 → reject`; effect-5 handler already guards correctly |
-| L5 | MEDIUM | `m669.c` + `fx.c` | Order-jump bound uses `M669_OrderNum` (loop-restart byte, field 0x70) not order-list length → UI jumps silently fail when `OrderNum = 0` | libxmp scanned `mod->len` |
-| E1 | LOW | `efc_669.c` RowEffect | Effect 6 (Extended 669 balance): `info * 28u` truncates at `info > 9`; also wrong semantics (absolute vs. slide) | OpenMPT: nibble 0/1 only; libxmp: drops effects 6-7 |
-| D1 | DOC | `EFFECTS.md` | Effect 3 (Dxx) described as "Frequency adjust" but code + original use it as finetune table index | SOURCE CONFLICT: libxmp = finetune index; OpenMPT = fine portamento |
+| L1 | CRITICAL | `m669.c` sample loader | `sample_length` not validated before XOR loop → OOB write; unaligned `uint32_t` reads (ARM UB); `smp_offset` uint32 overflow | 5/5 players validate length first |
+| L2 | CRITICAL | `m669.c` size check | `size < 0x1f1` only covers fixed header; no guard for `nos×25 + nop×1536` | OpenMPT `GetHeaderMinimumAdditionalSize`; libxmp sequential reads |
+| L3 | HIGH | `m669.c` pattern decode | `Breaklist[pat]` ≥ 64 not validated → OOB read in 1536-byte pattern buffer | 4/4 players that check reject `>= 64` |
+| L4 | HIGH | `m669.c` load + `M669_unpack_row` | Speed 0 from Speedlist → infinite hang; no zero guard at load or per-pattern | OpenMPT, MikMod reject 0 at load |
+| L5 | MEDIUM | `m669.c` + `fx.c` | Order-jump bound uses `M669_OrderNum` (loop-restart byte) not order-list length → UI jumps silently fail when `OrderNum = 0` | libxmp scans order-list length |
+| E1 | LOW | `efc_669.c` RowEffect | Effect 6 balance: `info × 28` truncates for `info > 9`; wrong semantics (absolute vs. slide) | OCP, OpenMPT, Schism: nibble 0/1 only |
+| E2 | MEDIUM | `m669.c` + `efc_669.c` | Effects do not carry across empty cells — portamento and vibrato stop on any `b2 = 0xFF` row | 4/5 players carry; only libxmp also does not |
+| E3 | LOW | `efc_669.c` | Effect with data = 0 should cancel active effect; not implemented | OCP, Schism implement; spec documents it |
+| D1 | DOC | `EFFECTS.md` | Effect 3 (Dxx) documented as "Frequency adjust" but implemented as finetune index | SOURCE CONFLICT: 4/5 say pitch portamento; 2/5 say finetune index — unresolved, needs DOSBox-X test |
 
-| Conflict | Sources | Status |
-|----------|---------|--------|
-| Effect 3: finetune-index vs. per-tick frequency slide | libxmp agrees with code; OpenMPT disagrees | fxplayer follows libxmp; test with Schism Tracker to break tie |
+| Conflict | Positions | Status |
+|----------|-----------|--------|
+| Effect 3: finetune-index vs. pitch portamento | libxmp + fxplayer = finetune; OpenMPT + OCP + Schism + MikMod = pitch slide | **Open** — 4 vs 2; resolve with DOSBox-X original tracker test |
+| Effect carry on empty cells | OCP + OpenMPT + Schism + MikMod = carry; libxmp + fxplayer = no carry | **Effectively resolved** — 4 vs 2 for carry; see BUG-669-E2 |
+| Effect cancel on zero data | OCP + Schism + spec = cancel; OpenMPT + MikMod + libxmp = no cancel | **Open** — 2 vs 3; Schism exempts effect 3 from the rule |
