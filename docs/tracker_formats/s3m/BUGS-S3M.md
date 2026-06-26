@@ -8,6 +8,10 @@ Findings from a systematic review of `src/core/format/s3m.c` and
 - [st3play by 8bitbubsy](https://github.com/8bitbubsy/st3play) — direct C port of the
   ST3.21 ASM/C source code (the definitive reference implementation)
 
+See [REFERENCE-IMPLEMENTATIONS.md](REFERENCE-IMPLEMENTATIONS.md) for a map of
+st3play source files to fxplayer equivalents, key excerpts for each bug, and a
+summary of all MultimediaWiki vs st3play conflicts.
+
 When docs and MultimediaWiki conflict with actual ST3 behaviour, **st3play is the
 tie-breaker** — it is a direct machine translation of the original ASM. All st3play
 cross-references point to specific functions in `dig.c`, `digcmd.c`, `load.c`, and
