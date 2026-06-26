@@ -14,10 +14,10 @@ Before loading anything, seek to offset **0x0438** and read 4 bytes. If all four
 |--------|------|-------------|
 | 0x0000 | 20 bytes | Song title, null-padded |
 | 0x0014 | 15 × 30 = 450 bytes | Sample descriptors (see below) |
-| 0x01C6 | 1 byte | Number of song positions (order list length), 1–128 |
-| 0x01C7 | 1 byte | Restart byte (traditionally `0x78`) |
-| 0x01C8 | 128 bytes | Order list (pattern indices 0–63) |
-| 0x0248 | NOP × 1024 bytes | Pattern data |
+| 0x01D6 | 1 byte | Number of song positions (order list length), 1–128 |
+| 0x01D7 | 1 byte | Restart byte (traditionally `0x78`) |
+| 0x01D8 | 128 bytes | Order list (pattern indices 0–63) |
+| 0x0258 | NOP × 1024 bytes | Pattern data |
 | — | variable | Sample data (concatenated, signed 8-bit) |
 
 `NOP` (number of patterns) = highest pattern index in the full 128-entry order list + 1.
@@ -28,10 +28,9 @@ Before loading anything, seek to offset **0x0438** and read 4 bytes. If all four
 |--------|------|-------------|
 | 0x0000 | 20 bytes | Song title, null-padded |
 | 0x0014 | 31 × 30 = 930 bytes | Sample descriptors |
-| 0x0196 | 1 byte | Number of song positions, 1–128 |
-| 0x0197 | 1 byte | Restart byte (`0x7F` in ProTracker, `0x78` in SoundTracker, restart position in NoiseTracker/FastTracker) |
-| 0x0198 | 128 bytes | Order list (pattern indices) |
-| 0x0218 | — | — |
+| 0x03B6 | 1 byte | Number of song positions, 1–128 |
+| 0x03B7 | 1 byte | Restart byte (`0x7F` in ProTracker, `0x78` in SoundTracker, restart position in NoiseTracker/FastTracker) |
+| 0x03B8 | 128 bytes | Order list (pattern indices) |
 | **0x0438** | **4 bytes** | **Magic tag** (see [VARIANTS.md](VARIANTS.md)) |
 | 0x043C | NOP × channels × 64 × 4 bytes | Pattern data |
 | — | variable | Sample data |
