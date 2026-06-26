@@ -1,14 +1,10 @@
 # 669 Reference Implementations
 
-## Primary reference: `_original/DAT_669.CPP` + `_original/EFC_669.CPP`
+## Primary references for format behaviour
 
-The original F/X Player DOS source (Apollo / STIGMA, 1998) is the ground truth for
-the port. Both files are in `_original/` and must not be modified.
-
-`m669.c` and `efc_669.c` are mechanical translations of these files. When the port
-and any external reference diverge, the original DOS source is the tie-breaker.
-
-## Secondary references (cross-check material)
+There is no public source for the original Composer 669 or Unis 669 trackers, so
+there is no "st3play equivalent" for this format. The primary references are two
+independent, well-maintained reimplementations:
 
 ### libxmp (Composer 669 loader)
 
@@ -16,10 +12,10 @@ and any external reference diverge, the original DOS source is the tie-breaker.
   [libxmp repository](https://github.com/libxmp/libxmp)
 - **Format struct names**: `c669_file_header`, `c669_instrument_header`
 - **Key decisions**:
-  - Accepts both `if` and `JN` magic (fxplayer and original accept `if` only)
+  - Accepts both `if` and `JN` magic
   - Order list length: scans until `order[i] > sfh.nop`
   - Loop sentinel: `loopend >= 0xfffff → lpe = 0; flg = lpe ? LOOP : 0`
-  - Effect 3 mapped to `FX_669_FINETUNE` (confirms port's finetune-index interpretation)
+  - Effect 3 mapped to `FX_669_FINETUNE` (agrees with fxplayer's finetune-index interpretation)
   - Effects 6 and 7 silently dropped (`MSN(ev[2]) >= ARRAY_SIZE(fx) → continue`)
   - Break validation: `if (pbrk >= 64) return -1`
   - Initial speed: `mod->spd = 6`, tempo: `mod->bpm = 78` (matches fxplayer)
@@ -40,27 +36,40 @@ and any external reference diverge, the original DOS source is the tie-breaker.
   - Effect 4 (Exx) vibrato param duplicated: `param |= (param << 4)`
   - Effect 6 (G): only handles sub-param 0 (slide left) and 1 (slide right)
 
-## Original DOS source findings (key cross-checks)
+## `_original/DAT_669.CPP` and `_original/EFC_669.CPP` — prior DOS code
 
-The following behaviors in the original `_original/` DOS source are faithfully
-reproduced in the port — they should **not** be changed without confirming against
-the original:
+`_original/` contains the author's own earlier DOS F/X Player implementation of the
+669 player, written in Watcom C++. It is **not** the original Composer 669 or Unis
+669 tracker, and it is **not** a ground truth for 669 format behaviour — it is
+simply the predecessor to the current C99 port and shares the same author.
 
-| Behavior | Original location | Port location |
-|----------|-------------------|---------------|
-| Rejects `JN` magic (only accepts `if`) | `DAT_669.CPP:276` `*(short*)Pointer != 0x6669` | `m669.c:225` |
-| Song end restarts at order 0 (not at `_669_OrderNum`) | `DAT_669.CPP:582-584` | `m669.c:491-494` |
-| `_669_OrderNum` is stored but never used for restart | `DAT_669.CPP:286` | `m669.c:259` |
-| Effects do NOT carry across empty cells (0xFF byte 2) | `DAT_669.CPP:532-534` — effect set to 0xFF | `m669.c:447-454` |
-| Loop sentinel `!= 0x000fffff` (exact value) | `DAT_669.CPP:613` | `m669.c:530` |
-| Default sample volume 16 (above the 4-bit note-cell max) | `DAT_669.CPP:616` | `m669.c:532` |
+The C99 port (`m669.c`, `efc_669.c`) was written with reference to `_original/`,
+so behavioural differences between the two are meaningful as porting notes — but
+they do not override libxmp or OpenMPT when those sources disagree with `_original/`.
+
+### Notable differences between `_original/` and the C99 port
+
+| Behaviour | `_original/` | C99 port |
+|-----------|-------------|----------|
+| `addPeriode`/`decPeriode` floor | commented out (no clamp) | clamps to 10 — prevents div-by-zero in frequency calculation |
+| Instrument bounds check in `unpack_row` | `inst > _669_samples` (allows equal) | `inst >= M669_samples` (stricter, correct) |
+| Pattern bounds check in `unpack_row` | `PatternNr > _669_patterns` (allows equal) | `pat_nr >= M669_patterns` (stricter, correct) |
+| Sample bounds check in `GetNewSample` | `SampleNr <= _669_samples` (allows OOB) | `sn >= M669_samples` early-return guard added |
+
+### Behaviours shared by both `_original/` and the C99 port
+
+These are consistent between the two versions; they are documented here so reviewers
+know not to treat them as porting errors:
+
+| Behaviour | `_original/` location | Port location |
+|-----------|-----------------------|---------------|
+| Rejects `JN` magic (accepts `if` only) | `DAT_669.CPP:276` | `m669.c:225` |
+| Song end restarts at order 0 (not at `OrderNum`) | `DAT_669.CPP:582-584` | `m669.c:491-494` |
+| `OrderNum` stored but never used for song-end restart | `DAT_669.CPP:286` | `m669.c:259` |
+| Effects do not carry across empty cells (0xFF) | `DAT_669.CPP:532-534` | `m669.c:447-454` |
+| Loop sentinel `!= 0x000fffff` (exact equality) | `DAT_669.CPP:613` | `m669.c:530` |
+| Default sample volume 16 on instrument load | `DAT_669.CPP:616` | `m669.c:532` |
 | Vibrato depth formula `(Info << 4) + 1` | `EFC_669.CPP:253` | `efc_669.c:159` |
-| Effect 3 = set finetune table index | `EFC_669.CPP:249` | `efc_669.c:155` |
+| Effect 3 = set finetune table index (0–15) | `EFC_669.CPP:249` | `efc_669.c:155` |
 | Speed and break lists indexed by pattern number | `DAT_669.CPP:489-490` | `m669.c:414-415` |
-| `addPeriode`/`decPeriode` minimum clamp at 10 (commented out in original) | `EFC_669.CPP:82,98` — commented | `efc_669.c:44,51` — active |
-
-The clamp-at-10 deviation is intentional: the original has no clamp (code commented
-out), relying on a post-hoc check in `_to_Mixer` to deactivate the channel. The port
-adds an explicit clamp to prevent division by zero in the frequency calculation. This
-changes the behaviour slightly (channel stays active at period=10 vs. deactivated), but
-avoids undefined behaviour that would crash on modern hardware.
+| Effect-cancellation-on-zero rule: present in spec, absent in code | `EFC_669.CPP:685-700` (empty switch) | `efc_669.c` (not implemented) |
