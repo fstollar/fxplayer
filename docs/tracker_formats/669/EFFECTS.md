@@ -19,11 +19,11 @@ The command encoding partially maps to Protracker MOD notation but with a differ
 | 0 | `Axx` | Portamento up — raise pitch by `xx` each tick |
 | 1 | `Bxx` | Portamento down — lower pitch by `xx` each tick |
 | 2 | `Cxx` | Portamento to note — slide toward trigger note at rate `xx` |
-| 3 | `Dxx` | Frequency adjust — shift playback frequency by `xx` |
+| 3 | `Dxx` | Set finetune — `xx` (0–15) selects the pitch table row; analogous to ProTracker finetune |
 | 4 | `Exx` | Frequency vibrato — oscillate pitch at depth/speed `xx` |
 | 5 | `Fxx` | Set tempo — `xx` = new tempo value |
 
-**Effect cancellation rule:** Setting any of the above effects (`A`–`F`) with a value of `00` cancels all active effects in that row and notes that follow play at their natural pitch.
+**Effect cancellation rule (documented but unimplemented):** Setting any of the above effects (`A`–`F`) with a value of `00` is described in format documentation as cancelling all active effects. Neither the original F/X Player code nor the current port implement this — an effect with `xx=0` simply performs the operation with a zero parameter (e.g., `A00` slides pitch by 0 = no change). See BUGS-669.md for details.
 
 ## Extended 669 additional effects (Unis 669, 1994)
 
@@ -41,7 +41,9 @@ Notes:
 
 ## Notes on FX Player implementation
 
-In `src/core/mod669.c` the effect dispatch follows the 0–5 numeric mapping from the file format, not the A–F letters shown above. The letters are the display convention used in Composer 669's UI and in most documentation.
+In `src/core/effect/efc_669.c` the effect dispatch follows the 0–5 numeric mapping from the file format, not the A–F letters shown above. The letters are the display convention used in Composer 669's UI and in most documentation.
+
+Effect `D` (finetune) takes a 4-bit value 0–15 as a pitch table row index; it does not shift pitch continuously each tick. See BUGS-669.md BUG-669-D1 and the SOURCE CONFLICT with OpenMPT's interpretation.
 
 Effect `E` (frequency vibrato) uses the same fixed sine table as the S3M vibrato but with a different depth scaling — do not share the S3M vibrato path without adjusting the depth factor.
 

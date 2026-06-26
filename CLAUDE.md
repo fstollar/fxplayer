@@ -5,6 +5,7 @@
 Porting **F/X Player** — a 1998 DOS MOD/S3M tracker module player written
 as a very fast and accurate playback engine for DOS demos in the Pentium era —
 to a modern, portable codebase while keeping the original DOS build alive.
+The original DOS code was written by the author of this repo and serves as the basis for the port.
 
 The goal is **four build targets from one engine core:**
 
