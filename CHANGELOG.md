@@ -1,5 +1,43 @@
 # F/X Player — Change Log
 
+## docs/ — Strategic direction update: authenticity phase
+
+---
+
+### 2026-06-27 — Porting phase complete; focus shifts to tracker authenticity
+
+The bit-exact porting phase is complete. All three formats (S3M, MOD, 669)
+produce output verified against the original DOS build. The development focus
+now shifts to two goals:
+
+1. **Bug fixes for authentic playback** — correct the original FX Player's
+   own bugs so that S3M, MOD, and 669 files play as intended by their
+   respective trackers (Scream Tracker 3, ProTracker, etc.).
+2. **New features and extended format support** — handle modules made with
+   later trackers, detect tracker versions from file headers, and eventually
+   add new formats (XM, IT, ...).
+
+This means bit-identical output to the DOS binary is **no longer the
+correctness goal**. The DOS binary had real bugs. Reference WAV hashes in
+CTests are now regression baselines — update them when a fix intentionally
+changes output.
+
+**Permanent invariant (unchanged):** Every mixer variant must produce
+bit-identical output to `mixer_scalar.c`. This ensures consistent
+cross-platform output from the same engine logic.
+
+#### Documentation updated
+
+| File | What changed |
+|---|---|
+| `CLAUDE.md` | Validation strategy rewritten; O-2 "do not fix" constraint lifted; status section updated |
+| `BUGS.md` | "Validation phases" section added; O-2 status changed to authenticity candidate |
+| `ARCHITECTURE.md` | DOS architecture intro updated; validation section rewritten; "known faithful quirks" replaced with "known original bugs and port status" |
+| `ROADMAP.md` | "Bug audit" replaced with "Tracker authenticity and bug fixes"; tracker version detection added; BUGS-MOD.md added to bug doc list |
+| `docs/tracker_formats/mod/BUGS-MOD.md` | Intro reframed; validation phase section added; all SC status footers updated from "faithful reproduction" to open decision points |
+
+---
+
 ## docs/ — MOD format bug report and reference survey
 
 ---

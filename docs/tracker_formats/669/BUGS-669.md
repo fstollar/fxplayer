@@ -620,8 +620,11 @@ Composer 669 tracker itself running under DOSBox-X.
 
 Each file should be a minimal hand-crafted 669 (one or two instruments, fewest rows
 possible) that isolates the behaviour under investigation. Where the test targets a
-loader crash/hang, load only and do not render. For behavioural tests, render to WAV
-in DOSBox-X (`FX.EXE -w:test.wav`) and compare output against fxplayer after fixes.
+loader crash/hang, load only and do not render. For behavioural tests, the primary
+reference is the five players surveyed above (OCP, OpenMPT, Schism Tracker, MikMod,
+libxmp) — compare fxplayer output against their consensus. DOSBox-X with the original
+Composer 669 tracker is the arbiter for unresolved conflicts like BUG-669-D1 (effect 3
+semantics); DOSBox-X with `FX.EXE` is no longer a correctness reference.
 
 | Test file | Targets | What to check |
 |-----------|---------|---------------|

@@ -108,9 +108,16 @@ See `README.md` for the annotated file tree.
 
 ## Validation strategy
 
-The mixer's output is fully deterministic. Every port variant must produce
-**bit-identical** output to the scalar C reference, which itself must match the
-original DOS WAV. Comparison is `sha256(wav)` — no tolerance, no fuzzy matching.
+The mixer's output is fully deterministic. Every mixer variant must produce
+**bit-identical** output to `mixer_scalar.c` — this is a permanent invariant
+ensuring consistent cross-platform output from the same engine logic.
+
+SHA-256 CTests against reference WAVs are **regression baselines**, not a
+correctness gate. "Correct" now means authentic to the original tracker
+(Scream Tracker 3 for S3M, ProTracker for MOD, etc.) — not byte-identical to
+the DOS binary, which had its own bugs. When a bug fix intentionally changes
+output, regenerate the affected reference WAVs and update the CTest hashes.
+
 See `BUILD.md` for how to run the test suite and regenerate reference WAVs.
 
 ## Current status
@@ -121,9 +128,11 @@ blow-by-blow logs here.
 
 - **DOS build (`_work/`)** — builds with OpenWatcom V2 on Linux → `FX.EXE`
   (156 K, PMode/W). `DEV_WAV` file-output device (`-w:`/`-n:` switches).
-- **C99 core (`src/core/`)** — S3M, MOD (4/8-ch), and 669 all play **bit-exact**
-  vs. the DOS reference. `fx_detect_format` dispatches all three. 6/6 CTests
-  pass (`compare_s3m` / `compare_mod` / `compare_669`).
+- **C99 core (`src/core/`)** — S3M, MOD (4/8-ch), and 669 all play correctly.
+  `fx_detect_format` dispatches all three. 6/6 CTests pass as regression
+  baselines (`compare_s3m` / `compare_mod` / `compare_669`). Porting phase
+  complete (was bit-exact vs. DOS); now in authenticity phase — fixing bugs
+  toward tracker-accurate behaviour.
 - **CLI host (`src/host/cli/`)** — real-time playback via miniaudio. Arg parsing,
   interactive keyboard controls (pause/resume, order jump, volume), POSIX termios
   raw-mode TTY input, live status line (50 ms refresh). Loop semantics: `-l 0` =
@@ -132,8 +141,8 @@ blow-by-blow logs here.
   render loop, no SharedArrayBuffer. Play/pause/stop, order navigation, volume,
   5 bundled tracks (S3M/MOD/669), drag-and-drop. Live at
   **https://fstollar.github.io/fxplayer** (repo public, `gh-pages` branch).
-- **Validation harness** — sha256-exact CTests; DOS reference WAVs via
-  `tests/render-dosbox.sh --native`.
+- **Validation harness** — SHA-256 CTests as regression baselines; DOS reference
+  WAVs via `tests/render-dosbox.sh --native` (regenerate when fixes change output).
 
 See `BUILD.md` for toolchain requirements and step-by-step build/run/test commands.
 
@@ -141,8 +150,9 @@ See `BUILD.md` for toolchain requirements and step-by-step build/run/test comman
 - Sample addresses use `uintptr_t`, not `uint32_t` (64-bit host pointer width).
 - `g_master_vol_table` lives in `mixer_scalar.c`, shared by all format loaders.
 - MOD samples are signed 8-bit (no conversion); only 669 samples are XOR'd 0x80.
-- The mixer's master-volume soft-clip table has a faithful original quirk
-  (BUGS.md O-2) — do not "fix" it; it's required for bit-exactness.
+- The mixer's master-volume soft-clip table has a known original quirk
+  (BUGS.md O-2) — previously preserved for bit-exactness; now a candidate
+  for correction toward authentic ST3 behaviour. Investigate before changing.
 - DOS reference renders need **8.3-safe filenames** on the C: mount.
 - All three formats use the same deferred-jump pattern: `fx_order_jump` sets
   `nextorder`/`nextrow`/`jump`; `goRowOrder` applies at end-of-row. Never apply

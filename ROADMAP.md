@@ -56,15 +56,26 @@ canonical solution described in the Chrome "Audio Worklet Design Pattern" articl
 
 ---
 
-## Bug audit
+## Tracker authenticity and bug fixes
 
-Systematically work through `BUGS.md` and classify each quirk as:
+The porting phase is complete. The focus now is authentic playback relative to
+the original tracker software (Scream Tracker 3 for S3M, ProTracker for MOD,
+etc.). Bug fixes and authenticity improvements are tracked in:
 
-- **(a)** faithful reproduction required for bit-exactness — leave alone
-- **(b)** fixable in the C99 core without breaking bit-exactness — fix
-- **(c)** fixable only in the DOS original — decide whether/how to fix
+- `BUGS.md` — port-phase bugs, original DOS quirks, and authenticity candidates
+- `docs/tracker_formats/mod/BUGS-MOD.md` — MOD-specific playback bugs
+- `docs/tracker_formats/s3m/BUGS-S3M.md` — S3M-specific playback bugs
+- `docs/tracker_formats/669/BUGS-669.md` — 669-specific playback bugs
 
-Document the decision for each entry.
+When a fix intentionally changes output, regenerate the affected reference WAVs
+and update CTest hashes. The CTests remain as regression baselines.
+
+### Tracker version detection
+
+S3M files carry a tracker version field (`0x28–0x29`); MOD files need
+fingerprinting from the tag, channel count, and behaviour quirks. Detecting
+the source tracker version will allow per-tracker effect semantics and
+compatibility modes as support for later trackers is added.
 
 ## Remove floating-point from `src/core/`
 

@@ -69,9 +69,3 @@ fxplayer/
 | S3M | up to 32 | Scream Tracker 3 |
 | MOD | 4 or 8 | Amiga / ProTracker |
 | 669 | up to 8 | Composer 669 / UNIS 669 |
-
-## Validation
-
-Output is fully deterministic. Every port variant must produce **bit-identical** WAV
-output to the scalar C reference, which itself matches the original DOS render.
-Comparison is `sha256(wav)` — no tolerance, no fuzzy matching.

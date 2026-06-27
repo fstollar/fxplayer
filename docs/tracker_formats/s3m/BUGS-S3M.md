@@ -590,12 +590,15 @@ agree — that consensus is then more reliable than any single source alone.
 Each of the following should be a minimal hand-crafted S3M (one instrument, one or
 two channels, as few rows as needed) that isolates exactly the behaviour under
 investigation. The file should produce a clearly audible or measurable difference
-between the two interpretations, so it can be loaded into **DOSBox-X running the
-original Scream Tracker 3.21** and the output compared against fxplayer and st3play.
+between the two interpretations.
 
-Where the issue is about a WAV render difference (not a crash/hang), the test
-methodology is: render the file in DOSBox-X via `FX.EXE -w:test.wav`, render with
-fxplayer, render with st3play, `sha256sum` all three and note which players agree.
+Where the issue is about a WAV render difference (not a crash/hang), the primary
+test methodology is: render with **st3play** (the ST3.21 ground truth) and compare
+against fxplayer. For source conflicts where st3play itself may be wrong, also render
+with the original **Scream Tracker 3.21** under DOSBox-X — that is the ultimate
+arbiter for S3M behaviour. Rendering with `FX.EXE` (the original fxplayer DOS binary)
+is no longer a correctness reference and should be used only to understand what the
+old code did, not to validate fixes.
 
 | Test file | Targets | What to listen/check for |
 |-----------|---------|--------------------------|
@@ -609,13 +612,15 @@ fxplayer, render with st3play, `sha256sum` all three and note which players agre
 | `test-cxy-hexnibble.s3m` | SC-3 | Pattern order: rows end with `C3A`. Does the song jump to row 40 (MultimediaWiki) or ignore the effect (st3play)? |
 | `test-bxx-ff.s3m` | BUG-S8 | Single-order song with a `BFF` at row 0. Verify whether ST3 treats it as end-of-song or attempts to jump to order 255. |
 | `test-volume63.s3m` | BUG-S7 | Instrument at default volume 64 with `D0F` (fine slide down) on the first row. After the slide, does the starting volume read as 63 or 64? |
-| `test-init-speed0.s3m` | BUG-S3 | `initspeed = 0` in the header. Should be ignored and default speed used; used to verify fxplayer fix doesn't hang. Load only — do not render in DOSBox (unknown original behaviour; original may also hang). |
+| `test-init-speed0.s3m` | BUG-S3 | `initspeed = 0` in the header. Should be ignored and default speed used; verify fxplayer fix doesn't hang. Load only — do not render (ST3.21 and FX.EXE may also hang on this; st3play's guard is the reference fix). |
 | `test-init-tempo-low.s3m` | BUG-S3 / SC (init_tempo) | `inittempo = 20` (below 33). Verify what ST3 actually does with a sub-33 initial tempo: ignores it (MultimediaWiki) or uses it (st3play)? |
 
-Human-readable output is preferred for test files where possible (e.g. a note that
-pulses at a known rate so the on/off timing can be counted by ear or by waveform
-inspection). For cursor-only effects like Qxy retrigger count, rendering to WAV and
-comparing peak positions is more reliable than listening.
+Human-readable output is preferred where possible (e.g. a note that pulses at a
+known rate so the on/off timing can be counted by ear or by waveform inspection). For
+cursor-only effects like Qxy retrigger count, rendering to WAV and comparing peak
+positions against st3play output is more reliable than listening. Where a test is
+marked "run in DOSBox-X with Scream Tracker 3.21", that is the ST3 ground truth check
+— not a `FX.EXE` comparison.
 
 ---
 

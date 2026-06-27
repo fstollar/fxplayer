@@ -46,7 +46,10 @@ bare-metal MCU, and Wasm — from a single source tree:
 ## Original 1998 DOS architecture
 
 The original F/X Player (`_original/`, Apollo of STIGMA, 1996–1998) established
-the design the port must reproduce bit-exactly.
+the design the port was initially validated against bit-exactly during the porting
+phase. Going forward, authenticity to the original trackers (Scream Tracker 3,
+ProTracker, etc.) is the correctness standard — not byte-identical reproduction
+of the DOS binary's behaviour, including its bugs.
 
 ### Global state
 
@@ -165,25 +168,32 @@ will diverge.
 
 Because the engine is sample-accurate and has no timer or thread dependency,
 two renders of the same module at the same sample rate always produce
-**bit-identical output**. Validation exploits this:
+**bit-identical output**. Validation uses this property:
 
-1. Render reference modules to WAV using the original DOS build.
-2. Every port variant must match the scalar C reference exactly.
-3. The scalar C reference must match the DOS WAV exactly.
-4. Comparison is `sha256(wav)` — no tolerance, no fuzzy matching.
+- Every mixer variant must match `mixer_scalar.c` exactly — this is a
+  **permanent invariant** that ensures consistent cross-platform output from
+  the same engine logic.
+- SHA-256 CTests against reference WAVs serve as **regression baselines**.
+  They catch unintended regressions. When a bug is intentionally fixed for
+  tracker authenticity, the affected reference WAVs must be regenerated.
+- During the initial porting phase, reference WAVs were produced by the
+  original DOS build and matched exactly. That phase is complete.
+- Going forward, "correct" means "authentic to the original tracker"
+  (Scream Tracker 3 for S3M, ProTracker for MOD, etc.) — not byte-identical
+  to the DOS binary, which had its own bugs.
 
 See `BUILD.md` for how to run the test suite and regenerate reference WAVs.
 
 ---
 
-## Known faithful quirks (do not "fix")
+## Known original bugs and their port status
 
-Some original behaviours look like bugs but must be reproduced exactly for
-bit-identical output. Full list in `BUGS.md`; two critical ones:
+The DOS binary had real bugs. Now that the porting phase is complete, these
+are candidates for correction in the C99 core toward tracker-authentic behaviour.
+Full list and status in `BUGS.md`.
 
-- **Master-volume soft-clip table** (BUGS.md O-2) — the table has an
-  off-by-one in the original that affects clipping behaviour. Reproducing
-  it is required for bit-exactness.
-- **S3M order-jump bounds** use strict `<` against `S3M_OrderNum` (BUGS.md O-3).
-  The original `<=` is an off-by-one OOB read. The port corrects it, which
-  is safe because it doesn't affect normal module playback.
+- **Master-volume soft-clip table** (BUGS.md O-2) — uninitialized-variable quirk
+  in `calcMasterVolume32`. Previously preserved for bit-exactness. Now a
+  candidate for correction; needs investigation against what ST3 actually does.
+- **S3M order-jump bounds** (BUGS.md O-3) — original `<=` is an off-by-one OOB
+  read; the port already corrects it to strict `<`. Already fixed.

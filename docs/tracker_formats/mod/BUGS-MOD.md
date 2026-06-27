@@ -5,9 +5,7 @@ Findings from a systematic review of `src/core/format/mod.c` and
 
 - `docs/tracker_formats/mod/FILE-FORMAT.md` and `EFFECTS.md` (format reference)
 - `_original/DAT_MOD.CPP` and `_original/EFC_MOD.CPP` — the original DOS source
-  (Apollo/STIGMA, 1996–1998). **This is the primary correctness reference.**
-  The port must produce bit-identical WAV output to the DOS build; "fixing" a quirk
-  that exists in both original and port breaks that contract.
+  (Apollo/STIGMA, 1996–1998). Used as a reference for what FX Player originally did.
 - [pt2-clone (`8bitbubsy/pt2-clone`)](https://github.com/8bitbubsy/pt2-clone) —
   a near bit-exact C reimplementation of ProTracker 2.3D. Used as the ProTracker
   ground truth for timing and behavior questions.
@@ -15,13 +13,20 @@ Findings from a systematic review of `src/core/format/mod.c` and
 See [REFERENCE-IMPLEMENTATIONS.md](REFERENCE-IMPLEMENTATIONS.md) for the full pt2-clone
 source map, key excerpts, and a summary of all original-vs-pt2-clone conflicts.
 
-**When the original FX Player code and pt2-clone disagree**, the original wins for
-fxplayer — the port must remain bit-exact to the DOS render. These cases are
-recorded as **SOURCE CONFLICT** callouts and must be resolved by the author before
-any fix is applied.
+## Validation phase
 
-When only the port diverges from both the original AND pt2-clone, that is a
-port-specific bug — safe to fix.
+The porting phase is complete: the C99 core was validated bit-exactly against the
+DOS binary. The focus is now **tracker authenticity** — ProTracker 2.3D is the
+correctness reference for MOD playback, not the DOS binary.
+
+Bugs are classified as:
+- **Port bugs** — the port diverges from both the original and ProTracker; fix immediately.
+- **Source conflicts (SC)** — the original FX Player and ProTracker disagree. These
+  are now open questions: the author decides whether to follow ProTracker (more
+  authentic) or keep the original behavior. Each SC entry documents both behaviors.
+
+When a fix intentionally changes output, regenerate the affected reference WAVs and
+update the CTest hashes.
 
 ---
 
@@ -213,12 +218,12 @@ No crash/sanitizer hit after fix.
 
 ---
 
-## Source conflicts not tied to current fxplayer port bugs
+## Source conflicts (SC) — original FX Player vs ProTracker 2.3D
 
 These are places where pt2-clone (ProTracker 2.3D) and the original FX Player
-disagree. The port currently matches the **original** in all cases — which is
-correct for bit-exactness. They are recorded here so they can be revisited if
-PlayTracker compatibility becomes a goal.
+disagree. The port currently matches the original in all cases — a legacy of the
+porting phase. Now that ProTracker authenticity is the goal, each SC is an open
+decision point. The author decides which behavior to follow for each entry.
 
 ---
 
@@ -247,8 +252,10 @@ the original `FX.EXE`, but at 125 BPM in ProTracker and pt2-clone. The differenc
 is about 2.4 % (≈ one semitone of tempo). Most demoscene MOD files do set the
 tempo explicitly on row 0, so this rarely audible in practice.
 
-**Status:** faithful reproduction of the original. No change required for
-bit-exact validation. Revisit if general ProTracker compatibility is desired.
+**Status (authenticity phase):** Original FX Player starts at 128 BPM;
+ProTracker 2.3D starts at 125 BPM. Most demoscene MODs set BPM explicitly on
+row 0, so impact is limited. Decision: keep 128 BPM (original behavior) or
+switch to 125 BPM (ProTracker authentic). Requires author decision.
 
 ---
 
@@ -274,7 +281,8 @@ Practical impact: at speed 6, fxplayer applies 6 volume steps per row; pt2-clone
 applies 5. Effects 5 (portamento + volslide) and 6 (vibrato + volslide) are
 affected the same way.
 
-**Status:** faithful reproduction of the original. Bit-exact vs DOS reference.
+**Status (authenticity phase):** Diverges from ProTracker (tick-0 vs tick >0).
+Original FX Player fires on tick 0; ProTracker does not. Requires author decision.
 
 ---
 
@@ -304,9 +312,8 @@ overwrites tremolo parameters and vice versa; `MOD_MTremolo` reads
 `MOD_VibratoSpeed[ch]` for the "is tremolo active" guard, so tremolo silently
 stops when vibrato is used on the same channel.
 
-**Status:** faithful reproduction of the original. Real MOD files using tremolo
-concurrently with vibrato on the same channel (rare in demoscene work) will differ
-between fxplayer and pt2-clone.
+**Status (authenticity phase):** Diverges from ProTracker, which keeps fully
+separate vibrato/tremolo state. Rare in demoscene work. Requires author decision.
 
 ---
 
@@ -344,10 +351,10 @@ case 1u:  /* fine porta up — slide amount is full Info byte */
 Faithful copy of original. For E15 (slide by 5): subtracts 0x15 = 21 from the
 stored (×16) period, equivalent to ≈ 1.3 actual period units instead of 5.
 
-**Status:** faithful reproduction of the original. Audible difference from
-ProTracker on any module using E1x/E2x with x ≠ 0 and expecting ProTracker
-timing. Real demoscene MOD files use E1x rarely; the original's behavior defines
-the target here.
+**Status (authenticity phase):** Audibly wrong relative to ProTracker on any
+module using E1x/E2x. The original applies roughly 1/16th the intended slide
+amount. This is a candidate for correction to ProTracker behavior. Requires
+author decision.
 
 ---
 
@@ -374,8 +381,9 @@ In well-formed demoscene MOD files the 128th order entry is typically 0 or unuse
 (song_positions ≤ 127), so this is latent. A file with exactly 128 valid entries
 where entry 127 has the highest pattern index would trigger it.
 
-**Status:** faithful reproduction of the original. Trivial to fix (`127u` →
-`128u`) if general correctness is desired; no impact on tested modules.
+**Status (authenticity phase):** Both the original and the port scan 127
+entries; ProTracker scans 128. Trivial to fix (`127u` → `128u`). Low risk,
+candidate for correction.
 
 ---
 
@@ -396,7 +404,8 @@ case 3u:  /* set gliss control */
 Effect 3 (portamento to note) always slides smoothly in fxplayer and the original.
 E3x is extremely rare in demoscene MOD files.
 
-**Status:** faithful reproduction of the original omission.
+**Status (authenticity phase):** Both original and port ignore E3x. ProTracker
+implements it. Low priority; E3x is rare in demoscene MOD files.
 
 ---
 
@@ -438,9 +447,11 @@ players. See REFERENCE-IMPLEMENTATIONS.md for full list.
 
 ### Test MOD files to build
 
-All test files: one instrument, two channels (or one), minimal rows. Load in
-DOSBox-X with original `FX.EXE -w:test.wav`; render with fxplayer; compare
-sha256 or waveform peaks.
+All test files: one instrument, two channels (or one), minimal rows. For port
+bugs (M1–M3), compare against ProTracker behavior as ground truth. For SC
+entries, compare output between fxplayer and pt2-clone to characterize the
+difference. DOS/DOSBox renders are still useful for regression checking but are
+no longer the correctness reference.
 
 | Test file | Targets | What to verify |
 |-----------|---------|----------------|

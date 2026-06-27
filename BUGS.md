@@ -4,9 +4,17 @@ This file documents bugs — both in the **original 1998 DOS source** (`_origina
 preserved verbatim) and discovered during the C99 port — plus how the port
 handles them.
 
-The C99 core is validated by **bit-exact SHA-256** comparison against WAV
-renders produced by the original DOS build (`FX.EXE` / `FX2.EXE`) running in
-DOSBox-X. See `tests/render-dosbox.sh` and `tests/reference_renders/`.
+## Validation phases
+
+**Porting phase (complete):** The C99 core was validated by bit-exact SHA-256
+comparison against WAV renders from the original DOS build (`FX.EXE` / `FX2.EXE`)
+running in DOSBox-X. All modules in `tests/reference_renders/` matched exactly.
+
+**Authenticity phase (current):** The reference is now the original tracker
+software — Scream Tracker 3 for S3M, ProTracker for MOD, etc. Bugs in the
+DOS binary are candidates for correction. When a bug fix intentionally changes
+output, the affected reference WAVs must be regenerated and the CTest hashes
+updated. The CTests remain as regression baselines against unintended regressions.
 
 ---
 
@@ -76,8 +84,13 @@ modules that hit large mix magnitudes diverged — `purple.669`
 (MasterVolume 12288, 8 channels) first differed at frame 436857, where the DOS
 output saturates to 32767 but the mis-ported table produced small values.
 
-**Port handling:** `core/mixer/mixer_scalar.c` `mixer_calc_master_vol32`
-reproduces the original exactly — `test` persists across iterations, no `else`.
+**Port handling (porting phase):** `core/mixer/mixer_scalar.c`
+`mixer_calc_master_vol32` reproduced the original exactly — `test` persists
+across iterations, no `else`. This was required for bit-exactness against DOS.
+
+**Authenticity phase:** This quirk is a candidate for correction. Needs
+investigation: what does Scream Tracker 3 actually produce here? Fix depends
+on what the authentic behaviour is, not on matching the DOS binary.
 
 ---
 
